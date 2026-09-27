@@ -1,84 +1,9 @@
-.mark {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-  height: 34px;
-  min-width: 52px;
-  padding: 0 12px;
-  border-radius: 12px;
-  background: var(--vs-ink);
-  color: #f7f3ec;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset;
-  transition: transform var(--t-fast) var(--e-out), border-radius var(--t-med) var(--e-out);
-  will-change: transform;
-}
-
-.mark:hover {
-  transform: translateY(-1.5px) scale(1.02);
-  border-radius: 999px;
-}
-
-.mark:active {
-  transform: scale(0.965);
-  transition-duration: 0.08s;
-}
-
-.glyph {
-  display: inline-flex;
-  align-items: baseline;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  line-height: 1;
-}
-
-.v {
-  transition: transform var(--t-fast) var(--e-out);
-}
-
-.colon {
-  opacity: 0.55;
-}
-
-.slash {
-  transition: transform var(--t-med) var(--e-out);
-}
-
-.mark:hover .slash {
-  transform: translateX(1.5px) rotate(-8deg);
-}
-
-.caret {
-  width: 5px;
-  height: 11px;
-  margin-left: 3px;
-  background: #f7f3ec;
-  opacity: 0.9;
-  animation: blink 1.5s steps(1, end) infinite;
-}
-
-@keyframes blink {
-  0%,
-  55% {
-    opacity: 0.9;
-  }
-  56%,
-  100% {
-    opacity: 0.12;
-  }
-}
-
-.compact {
-  height: 30px;
-  min-width: 44px;
-  padding: 0 9px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .caret {
-    animation: none;
-  }
-}
+.mark { position: relative; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; width: 52px; height: 34px; padding: 0 12px; border-radius: 12px; background: var(--vs-ink); color: #f7f3ec; box-shadow: 0 1px 0 rgba(255,255,255,.14) inset; will-change: width, transform; transition: transform var(--t-fast) var(--e-out), border-radius var(--t-med) var(--e-out); }
+.mark:hover, .mark:focus-visible { border-radius: 999px; transform: translateY(-1px) scale(1.01); }
+.mark:active { transform: scale(.965); }
+.glyph, .full { position: absolute; font-family: var(--font-mono); font-size: 13px; font-weight: 500; letter-spacing: .02em; line-height: 1; white-space: nowrap; }
+.full { opacity: 0; transform: translateX(8px); font-size: 11px; letter-spacing: .08em; }
+.caret { width: 4px; height: 10px; margin-left: 3px; background: #f7f3ec; opacity: .82; animation: blink 1.5s steps(1,end) infinite; }
+.compact { width: 44px; height: 30px; padding: 0 9px; }
+@keyframes blink { 0%,55% { opacity:.82 } 56%,100% { opacity:.12 } }
+@media (prefers-reduced-motion: reduce) { .caret { animation:none; } .mark { transition:none; } }

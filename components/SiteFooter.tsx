@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap, revealUp } from "@/lib/motion";
 import TechLabel from "@/components/primitives/TechLabel";
+import RollingText from "@/components/primitives/RollingText";
 import WordBlocks from "@/components/primitives/WordBlocks";
 import styles from "./SiteFooter.module.css";
 
@@ -49,8 +50,8 @@ export default function SiteFooter() {
         <div className={styles.meta}>
           <div className={`${styles.col} ${styles.left}`} data-foot-fade>
             <span className={styles.copy}>© 2026 Voyagerscape</span>
-            <a className={styles.metaLink} href="/privacy" data-cursor="link">
-              Privacy Policy
+            <a className={styles.metaLink} href="/privacy" data-cursor="link" data-tactile>
+              <RollingText text="Privacy Policy" />
             </a>
           </div>
 
@@ -58,8 +59,8 @@ export default function SiteFooter() {
             <TechLabel nano className={styles.metaLabel}>
               General Enquiries
             </TechLabel>
-            <a className={styles.metaLink} href="mailto:hello@voyagerscape.co" data-cursor="link">
-              hello@voyagerscape.co
+            <a className={styles.metaLink} href="mailto:hello@voyagerscape.co" data-cursor="link" data-tactile>
+              <RollingText text="hello@voyagerscape.co" />
             </a>
           </div>
 
@@ -74,8 +75,9 @@ export default function SiteFooter() {
                 target="_blank"
                 rel="noreferrer noopener"
                 data-cursor="link"
+                data-tactile
               >
-                LinkedIn
+                <RollingText text="LinkedIn" />
               </a>
               <a
                 className={styles.metaLink}
@@ -83,8 +85,9 @@ export default function SiteFooter() {
                 target="_blank"
                 rel="noreferrer noopener"
                 data-cursor="link"
+                data-tactile
               >
-                Instagram
+                <RollingText text="Instagram" />
               </a>
             </span>
           </div>

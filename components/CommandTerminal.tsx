@@ -7,6 +7,7 @@ import { ROUTES } from "@/lib/routes";
 import { gsap, prefersReducedMotion } from "@/lib/motion";
 import CommandInput from "@/components/CommandInput";
 import TechLabel from "@/components/primitives/TechLabel";
+import RollingText from "@/components/primitives/RollingText";
 import styles from "./CommandTerminal.module.css";
 
 const EFFECT_COMMANDS = ["bw", "negative", "reset"] as const;
@@ -210,6 +211,7 @@ export default function CommandTerminal() {
                   onClick={() => run(command)}
                   data-cursor="link"
                   data-magnetic
+                  data-tactile
                   tabIndex={terminalOpen ? 0 : -1}
                   data-active={
                     (command === "bw" && visualMode === "bw") ||
@@ -217,9 +219,9 @@ export default function CommandTerminal() {
                       ? "true"
                       : undefined
                   }
-                >
-                  {command}
-                </button>
+>
+                    <RollingText text={command} />
+                  </button>
               </li>
             ))}
           </ul>

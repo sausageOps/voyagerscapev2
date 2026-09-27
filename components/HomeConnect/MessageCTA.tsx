@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap, prefersReducedMotion } from "@/lib/motion";
 import GlassControl from "@/components/primitives/GlassControl";
+import RollingText from "@/components/primitives/RollingText";
 import styles from "./MessageCTA.module.css";
 
 /** Floating glass CTA with pointer influence and press compression. */
@@ -45,11 +46,10 @@ export default function MessageCTA({ onOpen, open }: { onOpen: () => void; open:
         data-cursor="link"
         data-cursor-label="Open"
         data-magnetic
+        data-tactile="click"
       >
-        <span className={styles.prompt} aria-hidden="true">
-          &gt;/
-        </span>
-        <span className={styles.text}>Leave Us A Message</span>
+        <span className={styles.prompt} aria-hidden="true">&gt;/</span>
+        <RollingText className={styles.text} text="LEAVE US A MESSAGE" />
       </GlassControl>
     </div>
   );

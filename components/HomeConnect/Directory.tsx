@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap, revealUp } from "@/lib/motion";
 import TechLabel from "@/components/primitives/TechLabel";
+import RollingText from "@/components/primitives/RollingText";
 import styles from "./Directory.module.css";
 
 interface Entry {
@@ -63,8 +64,8 @@ export default function Directory({ ready }: { ready: boolean }) {
                 {entry.label}
               </TechLabel>
               {entry.href ? (
-                <a className={styles.value} href={entry.href} data-cursor="link">
-                  {entry.value}
+                <a className={styles.value} href={entry.href} data-cursor="link" data-tactile>
+                  <RollingText text={entry.value} />
                 </a>
               ) : (
                 <span className={styles.value}>{entry.value}</span>

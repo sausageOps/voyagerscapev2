@@ -9,6 +9,7 @@ import { gsap, revealUp } from "@/lib/motion";
 import BrandMark from "@/components/BrandMark";
 import NavMenu from "@/components/NavMenu";
 import GlassControl from "@/components/primitives/GlassControl";
+import RollingText from "@/components/primitives/RollingText";
 import styles from "./SiteHeader.module.css";
 
 export default function SiteHeader() {
@@ -98,10 +99,11 @@ export default function SiteHeader() {
               <Link
                 href={route.href}
                 className={styles.sheetLink}
+                data-tactile
                 aria-current={isRouteActive(route, pathname) ? "page" : undefined}
                 tabIndex={mobileMenuOpen ? 0 : -1}
               >
-                <span>{route.label}</span>
+                <RollingText text={route.label} />
                 <span className="vs-tech vs-tech--nano">
                   {isRouteActive(route, pathname) ? "current" : route.ready ? "live" : "soon"}
                 </span>

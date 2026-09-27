@@ -10,6 +10,7 @@ import Cursor from "@/components/Cursor";
 import PageLoader from "@/components/PageLoader";
 import RouteTransition from "@/components/RouteTransition";
 import SiteFooter from "@/components/SiteFooter";
+import TactileInteractions from "@/components/TactileInteractions";
 
 /**
  * Global frame. Every future route mounts inside this shell, so adding
@@ -31,6 +32,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <SiteFooter />
           <CommandTerminal />
           <Cursor />
+          <TactileInteractions />
         </SmoothScroll>
       </VisualModeProvider>
     </UIProvider>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ROUTES, isRouteActive } from "@/lib/routes";
 import GlassControl from "@/components/primitives/GlassControl";
+import RollingText from "@/components/primitives/RollingText";
 import styles from "./NavMenu.module.css";
 
 export default function NavMenu({ id }: { id?: string }) {
@@ -26,10 +27,9 @@ export default function NavMenu({ id }: { id?: string }) {
                 aria-current={active ? "page" : undefined}
                 data-cursor="link"
                 data-magnetic
+                data-tactile
               >
-                <span className={styles.label} data-text={route.label}>
-                  {route.label}
-                </span>
+                <RollingText className={styles.label} text={route.label} />
               </GlassControl>
             </li>
           );
