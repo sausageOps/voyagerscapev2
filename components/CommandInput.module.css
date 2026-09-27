@@ -1,0 +1,79 @@
+.form {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 46px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  background: rgba(17, 17, 17, 0.045);
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  transition: border-color var(--t-fast) var(--e-out), background var(--t-fast) var(--e-out);
+}
+
+.form:focus-within {
+  border-color: rgba(17, 17, 17, 0.32);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.glyph {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--vs-ink-faint);
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  letter-spacing: 0.02em;
+  color: var(--vs-ink);
+}
+
+.input::placeholder {
+  color: var(--vs-ink-faint);
+}
+
+.caret {
+  width: 6px;
+  height: 14px;
+  background: var(--vs-ink);
+  opacity: 0.25;
+  transition: opacity var(--t-fast) var(--e-out);
+}
+
+.form:focus-within .caret {
+  opacity: 0.8;
+  animation: blink 1.15s steps(1, end) infinite;
+}
+
+.caret[data-filled="true"] {
+  opacity: 0;
+}
+
+@keyframes blink {
+  0%,
+  55% {
+    opacity: 0.8;
+  }
+  56%,
+  100% {
+    opacity: 0.1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form:focus-within .caret {
+    animation: none;
+  }
+}
+
+/* The form carries the focus indicator, so suppress the doubled ring */
+.input:focus-visible {
+  outline: none;
+}

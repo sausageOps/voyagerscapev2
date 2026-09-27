@@ -1,0 +1,109 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+  /* never clipped, never affected by a transformed ancestor */
+  contain: layout style;
+}
+
+.dot,
+.ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* ---- inner dot ---- */
+.dot {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  background: var(--vs-ink);
+  box-shadow: 0 0 0 1.5px rgba(255, 253, 249, 0.55);
+  transition: width 0.22s var(--e-out), height 0.22s var(--e-out), margin 0.22s var(--e-out),
+    background 0.22s var(--e-out);
+}
+
+/* ---- outer ring ---- */
+.ring {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border: 1px solid rgba(17, 17, 17, 0.32);
+  background: rgba(255, 253, 249, 0.06);
+  transition: width 0.3s var(--e-out), height 0.3s var(--e-out), margin 0.3s var(--e-out),
+    background-color 0.3s var(--e-out), border-color 0.3s var(--e-out);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  color: #f7f3ec;
+  opacity: 0;
+  transform: scale(0.82);
+  transition: opacity 0.22s var(--e-out), transform 0.28s var(--e-out);
+  white-space: nowrap;
+}
+
+/* ---- interactive state ---- */
+.root[data-mode="link"] .ring {
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  background: rgba(17, 17, 17, 0.07);
+  border-color: rgba(17, 17, 17, 0.14);
+}
+
+.root[data-mode="link"] .dot {
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+}
+
+/* ---- contextual label state (device, CTA) ---- */
+.root[data-mode="label"] .ring {
+  width: 62px;
+  height: 62px;
+  margin: -31px 0 0 -31px;
+  background: rgba(17, 17, 17, 0.92);
+  border-color: transparent;
+}
+
+.root[data-mode="label"] .dot {
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.root[data-labelled="true"] .label {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Invert against the negative visual mode so it stays visible */
+:global(html[data-visual-mode="negative"]) .dot {
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.55);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .root {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .label,
+  .dot,
+  .ring {
+    transition-duration: 0.12s;
+  }
+}

@@ -1,0 +1,66 @@
+.wrap {
+  will-change: transform;
+}
+
+.cta {
+  height: 52px;
+  padding: 0 24px;
+  font-size: var(--fs-micro);
+  will-change: transform;
+  transition: padding var(--t-med) var(--e-out), transform var(--t-fast) var(--e-out);
+}
+
+/* the control opens up rather than scaling bodily */
+.cta:hover {
+  padding: 0 30px;
+}
+
+.cta:active {
+  transform: scale(0.985);
+}
+
+.prompt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  opacity: 0.45;
+  transition: opacity var(--t-fast) var(--e-out), transform var(--t-fast) var(--e-out);
+}
+
+.cta:hover .prompt {
+  opacity: 0.95;
+  transform: translateX(2px);
+}
+
+.text {
+  display: inline-block;
+  transition: transform var(--t-fast) var(--e-out), letter-spacing var(--t-med) var(--e-out);
+}
+
+.cta:hover .text {
+  transform: translateY(-0.5px);
+  letter-spacing: calc(var(--tracking-tech) + 0.012em);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta,
+  .cta:hover,
+  .cta:active {
+    transition: none;
+    transform: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .wrap {
+    display: block;
+    width: 100%;
+  }
+  /* A wide rounded control, as in the mobile reference */
+  .cta {
+    width: 100%;
+    height: 56px;
+    padding: 0 22px;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+}

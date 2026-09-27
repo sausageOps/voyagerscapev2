@@ -1,0 +1,138 @@
+/* Desktop: the cards are pinned to the lower corners of the hero and read as
+   independent objects resting on the canvas. */
+.field {
+  position: absolute;
+  inset: auto 0 clamp(36px, 8svh, 92px);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.card {
+  position: absolute;
+  bottom: 0;
+  width: clamp(188px, 15vw, 218px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  /* Perfectly square to the grid, and deliberately flat: definition comes
+     from the edge and an inset highlight, never from a cast shadow. */
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  opacity: 0;
+  transition: transform var(--t-fast) var(--e-out), background-color var(--t-fast) var(--e-out),
+    border-color var(--t-fast) var(--e-out);
+  pointer-events: auto;
+  transition: transform var(--t-med) var(--e-out);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(17, 17, 17, 0.14);
+}
+
+.card:hover .value {
+  transform: translateX(2px);
+}
+
+.card:hover .label {
+  transform: translateX(1px);
+}
+
+.card[data-slot="contact"] {
+  left: 0;
+}
+
+.card[data-slot="positions"] {
+  right: 0;
+}
+
+.pink {
+  background: #f7d5ee;
+}
+
+.pink:hover {
+  background: #f9dcf1;
+}
+
+.peach {
+  background: #f8e2c1;
+}
+
+.peach:hover {
+  background: #fae7ca;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  display: block;
+  color: rgba(17, 17, 17, 0.5);
+  transition: transform var(--t-fast) var(--e-out);
+}
+
+/* Card content uses the body face so the labels (mono) read as a separate
+   tier — the page should show its typographic system. */
+.value {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  letter-spacing: -0.005em;
+  line-height: 1.35;
+  color: var(--vs-ink);
+  text-decoration: none;
+  transition: opacity var(--t-fast) var(--e-out), transform var(--t-fast) var(--e-out);
+}
+
+a.value:hover {
+  opacity: 0.6;
+}
+
+a.value:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Tablet: back into flow, side by side */
+@media (max-width: 1099px) {
+  .field {
+    position: relative;
+    inset: auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    width: min(640px, 100%);
+    align-self: center;
+    pointer-events: auto;
+  }
+  .card {
+    position: relative;
+    bottom: auto;
+    left: auto !important;
+    right: auto !important;
+    width: 100%;
+  }
+}
+
+/* Mobile: one full-width card stack below the object */
+@media (max-width: 767px) {
+  .field {
+    order: 3;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+  .card {
+    gap: 14px;
+    padding: 18px 20px;
+  }
+  .card:hover {
+    transform: none;
+  }
+}

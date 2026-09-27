@@ -1,0 +1,62 @@
+.nav {
+  pointer-events: auto;
+}
+
+.list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.item {
+  text-decoration: none;
+  transition: transform var(--t-fast) var(--e-out), background-color var(--t-fast) var(--e-out);
+}
+
+/* The pill itself carries an inline transform from the cursor magnet, so the
+   growth lives on the list item — the one box nothing else writes to. */
+.list > li {
+  transform-origin: center;
+  transition: transform var(--t-fast) var(--e-out);
+}
+
+.list > li:hover {
+  transform: scale(1.045);
+}
+
+.list > li:active {
+  transform: scale(0.985);
+}
+
+/* adjacent pills lean in a fraction — a small ripple, not a wave */
+.list > li:hover + li,
+.list > li:has(+ li:hover) {
+  transform: scale(1.018);
+}
+
+/* Microscopic text shift on hover */
+.label {
+  display: inline-block;
+  transition: transform var(--t-fast) var(--e-out), letter-spacing var(--t-fast) var(--e-out);
+}
+
+.item:hover .label {
+  transform: translateY(-0.5px);
+  letter-spacing: calc(var(--tracking-tech) + 0.01em);
+}
+
+@media (max-width: 767px) {
+  .list {
+    gap: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .list > li,
+  .list > li:hover,
+  .list > li:hover + li,
+  .list > li:has(+ li:hover) {
+    transform: none;
+    transition: none;
+  }
+}

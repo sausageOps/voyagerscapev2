@@ -1,0 +1,229 @@
+@property --tilt-x {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --tilt-y {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --tilt-r {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+.stage {
+  --tilt-x: 0;
+  --tilt-y: 0;
+  --tilt-r: 0;
+  position: relative;
+  /* Fluid across every breakpoint: never wider than the column, never taller
+     than the space between the hero and the CTA. */
+  width: clamp(256px, min(31vw, 47svh), 452px);
+  transform: translate3d(calc(var(--tilt-x) * 1px), calc(var(--tilt-y) * 1px), 0)
+    rotate(calc(var(--tilt-r) * 1deg));
+  will-change: transform;
+}
+
+.float {
+  will-change: transform;
+}
+
+.hit {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border-radius: 36px;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--t-med) var(--e-out);
+}
+
+/* Restrained hover: the object leans, it does not jump */
+.hit:hover {
+  transform: translateY(-3px) scale(1.012) rotate(-0.35deg);
+}
+
+.hit:active {
+  transform: translateY(0) scale(0.995);
+  transition-duration: 0.1s;
+}
+
+.hit:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 10px;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.shutter {
+  will-change: transform;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--t-fast) var(--e-out);
+}
+
+/* physical controls answer the pointer with a micro-response */
+.control {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--t-fast) var(--e-out);
+}
+
+.control:hover {
+  transform: scale(1.06);
+}
+
+.hit:hover .shutter {
+  transform: translateY(-0.6px);
+}
+
+.spec,
+.lens,
+.shadow {
+  will-change: transform;
+}
+
+.shadow {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Keeps the SVG box stable before paint, so nothing shifts on load. */
+.svg {
+  aspect-ratio: 340 / 300;
+}
+
+.segment,
+.tick {
+  transition: opacity var(--t-fast) var(--e-out);
+}
+
+/* ---- screen + engraved typography ---- */
+
+
+
+.meter {
+  transition: width 0.1s linear;
+}
+
+/* ---- tally lamp states ---- */
+.tally {
+  fill: #b9ae9c;
+  transition: fill var(--t-fast) var(--e-out);
+}
+
+.stage[data-status="rec"] .tally {
+  fill: #e2557f;
+  animation: tally 1.15s var(--e-inout) infinite;
+}
+
+.stage[data-status="play"] .tally {
+  fill: #48c896;
+}
+
+.stage[data-status="wait"] .tally {
+  fill: #e0b34a;
+  animation: tally 0.6s linear infinite;
+}
+
+.stage[data-status="err"] .tally {
+  fill: #d2453f;
+}
+
+@keyframes tally {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.strap {
+  transform-origin: 58px 100px;
+  animation: sway 7s var(--e-inout) infinite;
+  will-change: transform;
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-1.3deg);
+  }
+  50% {
+    transform: rotate(1.8deg);
+  }
+}
+
+/* ---- responsive ---- */
+@media (max-width: 1023px) {
+  .stage {
+    width: clamp(244px, min(42vw, 40svh), 344px);
+  }
+}
+
+/* Tablet portrait: more width is available than height, so height leads. */
+@media (max-width: 900px) and (orientation: portrait) {
+  .stage {
+    width: min(62vw, 38svh, 360px);
+  }
+}
+
+@media (max-width: 767px) {
+  .stage {
+    width: min(78vw, 34svh, 330px);
+  }
+}
+
+@media (max-width: 430px) {
+  .stage {
+    width: min(80vw, 32svh, 306px);
+  }
+}
+
+@media (max-width: 380px) {
+  .stage {
+    width: min(82vw, 30svh, 286px);
+  }
+}
+
+/* Coarse pointers get no hover lean and a touch-friendly target. */
+@media (hover: none) {
+  .hit:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strap,
+  .tally {
+    animation: none;
+  }
+  .control,
+  .shutter {
+    transition: none;
+  }
+  .stage {
+    transform: none;
+  }
+  .hit,
+  .hit:hover,
+  .hit:active {
+    transform: none;
+    transition: none;
+  }
+  .segment,
+  .tick,
+  .meter {
+    transition: none;
+  }
+}

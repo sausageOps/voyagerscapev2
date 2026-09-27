@@ -1,0 +1,48 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-loader);
+  display: grid;
+  place-items: center;
+  background: var(--vs-bg);
+  will-change: transform;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+  width: min(360px, 82vw);
+}
+
+.word {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 4.4vw, 2.2rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  color: var(--vs-ink-faint);
+}
+
+.track {
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--vs-line);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--vs-ink);
+  transform-origin: 0 50%;
+  transition: transform 0.4s var(--e-out);
+}

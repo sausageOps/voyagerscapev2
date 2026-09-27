@@ -1,0 +1,150 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-header);
+  pointer-events: none;
+  padding: clamp(14px, 1.7vw, 22px) var(--gutter) 0;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--header-h);
+}
+
+.left,
+.right,
+.mobileRight {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Nav is optically centred against the viewport, not the flex row */
+.center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
+.right {
+  gap: 7px;
+}
+
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 2px;
+  transition: opacity var(--t-fast) var(--e-out);
+}
+
+.hint:hover {
+  opacity: 0.62;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  border: 1px solid var(--vs-line);
+  background: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  color: var(--vs-ink);
+  transition: transform var(--t-fast) var(--e-out), background var(--t-fast) var(--e-out);
+}
+
+.hint:hover .key {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.mobileRight {
+  display: none;
+}
+
+.slashBtn {
+  min-width: 30px;
+  font-size: 12px;
+}
+
+/* ---------- Mobile sheet ---------- */
+.mobileSheet {
+  pointer-events: none;
+  margin-top: 8px;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity var(--t-fast) var(--e-out), transform var(--t-med) var(--e-out),
+    visibility var(--t-med);
+  visibility: hidden;
+}
+
+.mobileSheet[data-open="true"] {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+.sheetInner {
+  border-radius: var(--r-lg);
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+}
+
+.sheetLink {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 14px;
+  border-radius: var(--r-md);
+  font-size: 1rem;
+  letter-spacing: var(--tracking-tight);
+  transition: background var(--t-fast) var(--e-out);
+}
+
+.sheetLink:active {
+  background: rgba(17, 17, 17, 0.06);
+}
+
+/* ---------- Breakpoints ---------- */
+@media (max-width: 1023px) {
+  .center {
+    position: static;
+    transform: none;
+  }
+  .row {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 767px) {
+  .header {
+    padding-top: 12px;
+  }
+  .row {
+    min-height: 48px;
+  }
+  .center,
+  .right {
+    display: none;
+  }
+  .mobileRight {
+    display: flex;
+  }
+}

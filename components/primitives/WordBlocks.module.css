@@ -1,0 +1,206 @@
+.run {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font-family: var(--font-display);
+  /* A rasterised face needs more weight and looser tracking than a mono to
+     hold the same presence. */
+  font-weight: 600;
+  color: var(--vs-ink);
+}
+
+.slot {
+  display: contents;
+}
+
+.word {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  text-decoration: none;
+  color: inherit;
+  /* GSAP owns transform; CSS only animates surface properties. */
+  transition: background-color var(--t-fast) var(--e-out), border-color var(--t-fast) var(--e-out),
+    letter-spacing var(--t-fast) var(--e-out);
+}
+
+.blocked:hover {
+  background: var(--surface-card-hover);
+  border-color: rgba(17, 17, 17, 0.12);
+}
+
+/* Touch devices get press feedback instead of hover */
+.blocked:active {
+  background: var(--surface-card-hover);
+}
+
+.word:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 3px;
+}
+
+/* Capsuled word — soft warm panel, generous optical padding */
+.blocked {
+  background: var(--surface-card);
+  border: 1px solid rgba(17, 17, 17, 0.05);
+  will-change: transform;
+}
+
+.bare {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.pink {
+  background: #f7cdec;
+  border-color: rgba(17, 17, 17, 0.06);
+}
+
+.lavender {
+  background: var(--vs-lavender);
+  border-color: rgba(17, 17, 17, 0.06);
+}
+
+.brk {
+  flex-basis: 100%;
+  height: 0;
+}
+
+/* ---------- Hero scale ---------- */
+.hero {
+  /* A monospace sets much wider than a grotesque, so the scale is retuned
+     rather than inherited: 1440→33px, 1280→30px, 1024→26px. */
+  gap: clamp(5px, 0.42vw, 8px);
+  font-size: clamp(1.4rem, 2.66vw, 2.4rem);
+  line-height: 1;
+  letter-spacing: -0.012em;
+  word-spacing: 0;
+}
+
+.hero .word {
+  padding: 0.22em 0.32em 0.28em;
+  border-radius: 0.26em;
+  min-height: 1.46em;
+}
+
+/* Short words sit in fuller capsules */
+.hero .round {
+  border-radius: 999px;
+  padding-inline: 0.44em;
+}
+
+.hero .pink {
+  border-radius: 999px;
+  padding-inline: 0.52em;
+  font-size: 0.86em;
+  letter-spacing: -0.006em;
+  background: #f7cdec;
+}
+
+/* the capsule breathes open slightly and the address spaces out */
+.hero .pink:hover {
+  background: #f9d8f0;
+  border-color: rgba(17, 17, 17, 0.14);
+  padding-inline: 0.68em;
+  letter-spacing: 0.012em;
+}
+
+/* the disc sits beside the address, as in the reference */
+.hero .lavender {
+  border-radius: 50%;
+  padding: 0;
+  width: 1.32em;
+  min-width: 1.32em;
+  height: 1.32em;
+  background: var(--vs-yellow);
+}
+
+.hero .lavender svg {
+  transition: transform var(--t-med) var(--e-out);
+}
+
+/* the disc reacts when the address beside it is hovered, and on its own.
+   `.slot` is display:contents, so the pairing goes through the wrapper. */
+.hero .slot:has(.pink:hover) + .slot .lavender svg,
+.hero .lavender:hover svg {
+  transform: rotate(-14deg) scale(1.1);
+}
+
+.hero .lavender:hover {
+  background: #f6dfa8;
+}
+
+.hero .wide {
+  padding-inline: 0.46em;
+}
+
+/* ---------- Footer statement scale ---------- */
+.statement {
+  justify-content: center;
+  gap: clamp(5px, 0.44vw, 8px);
+  font-size: clamp(0.9rem, 1.62vw, 1.38rem);
+  line-height: 1;
+  letter-spacing: -0.008em;
+}
+
+.statement .word {
+  padding: 0.32em 0.5em 0.38em;
+  border-radius: 0.32em;
+  background: rgba(255, 253, 249, 0.85);
+}
+
+.statement .round {
+  border-radius: 999px;
+}
+
+.statement .word {
+  will-change: transform;
+}
+
+.statement .blocked:hover {
+  background: #fffdf9;
+}
+
+@media (max-width: 767px) {
+  .hero {
+    /* Re-tuned for small screens, not a scaled-down desktop. Monospace needs
+       roughly 6.2vw here to fit the longest word plus its capsule. */
+    gap: 4px;
+    font-size: clamp(1.22rem, 6.3vw, 1.7rem);
+    letter-spacing: -0.014em;
+  }
+  .hero .word {
+    padding: 0.2em 0.28em 0.26em;
+    border-radius: 0.24em;
+    min-height: 1.38em;
+  }
+  /* the address is the longest token — give it its own metric so it and the
+     disc sit on one line instead of orphaning */
+  .hero .pink {
+    font-size: 0.7em;
+    padding-inline: 0.55em;
+  }
+  .hero .lavender {
+    width: 1.16em;
+    min-width: 1.16em;
+    height: 1.16em;
+  }
+  /* give the glyph room inside the disc at small sizes */
+  .hero .lavender svg {
+    width: 0.68em;
+    height: 0.68em;
+  }
+  .statement {
+    font-size: clamp(0.78rem, 3.9vw, 1rem);
+    gap: 5px;
+  }
+}
+
+@media (max-width: 380px) {
+  .hero {
+    font-size: clamp(1.14rem, 5.95vw, 1.46rem);
+    gap: 3px;
+  }
+}

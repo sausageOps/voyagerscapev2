@@ -1,0 +1,399 @@
+/* =========================================================
+   VOYAGERSCAPE — GLOBAL TOKENS, RESET, LIQUID GLASS SYSTEM
+   ========================================================= */
+
+:root {
+  /* ---- Colour ---- */
+  --vs-bg: #f5f0e8;
+  --vs-bg-deep: #efe8dd;
+  /* Secondary section (footer) — a half-step darker warm grey */
+  --vs-bg-sub: #eae4d9;
+  --vs-ink: #111111;
+  --vs-ink-soft: #6e6a64;
+  --vs-ink-faint: #a49e95;
+  --vs-line: rgba(17, 17, 17, 0.12);
+  --vs-line-soft: rgba(17, 17, 17, 0.07);
+
+  --vs-pink: #f1b8e4;
+  --vs-lavender: #d8ccff;
+  --vs-yellow: #f3e5b5;
+  --vs-peach: #f5d8b8;
+
+  /* ---- Type ---- */
+  /* Three explicit roles — identical on every breakpoint, no fallbacks to a
+     system face on mobile. */
+  --font-display: var(--font-display-face), var(--font-grotesk), "Helvetica Neue", Arial, sans-serif;
+  --font-body: var(--font-grotesk), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-mono-tech), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --fs-micro: 0.6875rem;   /* 11px technical labels */
+  --fs-nano: 0.625rem;     /* 10px */
+  --fs-small: 0.8125rem;
+  --fs-body: 0.9375rem;
+
+  --tracking-tech: 0.09em;
+  --tracking-tight: -0.035em;
+
+  /* ---- Geometry ---- */
+  --r-pill: 999px;
+  --r-lg: 22px;
+  --r-md: 14px;
+  --r-sm: 10px;
+
+  --gutter: clamp(16px, 3.2vw, 40px);
+  --header-h: 64px;
+
+  /* ---- Spacing scale ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 28px;
+  --space-5: 48px;
+  --space-6: 80px;
+
+  /* ---- Motion ---- */
+  --e-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --e-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 0.22s;
+  --t-med: 0.42s;
+
+  /* ---- Glass material ---- */
+  --glass-tint: 255, 253, 249;
+  --glass-alpha: 0.42;
+  --glass-blur: 14px;
+  --glass-sat: 180%;
+  --glass-edge: rgba(255, 255, 255, 0.85);
+  --glass-edge-low: rgba(255, 255, 255, 0.28);
+  --glass-rim: rgba(17, 17, 17, 0.1);
+  /* Flat by default: definition comes from edges and surface tone, not from
+     cast shadows. */
+  --glass-shadow: 0 0 0 1px rgba(17, 17, 17, 0.045), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  --surface-card: rgba(255, 253, 249, 0.66);
+  --surface-card-hover: rgba(255, 253, 249, 0.92);
+
+  --z-cursor: 120;
+  --z-loader: 110;
+  --z-terminal: 90;
+  --z-header: 70;
+  --z-float: 40;
+}
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: auto;
+  /* Canvas colour lives on <html> so body-level filters can invert it too */
+  background: var(--vs-bg);
+  transition: background-color 0.45s var(--e-inout);
+}
+
+body {
+  background: transparent;
+  color: var(--vs-ink);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/* Warm paper ambience — cheap, no blur, GPU friendly */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 60%),
+    radial-gradient(70% 55% at 12% 88%, rgba(241, 184, 228, 0.16), rgba(241, 184, 228, 0) 70%),
+    radial-gradient(65% 50% at 88% 82%, rgba(216, 204, 255, 0.16), rgba(216, 204, 255, 0) 70%);
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure {
+  margin: 0;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: var(--vs-ink);
+  color: var(--vs-bg);
+}
+
+/* ---------- Focus ---------- */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.vs-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.vs-skip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 200;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  background: var(--vs-ink);
+  color: var(--vs-bg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  transform: translateY(-160%);
+  transition: transform var(--t-fast) var(--e-out);
+}
+
+.vs-skip:focus-visible {
+  transform: translateY(0);
+}
+
+/* =========================================================
+   LIQUID GLASS — layered optical material
+   1 translucent base · 2 blur · 3 saturation · 4 backdrop
+   sampling · 5 edge highlight · 6 inner highlight · 7 drop
+   shadow · 8 sheen · 9 pointer specular · 10 press compress
+   ========================================================= */
+
+.vs-glass {
+  position: relative;
+  isolation: isolate;
+  /* 1. translucent base with a faint warm sample of the page */
+  background-color: rgba(var(--glass-tint), var(--glass-alpha));
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.36),
+    rgba(255, 255, 255, 0.04) 42%,
+    rgba(245, 240, 232, 0.14)
+  );
+  /* 7. shadow beneath the glass */
+  box-shadow: var(--glass-shadow);
+  transform: translateZ(0);
+  transition: background-color var(--t-fast) var(--e-out), box-shadow var(--t-med) var(--e-out),
+    transform var(--t-fast) var(--e-out);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .vs-glass {
+    /* 2 + 3 + 4. blur, saturation, brightness sampling of the backdrop */
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(1.04);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(1.04);
+    background-color: rgba(var(--glass-tint), var(--glass-alpha));
+  }
+}
+
+/* 12. graceful fallback — no backdrop-filter: go more opaque */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .vs-glass {
+    background-color: rgba(var(--glass-tint), 0.94);
+  }
+}
+
+/* 5 + 6. bright outer edge + soft internal highlight (single pseudo, no cost) */
+.vs-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  padding: 1px;
+  background: linear-gradient(
+    150deg,
+    var(--glass-edge) 0%,
+    var(--glass-edge-low) 34%,
+    rgba(255, 255, 255, 0) 52%,
+    var(--glass-rim) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  z-index: 2;
+}
+
+/* 8 + 9 + 11. sheen sheet driven by --mx/--my pointer specular */
+.vs-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  opacity: var(--sheen, 0);
+  background: radial-gradient(
+      55% 120% at var(--mx, 50%) var(--my, 0%),
+      rgba(255, 255, 255, 0.9),
+      rgba(255, 255, 255, 0) 70%
+    ),
+    linear-gradient(115deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 60%);
+  transition: opacity var(--t-med) var(--e-out);
+  mix-blend-mode: screen;
+}
+
+/* Default radius at zero specificity so component modules always win */
+:where(.vs-glass) {
+  border-radius: var(--r-pill);
+}
+
+/* Clearer treatment — floating controls over rich content */
+.vs-glass--clear {
+  --glass-alpha: 0.24;
+  --glass-blur: 10px;
+  --glass-sat: 190%;
+}
+
+/* Denser, legible treatment — text surfaces (terminal, panels) */
+.vs-glass--solid {
+  --glass-alpha: 0.84;
+  --glass-blur: 26px;
+  --glass-sat: 150%;
+}
+
+.vs-glass--dark {
+  --glass-tint: 18, 18, 17;
+  --glass-alpha: 0.78;
+  --glass-edge: rgba(255, 255, 255, 0.34);
+  --glass-edge-low: rgba(255, 255, 255, 0.1);
+  --glass-rim: rgba(0, 0, 0, 0.5);
+  color: #f7f3ec;
+}
+
+/* =========================================================
+   TECHNICAL LABEL PRIMITIVE
+   ========================================================= */
+.vs-tech {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  color: var(--vs-ink-soft);
+  line-height: 1;
+}
+
+.vs-tech--nano {
+  font-size: var(--fs-nano);
+}
+
+/* =========================================================
+   VISUAL COMMAND MODES (bw / negative) — global, session only
+   ========================================================= */
+html[data-visual-mode="bw"] {
+  background: #f0f0f0;
+}
+
+html[data-visual-mode="bw"] body {
+  filter: grayscale(1) contrast(1.02);
+}
+
+/* Match the canvas to the inverted page so the fold has no light seam */
+html[data-visual-mode="negative"] {
+  background: #0a0f17;
+}
+
+html[data-visual-mode="negative"] body {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+html[data-visual-mode="negative"] body::before {
+  opacity: 0.6;
+}
+
+/* Keep the mode transition itself calm */
+body {
+  transition: filter 0.45s var(--e-inout);
+}
+
+/* =========================================================
+   CURSOR — the class is added by <Cursor> only after it has
+   mounted and seen a real mouse, so the native pointer is
+   never hidden before a replacement exists.
+   ========================================================= */
+@media (hover: hover) and (pointer: fine) {
+  html.has-custom-cursor,
+  html.has-custom-cursor * {
+    cursor: none !important;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.12s !important;
+    scroll-behavior: auto !important;
+  }
+}
