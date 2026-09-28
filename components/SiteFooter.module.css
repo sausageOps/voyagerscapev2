@@ -49,8 +49,7 @@
 }
 
 .copy,
-.metaLink,
-.metaLabel {
+.metaLink {
   font-family: var(--font-mono);
   font-size: var(--fs-nano);
   letter-spacing: var(--tracking-tech);
@@ -61,8 +60,17 @@
   color: var(--vs-ink-soft);
 }
 
-.metaLabel {
-  color: var(--vs-ink-faint);
+/* The two information labels reuse the mobile menu's approved pastel pill
+   treatment verbatim — composed, not copied, so the geometry, typography and
+   the --vs-pink / --vs-yellow washes can never drift between the two. */
+.metaLabelConnect {
+  composes: footLabel from "./MobileMenu.module.css";
+  composes: footLabelConnect from "./MobileMenu.module.css";
+}
+
+.metaLabelEnquiries {
+  composes: footLabel from "./MobileMenu.module.css";
+  composes: footLabelEnquiries from "./MobileMenu.module.css";
 }
 
 .metaLink {
