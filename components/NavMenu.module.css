@@ -13,7 +13,33 @@
   transition: transform var(--t-fast) var(--e-out), background-color var(--t-fast) var(--e-out);
 }
 
-/* The pill itself carries an inline transform from the cursor magnet, so the
+/* Compact desktop counterparts to the mobile menu's four-shape language. */
+.list > li:nth-child(1) .item {
+  width: 58px;
+  padding-inline: 0;
+  border-radius: 12px;
+}
+
+.list > li:nth-child(2) .item {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.list > li:nth-child(3) .item {
+  width: 84px;
+  padding-inline: 0;
+  border-radius: var(--r-pill);
+}
+
+.list > li:nth-child(4) .item {
+  width: 70px;
+  padding-inline: 0;
+  border-radius: 7px;
+}
+
+/* The control itself carries an inline transform from the cursor magnet, so the
    growth lives on the list item — the one box nothing else writes to. */
 .list > li {
   transform-origin: center;

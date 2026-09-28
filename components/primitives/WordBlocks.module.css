@@ -108,12 +108,13 @@
 }
 
 /* the disc sits beside the address, as in the reference */
-.hero .lavender {
+.hero .word.lavender {
   border-radius: 50%;
   padding: 0;
   width: 1.32em;
   min-width: 1.32em;
   height: 1.32em;
+  min-height: 1.32em;
   background: var(--vs-yellow);
 }
 

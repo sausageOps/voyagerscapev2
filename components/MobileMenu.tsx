@@ -20,12 +20,12 @@ import styles from "./MobileMenu.module.css";
  *
  * Each item carries its own shape (by position) so the four read as one
  * coherent system rather than four identical full-width buttons:
- *   1st → pill · 2nd → smaller pill · 3rd → pill · 4th → block
+ *   1st → soft square · 2nd → circle · 3rd → pill · 4th → block
  *
  * Labels/destinations come from the shared NAV_ROUTES registry so the mobile
  * menu stays identical to the desktop navigation.
  */
-const TREATMENTS = ["tPill", "tPillSmall", "tPill", "tBlock"] as const;
+const TREATMENTS = ["tSoftSquare", "tCircle", "tPill", "tBlock"] as const;
 
 const MOBILE_NAV = NAV_ROUTES;
 

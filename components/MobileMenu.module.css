@@ -102,13 +102,21 @@
 }
 
 /* ---- Shapes ---- */
+.navItem.tSoftSquare {
+  width: 80px;
+  padding-inline: 0;
+  border-radius: 18px;
+}
+
 .tPill {
   border-radius: var(--r-pill);
 }
 
-.tPillSmall {
-  border-radius: var(--r-pill);
-  padding: 12px 26px;
+.navItem.tCircle {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border-radius: 50%;
   font-size: clamp(0.9rem, 4vw, 1.02rem);
 }
 
