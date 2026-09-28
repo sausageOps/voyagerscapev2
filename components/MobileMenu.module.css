@@ -169,6 +169,23 @@
   color: var(--vs-ink-soft);
 }
 
+/* Accent grounds for the two information labels.
+   Same palette tokens as the rest of the site (--vs-pink / --vs-yellow), but
+   washed back over the cream ground so they read as pale pastel tags rather
+   than saturated chips. Geometry, padding, typography and ink are inherited
+   unchanged from .footLabel above.
+   The rgba lines are the no-color-mix fallback: identical result, since the
+   chip sits directly on the --vs-bg surface. */
+.footLabelConnect {
+  background: rgba(241, 184, 228, 0.35);
+  background: color-mix(in srgb, var(--vs-pink) 35%, var(--vs-bg));
+}
+
+.footLabelEnquiries {
+  background: rgba(243, 229, 181, 0.5);
+  background: color-mix(in srgb, var(--vs-yellow) 50%, var(--vs-bg));
+}
+
 .socials {
   display: inline-flex;
   align-items: center;

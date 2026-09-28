@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { gsap, revealUp } from "@/lib/motion";
-import TechLabel from "@/components/primitives/TechLabel";
 import WordBlocks from "@/components/primitives/WordBlocks";
 import styles from "./SiteFooter.module.css";
 
@@ -55,18 +54,14 @@ export default function SiteFooter() {
           </div>
 
           <div className={`${styles.col} ${styles.center}`} data-foot-fade>
-            <TechLabel nano className={styles.metaLabel}>
-              General Enquiries
-            </TechLabel>
+            <span className={styles.metaLabelEnquiries}>General Enquiries</span>
             <a className={styles.metaLink} href="mailto:hello@voyagerscape.co" data-cursor="link">
               hello@voyagerscape.co
             </a>
           </div>
 
           <div className={`${styles.col} ${styles.right}`} data-foot-fade>
-            <TechLabel nano className={styles.metaLabel}>
-              Connect
-            </TechLabel>
+            <span className={styles.metaLabelConnect}>Connect</span>
             <span className={styles.socials}>
               <a
                 className={styles.metaLink}
