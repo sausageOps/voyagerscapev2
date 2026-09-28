@@ -169,6 +169,16 @@
   color: var(--vs-ink-soft);
 }
 
+/* Accent grounds for the two information labels — existing palette tokens,
+   same chip geometry/typography as .footLabel above. */
+.footLabelConnect {
+  background: var(--vs-pink);
+}
+
+.footLabelEnquiries {
+  background: var(--vs-yellow);
+}
+
 .socials {
   display: inline-flex;
   align-items: center;

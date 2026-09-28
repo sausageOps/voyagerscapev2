@@ -178,7 +178,7 @@ export default function MobileMenu() {
         {/* ---- Bottom: centred information cluster ---- */}
         <div className={styles.footer}>
           <div className={styles.footBlock} data-menu-foot>
-            <span className={styles.footLabel}>Connect</span>
+            <span className={`${styles.footLabel} ${styles.footLabelConnect}`}>Connect</span>
             <span className={styles.socials}>
               <a
                 className={styles.footLink}
@@ -202,7 +202,9 @@ export default function MobileMenu() {
           </div>
 
           <div className={styles.footBlock} data-menu-foot>
-            <span className={styles.footLabel}>General Enquiries</span>
+            <span className={`${styles.footLabel} ${styles.footLabelEnquiries}`}>
+              General Enquiries
+            </span>
             <a
               className={styles.footLink}
               href="mailto:hello@voyagerscape.co"
