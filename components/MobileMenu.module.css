@@ -1,0 +1,241 @@
+/* =========================================================
+   MOBILE MENU — full-screen, minimal editorial composition
+   Brand · Close / floating nav pieces / centred info cluster
+   ========================================================= */
+
+.layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  /* Above the mobile floating recorder (80) and terminal (90),
+     below the loader (110) and cursor (120). */
+  z-index: 100;
+  /* GSAP drives autoAlpha; start hidden so there is no flash on mount. */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.layer[data-open="true"] {
+  pointer-events: auto;
+}
+
+/* Calm, flat Voyagerscape ground — no gradients, no decoration. */
+.surface {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 12px var(--gutter) max(22px, env(safe-area-inset-bottom));
+  padding-top: max(12px, env(safe-area-inset-top));
+  background: var(--vs-bg);
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---- Top row ---- */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  flex: 0 0 auto;
+}
+
+.close {
+  font-size: var(--fs-micro);
+}
+
+/* =========================================================
+   NAVIGATION — individual, auto-width floating pieces
+   ========================================================= */
+.nav {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.navList li {
+  display: flex;
+  justify-content: center;
+}
+
+/* Shared piece: hugs its own text, generous inner padding */
+.navItem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 32px;
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 4.6vw, 1.18rem);
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  color: var(--vs-ink);
+  background: rgba(255, 253, 249, 0.72);
+  box-shadow: var(--glass-shadow);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--t-fast) var(--e-out), background var(--t-fast) var(--e-out),
+    box-shadow var(--t-med) var(--e-out), color var(--t-fast) var(--e-out);
+}
+
+.navItem:hover {
+  background: rgba(255, 253, 249, 0.95);
+  transform: translateY(-1.5px);
+}
+
+.navItem:active {
+  transform: translateY(0) scale(0.975);
+  transition-duration: 0.08s;
+}
+
+/* ---- Shapes ---- */
+.tPill {
+  border-radius: var(--r-pill);
+}
+
+.tPillSmall {
+  border-radius: var(--r-pill);
+  padding: 12px 26px;
+  font-size: clamp(0.9rem, 4vw, 1.02rem);
+}
+
+.tBlock {
+  border-radius: var(--r-sm);
+}
+
+/* ---- Active anchor → existing Voyagerscape dark UI language ---- */
+.navActive {
+  background: var(--vs-ink);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.02) 45%,
+    rgba(0, 0, 0, 0.12)
+  );
+  color: #f7f3ec;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 20px 40px -26px rgba(17, 17, 17, 0.5);
+}
+
+.navActive:hover {
+  background: #191919;
+}
+
+/* =========================================================
+   BOTTOM — centred information cluster
+   ========================================================= */
+.footer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  padding-top: 20px;
+}
+
+.footBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+
+/* Small label chip — echoes the reference's tag treatment */
+.footLabel {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 253, 249, 0.62);
+  box-shadow: inset 0 0 0 1px var(--vs-line-soft);
+  font-family: var(--font-mono);
+  font-size: var(--fs-nano);
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  color: var(--vs-ink-soft);
+}
+
+.socials {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.footLink {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--vs-ink);
+  letter-spacing: var(--tracking-tight);
+  transition: opacity var(--t-fast) var(--e-out);
+}
+
+.footLink:hover {
+  opacity: 0.62;
+}
+
+.footLink:active {
+  opacity: 0.6;
+}
+
+.legal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.copy {
+  font-family: var(--font-mono);
+  font-size: var(--fs-nano);
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  color: var(--vs-ink-soft);
+}
+
+/* =========================================================
+   RESPONSIVE — comfortable spacing on small phones
+   ========================================================= */
+@media (max-height: 640px) {
+  .nav {
+    padding: 16px 0;
+  }
+  .navList {
+    gap: 10px;
+  }
+  .navItem {
+    padding: 12px 28px;
+  }
+  .footer {
+    gap: 14px;
+    padding-top: 14px;
+  }
+}
+
+@media (max-width: 340px) {
+  .navItem {
+    padding: 12px 26px;
+    font-size: 0.98rem;
+  }
+}
+
+/* The full-screen menu is a mobile-only affordance. */
+@media (min-width: 768px) {
+  .layer {
+    display: none;
+  }
+}

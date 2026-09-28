@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUI } from "@/lib/ui-store";
-import { NAV_ROUTES, isRouteActive } from "@/lib/routes";
 import { gsap, revealUp } from "@/lib/motion";
 import BrandMark from "@/components/BrandMark";
 import NavMenu from "@/components/NavMenu";
@@ -84,31 +82,6 @@ export default function SiteHeader() {
             {mobileMenuOpen ? "Close" : "Menu"}
           </GlassControl>
         </div>
-      </div>
-
-      <div
-        id="vs-mobile-nav"
-        className={styles.mobileSheet}
-        data-open={mobileMenuOpen ? "true" : "false"}
-        aria-hidden={!mobileMenuOpen}
-      >
-        <ul className={`vs-glass vs-glass--solid ${styles.sheetInner}`}>
-          {NAV_ROUTES.map((route) => (
-            <li key={route.command}>
-              <Link
-                href={route.href}
-                className={styles.sheetLink}
-                aria-current={isRouteActive(route, pathname) ? "page" : undefined}
-                tabIndex={mobileMenuOpen ? 0 : -1}
-              >
-                <span>{route.label}</span>
-                <span className="vs-tech vs-tech--nano">
-                  {isRouteActive(route, pathname) ? "current" : route.ready ? "live" : "soon"}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
       </div>
     </header>
   );
