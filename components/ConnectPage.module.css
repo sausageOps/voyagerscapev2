@@ -1,0 +1,92 @@
+/* Dedicated Connect page — mirrors the placeholder shell's calm, centred
+   composition and reuses the site's existing tokens/typography. */
+.wrap {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: calc(var(--header-h) + 40px) var(--gutter) 40px;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  max-width: 52ch;
+}
+
+.index {
+  color: var(--vs-ink-faint);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 7vw, 4.4rem);
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+}
+
+.note {
+  color: var(--vs-ink-soft);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  max-width: 40ch;
+}
+
+.control {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.contacts {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px 44px;
+}
+
+.contactCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.contactLabel {
+  color: var(--vs-ink-faint);
+}
+
+.contactLink {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--vs-ink);
+  transition: opacity var(--t-fast) var(--e-out);
+}
+
+.contactLink:hover {
+  opacity: 0.6;
+}
+
+.socials {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hint {
+  margin-top: 10px;
+  color: var(--vs-ink-faint);
+}
+
+@media (max-width: 560px) {
+  .contacts {
+    flex-direction: column;
+    gap: 20px;
+  }
+}

@@ -12,16 +12,19 @@ export interface RouteDef {
 
 /**
  * Single registry consumed by the nav, the terminal and future pages.
- * Header order is the array order: HOME · WORK · SERVICES · STORE.
+ * Header order is the array order: HOME · ART · CONNECT · ABOUT.
+ *
+ * The destinations are four genuinely separate routes/pages:
+ *   HOME    → /
+ *   ART     → /art       (dedicated art / portfolio page)
+ *   CONNECT → /connect   (dedicated connect / contact page)
+ *   ABOUT   → /about     (dedicated about page)
  */
 export const ROUTES: RouteDef[] = [
-  // The Connect experience *is* the homepage, so /connect reads as Home.
-  { label: "Home", href: "/", command: "home", ready: true, match: ["/connect"] },
-  { label: "Work", href: "/work", command: "work", ready: false },
-  { label: "Services", href: "/services", command: "services", ready: false },
-  { label: "Store", href: "/store", command: "store", ready: false },
-  // Kept so the `connect` command keeps working; not shown in the nav.
-  { label: "Connect", href: "/", command: "connect", ready: true, nav: false },
+  { label: "Home", href: "/", command: "home", ready: true },
+  { label: "Art", href: "/art", command: "art", ready: false },
+  { label: "Connect", href: "/connect", command: "connect", ready: true },
+  { label: "About", href: "/about", command: "about", ready: false },
 ];
 
 /** Items shown in the header cluster, in order. */
