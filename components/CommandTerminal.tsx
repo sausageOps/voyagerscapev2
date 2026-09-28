@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useUI, type VisualMode } from "@/lib/ui-store";
+import { useRouteTransition } from "@/components/RouteTransition";
 import { ROUTES } from "@/lib/routes";
 import { gsap, prefersReducedMotion } from "@/lib/motion";
 import CommandInput from "@/components/CommandInput";
@@ -19,7 +19,7 @@ interface LogLine {
 }
 
 export default function CommandTerminal() {
-  const router = useRouter();
+  const { navigate } = useRouteTransition();
   const { terminalOpen, setTerminalOpen, visualMode, setVisualMode } = useUI();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -113,7 +113,7 @@ export default function CommandTerminal() {
       const route = ROUTES.find((r) => r.command === command);
       if (route) {
         push("ok", `navigating → ${route.href}`);
-        router.push(route.href);
+        navigate(route.href);
         window.setTimeout(() => setTerminalOpen(false), 260);
         return;
       }
@@ -142,7 +142,7 @@ export default function CommandTerminal() {
 
       push("err", `E_UNKNOWN_CMD :: "${command}" not recognised`);
     },
-    [push, router, setTerminalOpen, setVisualMode],
+    [push, navigate, setTerminalOpen, setVisualMode],
   );
 
   return (

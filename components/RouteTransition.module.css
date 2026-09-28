@@ -1,0 +1,89 @@
+/* =========================================================
+   GLOBAL ROUTE TRANSITION — COORDINATED MASK WIPE LAYER
+   A repeating stripe mask (a handful of full-height bars)
+   sweeps shut over the current page as ONE surface, the
+   destination page name settles briefly in Pixelify Sans
+   while the route commits underneath, then the same mask
+   peels back up off the new page. Transform-only GSAP.
+   ~450ms. No pixels, no loading UI of any kind.
+   ========================================================= */
+
+.root {
+  position: fixed;
+  inset: 0;
+  /* Above header (--z-header: 70), terminal (90) and the mobile menu
+     overlay (100) — the mask must cover an open/closing menu too — but
+     below the initial loader (--z-loader: 110) and the custom cursor. */
+  z-index: 104;
+  overflow: hidden;
+  /* Transparent until the bars cover: the sweep always reads as the
+     current page being covered, never as a blank surface. */
+  background: transparent;
+  /* Hidden until GSAP takes over (autoAlpha) — never flashes on mount. */
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* The repeating mask surface — one flex row of full-height bars. */
+.mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+
+.bar {
+  flex: 1 1 0%;
+  display: block;
+  background: var(--vs-bg);
+  transform: scaleY(0);
+  transform-origin: center top;
+  will-change: transform;
+}
+
+/* One micro brand accent: a 2px pink edge riding the sweep's leading
+   line — tiny, temporary, existing site color only. */
+.edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -2px;
+  width: 2px;
+  background: var(--vs-pink);
+  opacity: 0.85;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Destination page name — Pixelify Sans, title case, nothing else. */
+.name {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 0 24px;
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 6vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-transform: none;
+  color: var(--vs-ink);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* Masked per-character rise for the name: each glyph sits in its own
+   overflow-hidden slot and rises into place. */
+.charMask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+}
+
+.char {
+  display: inline-block;
+  transform: translateY(110%);
+  will-change: transform;
+}
