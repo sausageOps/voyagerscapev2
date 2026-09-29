@@ -148,6 +148,11 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
         focusRingRef.current.rotation.z = 0;
       }
       if (buttonRef.current) buttonRef.current.position.y = 0;
+      sp.iris.snap(IRIS.open);
+      if (irisRef.current && smooth.current.lastIris !== IRIS.open) {
+        setIrisOpening(irisRef.current, IRIS.open);
+        smooth.current.lastIris = IRIS.open;
+      }
       materials.glass.envMapIntensity = glassBase.current;
       materials.glassInner.envMapIntensity = glassInnerBase.current;
       if (flashRef.current) flashRef.current.intensity = 0;
@@ -320,9 +325,10 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     }
 
     /* ------------------------------------------------------------ iris --- */
-    sp.iris.target = firing
-      ? IRIS.shut
-      : IRIS.open + (IRIS.near - IRIS.open) * prox;
+    // The aperture has one resting state: fully open. Proximity still
+    // drives the lens ring, glass and depth response, but it must not leave
+    // the iris stopped down after a shutter cycle.
+    sp.iris.target = firing ? IRIS.shut : IRIS.open;
     sp.iris.step(dt);
     const opening = clamp(sp.iris.value, IRIS.shut * 0.6, IRIS.open * 1.04);
     // Seven matrix writes per frame is nothing, but skipping them while the

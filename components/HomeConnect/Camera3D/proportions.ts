@@ -207,16 +207,14 @@ export const IRIS = {
   /**
    * Travel limits for the blade inner edge (the aperture radius).
    *
-   * `open` is the Stage 1B resting value, so the lens at rest looks exactly
-   * as it was signed off. The blades TRANSLATE radially rather than pivot:
-   * a pivoting blade swings its outer end out to hypot(halfWidth, reach)
-   * ≈ 0.70 at full open, which clears `rFocus` (0.690) and pokes visibly out
-   * of the side of the lens barrel. Translation keeps the corner budget
-   * fixed at the value Stage 1B already validated.
+   * `open` is the fully-open resting aperture. The blades TRANSLATE radially
+   * rather than pivot: a pivoting blade swings its outer end out to
+   * hypot(halfWidth, reach) and can poke visibly out of the lens barrel.
+   * Translation keeps the existing corner budget fixed.
    */
-  open: 0.195,
-  /** Where the iris rests when the cursor is on the lens. ~12% stop-down. */
-  near: 0.172,
+  /** Fully-open resting aperture. This is the single source of truth for the
+   * initial seed and the post-shutter return target. */
+  open: 0.30,
   /** Shutter actuation. Not fully shut — a real leaf shutter at speed never
    *  reads as a hard black disc, and driving it to zero makes the blade
    *  overlap geometry self-intersect. */
