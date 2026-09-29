@@ -6,62 +6,64 @@ import styles from "./IdentityWords.module.css";
 
 /**
  * Rotating footer identity line — Voyagerscape's own living signature.
- * Four small word chips read as one fragment of an identity statement;
- * the article is constant while the three positions afterwards rotate
- * independently, one at a time, so the sentence is continuously evolving
- * rather than being replaced as a block.
+ * Three small word chips read as one grammatical identity statement:
+ * ARTICLE · ADJECTIVE · ROLE — "A Visual Explorer", "An AI Enthusiast".
+ * Every chip rotates — the article included — but never at random: the
+ * vocabulary below is authored as complete phrases, and the word pools
+ * are aligned so that what is on screen at rest is always one of those
+ * phrases (or a grammatically sound hand-off between two of them).
  *
- * Each rotating position reuses the GreetingPill's verified approach:
- * a clip window whose width is tweened to the active word — the word's
- * width measured in place, in the actual font, casing and tracking it is
- * shown in, plus a 1px guard. No fixed widths, no longest-word widths;
- * a chip hugs "Art" and breathes open to hold "Photography".
+ * Grammar drives the choreography: the article is bound to the adjective
+ * it describes, so those two positions roll together, while the role
+ * position lags by one beat. The row therefore never rests on "An Cloud"
+ * or "A AI" — a coupled pair moves as one unit, the role trails behind,
+ * and the sentence stays natural English at every pause.
  *
- * The vocabulary is authored, not randomised: aligned pools cycle through
- * deliberately written combinations (modifier · craft · identity), so
- * every resting phrase — and every one-word-off mix the stagger passes
- * through — reads as editorial. The repeated appearances of the core
- * fields (photography, art, technology, cloud, AI, automotive) are
- * intentional weighting, not duplication.
+ * Each position reuses the GreetingPill's verified approach: a clip
+ * window whose width is tweened to the active word — the word's width
+ * measured in place, in the actual font, casing and tracking it is shown
+ * in, plus a 1px guard. No fixed widths, no longest-word widths; a chip
+ * hugs "AI" and breathes open to hold "Photography & Art".
  */
-
-const LEAD = "A";
 
 /**
- * Aligned rotating pools. Reading column i gives one authored phrase —
- * e.g. column 0 is "A Visual Photography Explorer", column 8 is "A Code
- * Pixels Human". The final "Voyager" is the site's own name, and doubles
- * as the wrap: every pool's last word differs from its first, so the
- * cycle's closing transition always lands back on the first chip word —
- * which is what lets one timeline repeat seamlessly forever.
+ * Aligned word pools. Reading column i gives one authored phrase —
+ * column 0 is "A Visual Explorer", column 9 is "An AI Enthusiast".
+ * Articles and adjectives advance as one locked pair (see OFFSETS), the
+ * role trails. Compound fields ("AI & Cloud", "Photography & Art") sit
+ * in a single chip so the grammar never depends on chip count.
  */
 const SLOTS: readonly string[][] = [
-  // Position 1 — modifier / field
+  // Article — rotates A / An / The like any other word
   [
-    "Visual", "Digital", "Automotive", "AI", "Visual", "Creative",
-    "Digital", "Automotive", "Code", "Curious", "Visual", "Experimental",
-    "Photography", "Future",
+    "A", "A", "A", "A", "An", "An", "An", "An", "An", "An", "The", "A",
+    "A", "A",
   ],
-  // Position 2 — craft / material
+  // Adjective / field
   [
-    "Photography", "Art", "Photography", "Cloud", "Automotive",
-    "Technology", "AI", "Technology", "Pixels", "Creative", "Stories",
-    "Machines", "Art", "Design",
+    "Visual", "Digital", "Visual", "Cloud", "AI", "AI & Cloud", "Artistic",
+    "Automotive", "Automotive", "AI", "Digital", "Photography",
+    "Photography & Art", "Curious Digital",
   ],
-  // Position 3 — identity, anchored on "Explorer" for long calm runs
+  // Role / identity
   [
-    "Explorer", "Explorer", "Explorer", "Explorer", "Explorer", "Human",
-    "Explorer", "Nerd", "Human", "Technologist", "Explorer", "Human",
-    "Technologist", "Voyager",
+    "Explorer", "Artist", "Storyteller", "Explorer", "Explorer", "Creator",
+    "Technologist", "Enthusiast", "Photographer", "Enthusiast",
+    "Experimenter", "Enthusiast", "Creator", "Explorer",
   ],
 ];
 
 /** How long one position rests on a word before handing it on. */
 const HOLD = 7.2;
-/** The row's editorial beat: one position changes every OFFSET seconds,
- *  each position trailing the previous by this stagger, so the row never
- *  changes everywhere at once and every in-between phrase holds ~2.4s. */
+/** The role position's stagger behind the article·adjective pair: the
+ *  row never changes everywhere at once, and every in-between phrase
+ *  holds ~2.4s. */
 const OFFSET = 2.4;
+/** Per-position stagger: the article always travels with the adjective
+ *  it describes (same beat — an article has no meaning apart from its
+ *  word). Only the role may trail: a noun reads grammatically with any
+ *  article, so letting it lag can never produce "An Cloud". */
+const OFFSETS = [0, 0, OFFSET];
 /** A beat of calm before the first change — never change on arrival. */
 const LEAD_IN = 0.6;
 /** Travel time of a single word's roll. */
@@ -75,7 +77,7 @@ const WIDTH_LAG = 0.4;
  *  its word. */
 const PX_GUARD = 1;
 /** Travel time of a window's width, scaled by the size of the hop so a
- *  large resize (Visual → Experimental) never whips. Growth always
+ *  large resize (AI → Photography & Art) never whips. Growth always
  *  completes at at + 0.1s, before the incoming word peeks into view. */
 const widthDuration = (delta: number) => gsap.utils.clamp(0.32, 0.26 + delta * 0.01, 0.6);
 
@@ -119,8 +121,8 @@ export default function IdentityWords() {
         // first word.
         measured.forEach(({ win, words, widths }) => {
           if (prefersReducedMotion()) {
-            // Reduced motion: static phrase, calm and fully readable — the
-            // chip simply hugs its resting word.
+            // Reduced motion: one stable, grammatical phrase, calm and
+            // fully readable — each chip hugs its resting word.
             gsap.set(win, { width: widths[0] });
             return;
           }
@@ -136,10 +138,12 @@ export default function IdentityWords() {
         // One master timeline: every position's every change is scheduled
         // at an absolute time, so the whole cycle is phase-locked and
         // repeats seamlessly. Within the cycle the positions must end
-        // exactly where they began — which is why "holds" (the same word
-        // twice in a row, e.g. the long Explorer runs) are skipped rather
-        // than rolled: skipping leaves the visible element untouched, and
-        // each pool's wrap transition is authored to return to word one.
+        // exactly where they began — which is why two equality cases are
+        // handled specially: a mid-cycle "hold" (the same word twice in a
+        // row) is skipped, and an equal-text wrap (Explorer → Explorer)
+        // teleports the elements instantly — invisible, since the text
+        // and therefore the rendering are identical — restoring the
+        // initial element state that the next loop expects.
         const master = gsap.timeline({ repeat: -1 });
 
         measured.forEach(({ win, words, widths }, k) => {
@@ -148,12 +152,22 @@ export default function IdentityWords() {
 
           texts.forEach((_, i) => {
             const next = (i + 1) % texts.length;
-            // A hold: the word carries over — nothing rolls, nothing moves.
-            if (i !== texts.length - 1 && texts[next] === texts[visible]) return;
-
-            const at = LEAD_IN + i * HOLD + k * OFFSET;
             const outgoing = words[visible];
             const incoming = words[next];
+            const at = LEAD_IN + i * HOLD + OFFSETS[k];
+
+            // A hold: the word carries over — nothing rolls, nothing moves.
+            if (texts[next] === texts[visible]) {
+              if (i === texts.length - 1) {
+                // Equal-text wrap: swap the identical words in place so the
+                // cycle ends on element one, ready for the next loop.
+                master.set(outgoing, { yPercent: 120 }, at);
+                master.set(incoming, { yPercent: 0 }, at);
+                visible = next;
+              }
+              return;
+            }
+
             const fromWidth = widths[visible];
             const toWidth = widths[next];
 
@@ -220,9 +234,11 @@ export default function IdentityWords() {
         photography, art, technology, cloud, AI and automobiles.
       </span>
       <span className={styles.run} aria-hidden="true">
-        <span className={`${styles.chip} ${styles.lead}`}>{LEAD}</span>
         {SLOTS.map((pool, s) => (
-          <span className={styles.chip} key={s}>
+          <span
+            className={[styles.chip, s === 0 ? styles.lead : ""].filter(Boolean).join(" ")}
+            key={s}
+          >
             <span className={styles.window} data-identity-window>
               {/* Invisible in-flow sizer: natural resting width and the
                   constant row height. Never a rotating word itself. */}
