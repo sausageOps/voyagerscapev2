@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import type { RecordingState, AudioPlaybackState } from "@/lib/ui-store";
 import { prefersReducedMotion } from "@/lib/motion";
 import CameraCanvas from "./CameraCanvas";
@@ -60,6 +61,7 @@ export default function Camera3D({
   const [lost, setLost] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const captureTimer = useRef<number | null>(null);
+  const mobileInteracting = useRef(false);
 
   const reducedMotion = prefersReducedMotion();
 
@@ -80,6 +82,20 @@ export default function Camera3D({
   const shutter = useRef(createShutterSignal());
 
   const onContextLost = useCallback(() => setLost(true), []);
+
+  /* A tap remains on the existing button/click capture path. These pointer
+     handlers only tell the rig to settle its touch-only idle rotation, so a
+     pointerdown followed by its synthetic click cannot fire twice. */
+  const onMobilePointerDown = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType === "touch" || event.pointerType === "pen") {
+      mobileInteracting.current = true;
+    }
+  }, []);
+  const onMobilePointerEnd = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType === "touch" || event.pointerType === "pen") {
+      mobileInteracting.current = false;
+    }
+  }, []);
 
   const onClick = useCallback(() => {
     shutter.current.seq += 1;
@@ -107,6 +123,10 @@ export default function Camera3D({
         type="button"
         className={styles.hit}
         onClick={onClick}
+        onPointerDown={onMobilePointerDown}
+        onPointerUp={onMobilePointerEnd}
+        onPointerCancel={onMobilePointerEnd}
+        onLostPointerCapture={onMobilePointerEnd}
         data-cursor="camera"
         data-cursor-label="Look"
         aria-label="Observation device — press the shutter"
@@ -121,6 +141,7 @@ export default function Camera3D({
               reducedMotion={reducedMotion}
               pointer={pointer}
               shutter={shutter}
+              mobileInteracting={mobileInteracting}
             />
           </div>
         </div>

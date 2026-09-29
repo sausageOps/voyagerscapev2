@@ -164,6 +164,8 @@ interface CanvasProps {
   reducedMotion: boolean;
   pointer: MutableRefObject<PointerField>;
   shutter: MutableRefObject<ShutterSignal>;
+  /** Set only while a touch/pen is down on the camera's existing button. */
+  mobileInteracting: MutableRefObject<boolean>;
 }
 
 export default function CameraCanvas({
@@ -174,15 +176,19 @@ export default function CameraCanvas({
   reducedMotion,
   pointer,
   shutter,
+  mobileInteracting,
 }: CanvasProps) {
   const visible = useVisibility(container);
 
   /* Coarse pointers are the phones/tablets: hold the pixel ratio down. */
   const [maxDpr, setMaxDpr] = useState(1.75);
+  /* A touch-only primary pointer has no cursor path. Hybrid desktops keep
+     their existing hover interaction, even when they also have a touchscreen. */
+  const [touchIdle, setTouchIdle] = useState(false);
 
   /* Amplitude of the continuous idle motion, by device class. There is no
-     cursor on a touch device, so the float is the ONLY motion there and a
-     desktop amplitude reads as drifting rather than suspended — and on a
+     cursor on a touch device, so the float and touch-only yaw are its motion;
+     a desktop amplitude reads as drifting rather than suspended — and on a
      small screen the same world-space travel is a larger share of the
      object. Cursor-driven rotation is not scaled by this. */
   const [motionScale, setMotionScale] = useState(1);
@@ -193,6 +199,14 @@ export default function CameraCanvas({
     const tablet = window.matchMedia("(max-width: 1023px)").matches;
     setMaxDpr(coarse || small ? 1.5 : 1.75);
     setMotionScale(small ? 0.4 : coarse || tablet ? 0.65 : 1);
+  }, []);
+
+  useEffect(() => {
+    const touchOnly = window.matchMedia("(hover: none) and (pointer: coarse)");
+    const sync = () => setTouchIdle(touchOnly.matches);
+    sync();
+    touchOnly.addEventListener("change", sync);
+    return () => touchOnly.removeEventListener("change", sync);
   }, []);
 
   return (
@@ -233,6 +247,8 @@ export default function CameraCanvas({
         pointer={pointer}
         shutter={shutter}
         motionScale={motionScale}
+        mobileIdle={touchIdle && !reducedMotion}
+        mobileInteracting={mobileInteracting}
       />
     </Canvas>
   );
