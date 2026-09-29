@@ -2,16 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { gsap, revealUp } from "@/lib/motion";
-import WordBlocks from "@/components/primitives/WordBlocks";
+import IdentityWords from "@/components/IdentityWords";
 import styles from "./SiteFooter.module.css";
-
-const STATEMENT = [
-  { text: "The" },
-  { text: "Quietly" },
-  { text: "Deliberate" },
-  { text: "Design" },
-  { text: "Practice" },
-];
 
 /**
  * Secondary section on a half-step darker warm ground. Distributed
@@ -42,7 +34,7 @@ export default function SiteFooter() {
     <footer className={styles.footer} ref={ref}>
       <div className={styles.inner}>
         <div className={styles.statement} data-foot-fade>
-          <WordBlocks words={STATEMENT} size="statement" interactive />
+          <IdentityWords />
         </div>
 
         <div className={styles.meta}>

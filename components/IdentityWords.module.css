@@ -1,0 +1,109 @@
+/* =========================================================
+   ROTATING FOOTER IDENTITY LINE
+   A living signature in the site's existing word-block
+   language: the cream statement chips of the footer,
+   promoted to a slowly evolving identity sentence. Each
+   rotating position is a GreetingPill-style clip window
+   whose width follows its current word — never fixed,
+   never the width of the longest word.
+   ========================================================= */
+
+/* Centred row; the breathing room around it is owned by the footer's
+   existing .inner gap / padding, deliberately untouched. */
+.identity {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.run {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(5px, 0.44vw, 8px);
+  font-family: var(--font-display);
+  /* Same presence decisions as the statement run: a rasterised face
+     needs weight and a touch of looseness to sit calmly. */
+  font-weight: 600;
+  font-size: clamp(0.9rem, 1.62vw, 1.38rem);
+  line-height: 1;
+  letter-spacing: -0.008em;
+  color: var(--vs-ink);
+}
+
+/* One chip = the footer's statement block, unchanged: soft warm panel,
+   consistent horizontal padding. The chip never sizes itself to the
+   longest word — its content window is tweened by GSAP. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32em 0.5em 0.38em;
+  border-radius: 0.32em;
+  background: rgba(255, 253, 249, 0.85);
+  border: 1px solid rgba(17, 17, 17, 0.05);
+  white-space: nowrap;
+}
+
+/* The constant article: in the site's word-block language, a lone short
+   word reads as a capsule rather than a soft block. */
+.lead {
+  border-radius: 999px;
+}
+
+/* The clip window — the GreetingPill's verified geometry: relative,
+   overflow hidden, flex: none, width owned by GSAP. Deliberately not a
+   grid, so a window can never size to a ghost of its widest sibling and
+   centre words wrongly. The hidden in-flow sizer gives the window its
+   natural resting width (the first word) and the row's constant height;
+   the rotating words are absolutely positioned so their layout can never
+   depend on the animated width or on each other. */
+.window {
+  position: relative;
+  overflow: hidden;
+  flex: none;
+  display: block;
+}
+
+.sizer {
+  display: block;
+  visibility: hidden;
+  white-space: nowrap;
+  /* One uniform text row: sets the window's height and matches the word
+     rows exactly, so chip height never moves during a roll. */
+  line-height: 1.25;
+}
+
+.word {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* left/right + auto margins + max-content = exact horizontal centring
+     inside the tweened window, whatever its current width. */
+  margin-inline: auto;
+  width: max-content;
+  white-space: nowrap;
+  text-align: center;
+  /* Matches the sizer: one constant line box for every word. */
+  line-height: 1.25;
+  /* GSAP owns transform; nothing else may. */
+  will-change: transform;
+}
+
+/* Resting state (pre-hydration, no-JS, reduced motion): every word
+   except the first stays parked out of sight. GSAP's inline styles take
+   over once the rotation begins. */
+.dormant {
+  opacity: 0;
+}
+
+/* Mobile: re-tuned density from the statement treatment; whole chips
+   wrap — a window is always exactly one word wide, so a chip can never
+   clip mid-word and the row can never overflow horizontally. */
+@media (max-width: 767px) {
+  .run {
+    font-size: clamp(0.78rem, 3.9vw, 1rem);
+    gap: 5px;
+  }
+}
