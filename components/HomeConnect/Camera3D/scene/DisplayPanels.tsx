@@ -13,12 +13,14 @@ interface DisplayTexture {
   canvas: HTMLCanvasElement;
 }
 
-const DISPLAY_INK = "rgba(205, 220, 198, 0.92)";
+const DISPLAY_INK = "rgba(224, 235, 217, 0.98)";
 const DISPLAY_RULE = "rgba(205, 220, 198, 0.22)";
 
 function makeDisplay(aspect: number): DisplayTexture {
   const canvas = document.createElement("canvas");
-  canvas.width = 256;
+  // Keep the physical panels unchanged, but give their tiny type enough
+  // source resolution to stay crisp after it is projected onto the camera.
+  canvas.width = 512;
   canvas.height = Math.max(1, Math.round(canvas.width / aspect));
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -39,16 +41,18 @@ function paintDisplay(display: DisplayTexture, label: string, value: string) {
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
-  ctx.textAlign = "center";
+  ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = DISPLAY_RULE;
-  ctx.fillRect(w * 0.16, h * 0.5 - 0.5, w * 0.68, 1);
+  ctx.fillRect(w * 0.13, h * 0.5 - 1, w * 0.74, 2);
 
   ctx.fillStyle = DISPLAY_INK;
-  ctx.font = '500 18px "JetBrains Mono", ui-monospace, monospace';
-  ctx.fillText(label, w * 0.5, h * 0.29);
-  ctx.font = '500 21px "JetBrains Mono", ui-monospace, monospace';
-  ctx.fillText(value, w * 0.5, h * 0.71);
+  // The source texture is twice the old resolution; these sizes render about
+  // one third larger on the unchanged physical panel while staying compact.
+  ctx.font = '600 48px "JetBrains Mono", ui-monospace, monospace';
+  ctx.fillText(label, w * 0.13, h * 0.29);
+  ctx.font = '600 56px "JetBrains Mono", ui-monospace, monospace';
+  ctx.fillText(value, w * 0.13, h * 0.71);
   texture.needsUpdate = true;
 }
 
