@@ -6,64 +6,74 @@ import styles from "./IdentityWords.module.css";
 
 /**
  * Rotating footer identity line — Voyagerscape's own living signature.
- * Three small word chips read as one grammatical identity statement:
- * ARTICLE · ADJECTIVE · ROLE — "A Visual Explorer", "An AI Enthusiast".
- * Every chip rotates — the article included — but never at random: the
- * vocabulary below is authored as complete phrases, and the word pools
- * are aligned so that what is on screen at rest is always one of those
- * phrases (or a grammatically sound hand-off between two of them).
+ * Four small word chips read as one grammatical identity statement:
+ * ARTICLE · MODIFIER · FIELD · ROLE — "A Visual Photography Explorer",
+ * "An AI Digital Art Explorer". Every chip rotates — the article
+ * included — but never at random: the vocabulary below is authored as
+ * complete phrases, and the word pools are aligned so that what is on
+ * screen at rest is always one of those phrases (or a grammatically
+ * sound hand-off between two of them).
  *
- * Grammar drives the choreography: the article is bound to the adjective
- * it describes, so those two positions roll together, while the role
- * position lags by one beat. The row therefore never rests on "An Cloud"
- * or "A AI" — a coupled pair moves as one unit, the role trails behind,
- * and the sentence stays natural English at every pause.
+ * Grammar drives the choreography: the article is bound to the modifier
+ * it describes, so those two positions roll together, while the field
+ * and role positions trail one beat apart. The row therefore never
+ * rests on "An Photography" or "A AI" — a coupled pair moves as one
+ * unit, the nouns trail behind, and the sentence stays natural English
+ * at every pause.
  *
  * Each position reuses the GreetingPill's verified approach: a clip
  * window whose width is tweened to the active word — the word's width
  * measured in place, in the actual font, casing and tracking it is shown
  * in, plus a 1px guard. No fixed widths, no longest-word widths; a chip
- * hugs "AI" and breathes open to hold "Photography & Art".
+ * hugs "Art" and breathes open to hold "Cloud Technology".
  */
 
 /**
  * Aligned word pools. Reading column i gives one authored phrase —
- * column 0 is "A Visual Explorer", column 9 is "An AI Enthusiast".
- * Articles and adjectives advance as one locked pair (see OFFSETS), the
- * role trails. Compound fields ("AI & Cloud", "Photography & Art") sit
- * in a single chip so the grammar never depends on chip count.
+ * column 0 is "A Visual Photography Explorer", column 9 is "An AI
+ * Digital Art Explorer". Articles and modifiers advance as one locked
+ * pair (see OFFSETS); field and role trail one beat apart. Compound
+ * fields ("AI & Cloud", "Digital Art", "Cloud Technology") sit in a
+ * single chip so a phrase can run to five words while the row always
+ * holds four chips.
  */
 const SLOTS: readonly string[][] = [
   // Article — rotates A / An / The like any other word
   [
-    "A", "A", "A", "A", "An", "An", "An", "An", "An", "An", "The", "A",
-    "A", "A",
+    "A", "A", "A", "A", "An", "An", "An", "An", "An", "An", "A", "A",
+    "A", "The",
   ],
-  // Adjective / field
+  // Modifier / identity adjective — locked to its article
   [
-    "Visual", "Digital", "Visual", "Cloud", "AI", "AI & Cloud", "Artistic",
-    "Automotive", "Automotive", "AI", "Digital", "Photography",
-    "Photography & Art", "Curious Digital",
+    "Visual", "Creative", "Curious", "Visual", "AI", "AI & Cloud",
+    "Artistic", "Automotive", "Automotive", "AI", "Photography",
+    "Digital", "Creative", "Curious",
+  ],
+  // Field / craft material — a noun phrase: free with any article
+  [
+    "Photography", "Digital", "Technology", "Art", "Creative",
+    "Technology", "Machines", "Photography", "Visual", "Digital Art",
+    "Technology", "Art", "Cloud Technology", "Creative",
   ],
   // Role / identity
   [
-    "Explorer", "Artist", "Storyteller", "Explorer", "Explorer", "Creator",
-    "Technologist", "Enthusiast", "Photographer", "Enthusiast",
-    "Experimenter", "Enthusiast", "Creator", "Explorer",
+    "Explorer", "Artist", "Explorer", "Storyteller", "Technologist",
+    "Explorer", "Experimenter", "Enthusiast", "Storyteller", "Explorer",
+    "Creator", "Experimenter", "Explorer", "Technologist",
   ],
 ];
 
 /** How long one position rests on a word before handing it on. */
 const HOLD = 7.2;
-/** The role position's stagger behind the article·adjective pair: the
- *  row never changes everywhere at once, and every in-between phrase
- *  holds ~2.4s. */
+/** A beat of stagger between trailing positions: the row never changes
+ *  everywhere at once, and every in-between phrase holds ~2.4s. */
 const OFFSET = 2.4;
-/** Per-position stagger: the article always travels with the adjective
+/** Per-position stagger: the article always travels with the modifier
  *  it describes (same beat — an article has no meaning apart from its
- *  word). Only the role may trail: a noun reads grammatically with any
- *  article, so letting it lag can never produce "An Cloud". */
-const OFFSETS = [0, 0, OFFSET];
+ *  word). Only the field and role may trail: noun phrases read
+ *  grammatically with any article, so letting them lag can never
+ *  produce "An Photography". */
+const OFFSETS = [0, 0, OFFSET, OFFSET * 2];
 /** A beat of calm before the first change — never change on arrival. */
 const LEAD_IN = 0.6;
 /** Travel time of a single word's roll. */
