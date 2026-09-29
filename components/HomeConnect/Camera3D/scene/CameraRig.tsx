@@ -110,6 +110,8 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
       yaw: new Spring(0, MOTION.rotation.stiffness, MOTION.rotation.damping),
       pitch: new Spring(0, MOTION.rotation.stiffness, MOTION.rotation.damping),
       roll: new Spring(0, MOTION.rotation.stiffness, MOTION.rotation.damping),
+      tx: new Spring(0, MOTION.rotation.stiffness, MOTION.rotation.damping),
+      ty: new Spring(0, MOTION.rotation.stiffness, MOTION.rotation.damping),
       push: new Spring(0, MOTION.recoil.push.stiffness, MOTION.recoil.push.damping),
       focus: new Spring(0, MOTION.focusRing.stiffness, MOTION.focusRing.damping),
       iris: new Spring(IRIS.open, MOTION.aperture.stiffness, MOTION.aperture.damping),
@@ -133,7 +135,7 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     if (!idle) {
       group.position.set(0, 0, 0);
       group.rotation.set(0, STAGING.yaw, STAGING.roll);
-      if (shadowGroupRef.current) shadowGroupRef.current.position.z = 0;
+      if (shadowGroupRef.current) shadowGroupRef.current.position.set(0, 0, 0);
       if (shadowMatRef.current) shadowMatRef.current.uniforms.uLift.value = 0;
       if (lensParallaxRef.current) lensParallaxRef.current.position.z = 0;
       if (flashRef.current) flashRef.current.intensity = 0;
@@ -191,11 +193,19 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     // pushed. Same spring constants as yaw/pitch, so it settles in company
     // with them instead of arriving separately.
     sp.roll.target = -f.x * MOTION.maxRoll * active;
+    // Translation. The object drifts the way you are looking, which is what
+    // stops the rotation reading as a turntable bolted to the page. Runs on
+    // the same springs as the rotation so position and angle arrive together
+    // rather than as two separate movements.
+    sp.tx.target = f.x * MOTION.translate.x * active;
+    sp.ty.target = -f.y * MOTION.translate.y * active;
     sp.push.target = 0;
 
     sp.yaw.step(dt);
     sp.pitch.step(dt);
     sp.roll.step(dt);
+    sp.tx.step(dt);
+    sp.ty.step(dt);
     sp.push.step(dt);
 
     // Idle drift: incommensurate periods on every channel so no two ever
@@ -203,13 +213,15 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     // units — the object should look suspended, not animated.
     const floatY =
       (Math.sin(t * 0.46) * MOTION.idle.floatY +
-        Math.sin(t * 0.181 + 1.7) * MOTION.idle.floatY * 0.35) *
+        Math.sin(t * 0.181 + 1.7) * MOTION.idle.floatY * 0.35 +
+        Math.sin(t * 0.0971 + 0.4) * MOTION.idle.floatY * 0.22) *
       motionScale;
     // Depth breathes on its own periods so y and z never resolve into a
     // circle — that is what would read as an orbit instead of a drift.
     const floatZ =
       (Math.sin(t * 0.283 + 0.6) * MOTION.idle.floatZ +
-        Math.sin(t * 0.117 + 2.3) * MOTION.idle.floatZ * 0.4) *
+        Math.sin(t * 0.117 + 2.3) * MOTION.idle.floatZ * 0.4 +
+        Math.sin(t * 0.0613 + 1.1) * MOTION.idle.floatZ * 0.25) *
       motionScale;
     const driftYaw = Math.sin(t * 0.33) * MOTION.idle.driftYaw + Math.sin(t * 0.127) * MOTION.idle.driftYaw * 0.4;
     const driftPitch = Math.sin(t * 0.239 + 0.9) * MOTION.idle.driftPitch;
@@ -218,17 +230,26 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     // Scroll lag. Lenis drives native scroll, so this is a real signal and
     // costs one property read — no listener, no library, no change to
     // SmoothScroll. The object simply trails the page a little.
-    const scrollLag =
+    const scrollRise =
       clamp(window.scrollY * MOTION.scroll.perPixel, 0, MOTION.scroll.max) * motionScale;
 
-    const bodyZ = floatZ + sp.push.value;
-    group.position.set(0, floatY - scrollLag, bodyZ);
+    // FINAL COMPOSE. Every channel is additive and every one of them is
+    // written here, once, from this single useFrame:
+    //   idle float + cursor translation + scroll + shutter recoil (push)
+    const bodyZ = floatZ + sp.push.value - scrollRise * MOTION.scroll.backRatio;
+    group.position.set(
+      sp.tx.value,
+      floatY + sp.ty.value + scrollRise,
+      bodyZ,
+    );
 
     // The shadow stays on the ground but tracks the object in depth, and
     // loosens as it rises: an object that floats up without its contact
     // softening looks pasted on. Outside the staging yaw, so this z is the
     // same world z the body uses.
-    if (shadowGroupRef.current) shadowGroupRef.current.position.z = bodyZ;
+    // Shadow tracks the object across the floor in both axes but never
+    // leaves it: y stays on the ground, height is expressed as density.
+    if (shadowGroupRef.current) shadowGroupRef.current.position.set(sp.tx.value, 0, bodyZ);
     if (shadowMatRef.current) {
       shadowMatRef.current.uniforms.uLift.value = floatY / (MOTION.idle.floatY || 1);
     }

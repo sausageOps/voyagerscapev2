@@ -29,22 +29,31 @@ import CameraRig from "./scene/CameraRig";
 const CORNERS: THREE.Vector3[] = (() => {
   // Idle float translates the object; fold it into the box rather than the
   // rotation sweep. Recoil push is along Z and does not change the silhouette.
-  const slackY = MOTION.idle.floatY * 1.2;
+  // Everything that translates the object is folded into the box as slack;
+  // everything that rotates it is swept. Stage 4 added cursor translation,
+  // cursor roll and a scroll rise, and all three have to be in here or the
+  // object clips exactly when the cursor reaches a corner of the screen.
+  const slackY =
+    MOTION.idle.floatY * 1.2 + MOTION.translate.y + MOTION.scroll.max;
+  const slackX = MOTION.translate.x;
   const pts: THREE.Vector3[] = [];
 
   for (const box of OBJECT_HULL) {
     const yawSweep = MOTION.maxYaw * box.p + MOTION.idle.driftYaw * 1.15;
     const pitchSweep = MOTION.maxPitch * box.p + MOTION.idle.driftPitch * 1.15;
+    const rollSweep = MOTION.maxRoll * box.p + MOTION.idle.driftRoll * 1.15;
 
     for (const dy of [-yawSweep, 0, yawSweep]) {
       for (const dp of [-pitchSweep, 0, pitchSweep]) {
-        const q = new THREE.Quaternion().setFromEuler(
-          new THREE.Euler(dp, STAGING.yaw + dy, STAGING.roll),
-        );
-        for (const x of [box.min[0], box.max[0]]) {
-          for (const y of [box.min[1] - slackY, box.max[1] + slackY]) {
-            for (const z of [box.min[2], box.max[2]]) {
-              pts.push(new THREE.Vector3(x, y, z).applyQuaternion(q));
+        for (const dr of [-rollSweep, 0, rollSweep]) {
+          const q = new THREE.Quaternion().setFromEuler(
+            new THREE.Euler(dp, STAGING.yaw + dy, STAGING.roll + dr),
+          );
+          for (const x of [box.min[0] - slackX, box.max[0] + slackX]) {
+            for (const y of [box.min[1] - slackY, box.max[1] + slackY]) {
+              for (const z of [box.min[2], box.max[2]]) {
+                pts.push(new THREE.Vector3(x, y, z).applyQuaternion(q));
+              }
             }
           }
         }

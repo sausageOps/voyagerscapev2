@@ -379,9 +379,9 @@ export const STAGING = {
    */
   lookDown: 0.25,
   targetY: -0.03,
-  fov: 26,
+  fov: 34,
   /** Fraction of the frame the object is allowed to occupy (NDC half-extent). */
-  fill: 0.94,
+  fill: 0.99,
 } as const;
 
 /**
@@ -447,11 +447,11 @@ export const MOTION = {
    * a camera turning to follow you horizontally is a natural gesture, while
    * the same amount of vertical nod reads as the object tipping over.
    */
-  maxYaw: 7 * DEG,
-  maxPitch: 4.5 * DEG,
+  maxYaw: 14 * DEG,
+  maxPitch: 8 * DEG,
 
   /** The main body. ζ ≈ 0.63 — overshoots once, settles clean. */
-  rotation: { stiffness: 40, damping: 8 },
+  rotation: { stiffness: 44, damping: 14 },
 
   /**
    * Depth parallax. These are ADDITIVE fractions of the body rotation
@@ -477,7 +477,7 @@ export const MOTION = {
        1.35x the base amplitude, so floatY 0.027 -> 0.0365 u -> ~4.4 px of
        vertical travel: inside the 3-6 px the brief asks for, and slow
        enough (0.46 and 0.181 rad/s) that it is felt rather than watched. */
-    floatY: 0.027,
+    floatY: 0.023,
     /* Depth float. Larger in world units than floatY and still much smaller
        on screen, because z is foreshortened by the ~14° downward view: at
        0.028 u the object shifts ~1.1 px down-screen and its silhouette
@@ -485,7 +485,7 @@ export const MOTION = {
        a third of the vertical, so depth is clearly the subordinate channel.
        Deliberately on its own periods so the vertical and depth channels
        never resolve into one circular path. */
-    floatZ: 0.028,
+    floatZ: 0.024,
     driftYaw: 0.012,
     driftRoll: 0.0045,
     driftPitch: 0.0055,
@@ -498,7 +498,7 @@ export const MOTION = {
    * which is what a hanging mass does. Runs on the same spring constants as
    * yaw and pitch so all three settle with one character.
    */
-  maxRoll: 2.5 * DEG,
+  maxRoll: 3 * DEG,
 
   /**
    * Extra depth the lens assembly takes on as the cursor nears it — the
@@ -508,12 +508,21 @@ export const MOTION = {
   lensNear: 0.01,
 
   /**
+   * Cursor translation. Rotation alone reads as a turntable; a real object
+   * being looked around also shifts in frame. Deliberately asymmetric:
+   * 0.103 u (~12 px) horizontally where the frame has room, 0.052 u (~6 px)
+   * vertically where pitch is already swinging the protruding lens through
+   * the height budget. Rotation stays the dominant effect by a wide margin.
+   */
+  translate: { x: 0.103, y: 0.052 },
+
+  /**
    * Scroll lag. Lenis drives native window scroll, so window.scrollY is a
    * true signal and needs no listener and no change to SmoothScroll. The
    * object trails the page by at most 0.05 u (~6 px), reached after ~455 px
    * of scroll — by which point the hero is nearly out of frame anyway.
    */
-  scroll: { perPixel: 0.00011, max: 0.05 },
+  scroll: { perPixel: 0.00009, max: 0.032, backRatio: 0.6 },
 
   /**
    * Focus ring. ζ ≈ 0.80: it arrives, nudges, and stops.
@@ -571,8 +580,8 @@ export const MOTION = {
    *   push    0.55 u/s   -> 0.028 units toward the viewer at 119ms
    */
   recoil: {
-    pitch: -0.35,
-    yaw: 0.2,
+    pitch: -0.515,
+    yaw: 0.294,
     push: { impulse: 0.55, stiffness: 95, damping: 11.5 },
   },
 
