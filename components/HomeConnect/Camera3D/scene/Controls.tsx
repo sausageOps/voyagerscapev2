@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import type { MutableRefObject } from "react";
 import * as THREE from "three";
 import { TOP_Y, DIAL, SHUTTER, KNURL } from "../proportions";
 import { bake, merge } from "../geometry/shapes";
@@ -30,10 +31,35 @@ import type { CameraMaterials } from "../materials/materials";
  * already carries two recessed windows and the tally lamp; the deck does not
  * need a third.
  *
- * Stage 1B is still static. Hover depression and the shutter timeline belong
- * to the interaction stages.
+ * STAGE 2 — the shutter became a button
+ * -------------------------------------
+ * The pink cap travels on `buttonRef`. Cylinder and dome were already welded
+ * into ONE buffer, which matters here: translating a group that contains both
+ * keeps them rigid. Depressing them separately would part the dome from its
+ * tube and re-open the scalloped silhouette that welding them fixed.
+ *
+ * Travel is bounded by the collar, not by a magic number. The button's skirt
+ * starts 0.012 below the collar top and the collar's inner wall runs 0.03
+ * deep, so the maximum press (0.033) slides the skirt down inside that wall
+ * and no gap can open around it.
+ *
+ * `hitProxy` is an invisible sphere over the button. Three does not skip
+ * invisible objects when raycasting but the renderer does skip them when
+ * drawing, so it costs one ray test and zero draw calls — and it gives the
+ * 0.1-unit button a hit target a human can actually land on. This is the one
+ * place R3F mesh pointer events earn their keep: "is the cursor on this
+ * specific control" is a hit-test question, whereas everything else Stage 2
+ * reacts to is a distance question, answered more cheaply without a ray.
  */
-export default function Controls({ materials: m }: { materials: CameraMaterials }) {
+export interface ControlsProps {
+  materials: CameraMaterials;
+  /** Pink cap + dome. Translated on Y by the rig. */
+  buttonRef?: MutableRefObject<THREE.Group | null>;
+  /** Fired when the cursor enters/leaves the shutter button. */
+  onShutterHover?: (over: boolean) => void;
+}
+
+export default function Controls({ materials: m, buttonRef, onShutterHover }: ControlsProps) {
   const knurlRef = useRef<THREE.InstancedMesh>(null);
 
   const geo = useMemo(() => {
@@ -93,7 +119,7 @@ export default function Controls({ materials: m }: { materials: CameraMaterials 
     const collar = merge([
       tubeY(SHUTTER.rCollar, collarBase, collarTop, 40),
       ringY(SHUTTER.rButton + 0.012, SHUTTER.rCollar, collarTop, 40),
-      tubeY(SHUTTER.rButton + 0.012, collarTop - 0.03, collarTop, 36),
+      tubeY(SHUTTER.rButton + 0.012, collarTop - SHUTTER.bore, collarTop, 36),
     ]);
     bake(collar, [SHUTTER.x, 0, SHUTTER.z]);
 
@@ -115,10 +141,17 @@ export default function Controls({ materials: m }: { materials: CameraMaterials 
     dome.translate(0, buttonTop - capR, 0);
 
     const button = merge([
-      tubeY(SHUTTER.rButton, collarTop - 0.012, buttonTop - capSag, 40),
+      tubeY(SHUTTER.rButton, collarTop - SHUTTER.skirt, buttonTop - capSag, 40),
       dome,
     ]);
     bake(button, [SHUTTER.x, 0, SHUTTER.z]);
+
+    /* Generous invisible hit target over the button + collar. */
+    const hitProxy = bake(new THREE.SphereGeometry(SHUTTER.rCollar * 1.5, 12, 8), [
+      SHUTTER.x,
+      collarTop + 0.02,
+      SHUTTER.z,
+    ]);
 
     /* ----------------------------------------------------- index mark ---- */
     const index = bake(new THREE.BoxGeometry(0.018, 0.006, 0.05), [
@@ -135,6 +168,7 @@ export default function Controls({ materials: m }: { materials: CameraMaterials 
       collar,
       collarLip,
       button,
+      hitProxy,
       index,
       dialBase,
       dialTopY,
@@ -187,8 +221,18 @@ export default function Controls({ materials: m }: { materials: CameraMaterials 
       {/* shutter */}
       <mesh geometry={geo.collar} material={m.metalMid} />
       <mesh geometry={geo.collarLip} material={m.metalBright} />
-      <mesh geometry={geo.button} material={m.pink} />
-
+      <group ref={buttonRef}>
+        <mesh geometry={geo.button} material={m.pink} />
+      </group>
+      <mesh
+        geometry={geo.hitProxy}
+        visible={false}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          onShutterHover?.(true);
+        }}
+        onPointerOut={() => onShutterHover?.(false)}
+      />
     </group>
   );
 }

@@ -1,27 +1,53 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { MutableRefObject } from "react";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
-import { STAGING, OBJECT_BOUNDS } from "./proportions";
+import { STAGING, OBJECT_HULL, MOTION } from "./proportions";
 import type { TallyState } from "./materials/palette";
+import type { PointerField } from "./motion/usePointerField";
+import type { ShutterSignal } from "./motion/shutterSignal";
 import CameraRig from "./scene/CameraRig";
 
 /**
- * The eight corners of the object's bounding box, pre-rotated by the staging
- * orientation. Computed once at module scope.
+ * Points to fit: the hull corners, swept across the object's range of motion.
+ *
+ * Two fixes over Stage 1, both of which only show up in motion:
+ *
+ * 1. A hull of four boxes instead of one. See OBJECT_HULL — the single box
+ *    reserved a large empty corner and cost ~15% of the object's size.
+ *
+ * 2. The sweep. Fitting only the resting pose is wrong the moment the object
+ *    can turn: at full yaw the silhouette is ~3% wider than at rest, so a
+ *    frame packed to 94% clips a body corner exactly when the cursor reaches
+ *    the edge of the screen. That is a bug no static screenshot can catch, so
+ *    the extremes of yaw and pitch are fitted alongside the rest pose and the
+ *    union is what the solver packs. Each part is swept at its own parallax
+ *    factor rather than all of them at the largest one.
  */
 const CORNERS: THREE.Vector3[] = (() => {
-  const q = new THREE.Quaternion().setFromEuler(
-    new THREE.Euler(0, STAGING.yaw, STAGING.roll),
-  );
-  const [minX, minY, minZ] = OBJECT_BOUNDS.min;
-  const [maxX, maxY, maxZ] = OBJECT_BOUNDS.max;
+  // Idle float translates the object; fold it into the box rather than the
+  // rotation sweep. Recoil push is along Z and does not change the silhouette.
+  const slackY = MOTION.idle.floatY * 1.2;
   const pts: THREE.Vector3[] = [];
-  for (const x of [minX, maxX]) {
-    for (const y of [minY, maxY]) {
-      for (const z of [minZ, maxZ]) {
-        pts.push(new THREE.Vector3(x, y, z).applyQuaternion(q));
+
+  for (const box of OBJECT_HULL) {
+    const yawSweep = MOTION.maxYaw * box.p + MOTION.idle.driftYaw * 1.15;
+    const pitchSweep = MOTION.maxPitch * box.p + MOTION.idle.driftPitch * 1.15;
+
+    for (const dy of [-yawSweep, 0, yawSweep]) {
+      for (const dp of [-pitchSweep, 0, pitchSweep]) {
+        const q = new THREE.Quaternion().setFromEuler(
+          new THREE.Euler(dp, STAGING.yaw + dy, STAGING.roll),
+        );
+        for (const x of [box.min[0], box.max[0]]) {
+          for (const y of [box.min[1] - slackY, box.max[1] + slackY]) {
+            for (const z of [box.min[2], box.max[2]]) {
+              pts.push(new THREE.Vector3(x, y, z).applyQuaternion(q));
+            }
+          }
+        }
       }
     }
   }
@@ -128,6 +154,8 @@ interface CanvasProps {
   onContextLost: () => void;
   container: HTMLElement | null;
   reducedMotion: boolean;
+  pointer: MutableRefObject<PointerField>;
+  shutter: MutableRefObject<ShutterSignal>;
 }
 
 export default function CameraCanvas({
@@ -135,6 +163,8 @@ export default function CameraCanvas({
   onContextLost,
   container,
   reducedMotion,
+  pointer,
+  shutter,
 }: CanvasProps) {
   const visible = useVisibility(container);
 
@@ -177,7 +207,7 @@ export default function CameraCanvas({
       }}
     >
       <FitCamera />
-      <CameraRig status={status} idle={!reducedMotion} />
+      <CameraRig status={status} idle={!reducedMotion} pointer={pointer} shutter={shutter} />
     </Canvas>
   );
 }

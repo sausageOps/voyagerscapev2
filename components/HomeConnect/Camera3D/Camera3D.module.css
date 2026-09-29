@@ -39,7 +39,37 @@
   overflow: visible;
 }
 
-.canvas canvas {
+/* ---------------------------------------------------------------------
+   Drawing surface, 8% wider than the layout box it sits in.
+
+   Stage 2 needed the object ~20-25% larger. Most of that came free from
+   fixing the fit hull (see proportions.ts), but the last few percent needs
+   more drawing surface — a WebGL canvas cannot paint outside its own
+   element, so `overflow: visible` on the parent buys nothing.
+
+   What is NOT done here: growing `.stage`. That is the layout box, and it is
+   deliberately identical to the SVG fallback's box at every breakpoint. Grow
+   it and the hero jumps 8% wider the moment the WebGL chunk finishes
+   downloading and swaps out the fallback. Growing only the inner surface
+   keeps the footprint byte-identical, so there is no layout shift on upgrade
+   and nothing around the hero can be pushed.
+
+   Only the WIDTH grows. The fit solver is height-bound past ~106%, so extra
+   height buys no scale — and height is the risky axis, with hero text above
+   and the CTA below. At full size the rendered object is 421px inside a
+   446px layout box: it grew 21%, and still does not reach the edges of the
+   footprint it already had.
+   --------------------------------------------------------------------- */
+.gl {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 108%;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.gl canvas {
   display: block;
   width: 100% !important;
   height: 100% !important;

@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { RecordingState, AudioPlaybackState } from "@/lib/ui-store";
 import { prefersReducedMotion } from "@/lib/motion";
 import CameraCanvas from "./CameraCanvas";
+import { usePointerField } from "./motion/usePointerField";
+import { createShutterSignal } from "./motion/shutterSignal";
 import { resolveStatus, STATUS_TEXT } from "./status";
 import styles from "./Camera3D.module.css";
 
@@ -30,12 +32,19 @@ export interface Camera3DProps {
  * — so the existing cursor contract, keyboard path and screen-reader output
  * are unchanged by the swap.
  *
- * WHAT STAGE 1 DELIBERATELY DOES NOT DO
- * -------------------------------------
- * No cursor-follow physics, no lens parallax, no focus-ring travel, no
- * aperture animation, no shutter timeline, no scroll coupling. `onShutter` is
- * still wired to the button so the recorder contract keeps working, but it
- * triggers no 3D motion. Those are Stages 3–5.
+ * CURSOR CONTRACT
+ * ---------------
+ * `Cursor.tsx` is untouched. It resolves its target with
+ * `document.elementFromPoint(...).closest("[data-cursor], button, …")`, and
+ * the canvas is a DOM descendant of the button — so hovering the 3D object
+ * already walks up to this button and shows the "Look" label, including over
+ * the part of the drawing surface that overhangs the button's own box.
+ * Nothing about R3F's pointer handling changes that, because R3F's events
+ * ride on the same DOM event the custom cursor is reading.
+ *
+ * SCROLL
+ * ------
+ * Not coupled to scroll. Out of scope, and `SmoothScroll.tsx` is untouched.
  */
 export default function Camera3D({
   recordingState,
@@ -50,7 +59,23 @@ export default function Camera3D({
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [lost, setLost] = useState(false);
 
+  const reducedMotion = prefersReducedMotion();
+
+  /* Cursor position, sampled on the window rather than the canvas so the
+     object reacts to the pointer approaching it, not just arriving on it.
+     Disabled outright under reduced motion and on coarse pointers. */
+  const pointer = usePointerField(container, !reducedMotion);
+
+  /* Click -> shutter actuation. A ref, so a click does not re-render the
+     scene to deliver one integer that only the render loop reads. */
+  const shutter = useRef(createShutterSignal());
+
   const onContextLost = useCallback(() => setLost(true), []);
+
+  const onClick = useCallback(() => {
+    shutter.current.seq += 1;
+    onShutter();
+  }, [onShutter]);
 
   /* A lost context would leave a hole in the hero — drop to the SVG instead. */
   if (lost) return <>{fallback}</>;
@@ -60,18 +85,22 @@ export default function Camera3D({
       <button
         type="button"
         className={styles.hit}
-        onClick={onShutter}
+        onClick={onClick}
         data-cursor="camera"
         data-cursor-label="Look"
         aria-label="Observation device — press the shutter"
       >
         <div className={styles.canvas} ref={setContainer} aria-hidden="true">
-          <CameraCanvas
-            status={status}
-            onContextLost={onContextLost}
-            container={container}
-            reducedMotion={prefersReducedMotion()}
-          />
+          <div className={styles.gl}>
+            <CameraCanvas
+              status={status}
+              onContextLost={onContextLost}
+              container={container}
+              reducedMotion={reducedMotion}
+              pointer={pointer}
+              shutter={shutter}
+            />
+          </div>
         </div>
       </button>
       <span className="vs-sr-only" aria-live="polite">

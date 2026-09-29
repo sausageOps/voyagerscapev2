@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import type { MutableRefObject } from "react";
 import * as THREE from "three";
 import { LENS, LENS_Z, IRIS, PLINTH, KNURL } from "../proportions";
 import { tube, taper, annulus, engraving, bake, merge } from "../geometry/shapes";
@@ -29,13 +30,74 @@ import type { CameraMaterials } from "../materials/materials";
  *   4. the glass, a shallow cap recessed behind the bezel lip
  *
  * The iris is genuine geometry: seven straight-edged blades, each tangent to
- * a circle of radius `IRIS.opening`. It is static in Stage 1B.
+ * a circle of radius `IRIS.opening`.
  *
  * Every static part sharing a material is welded with `merge()`, so this whole
  * assembly is twelve draw calls despite roughly doubling in part count.
+ *
+ * STAGE 2 — two parts became mechanisms
+ * -------------------------------------
+ * The focus ring and its 64 knurl teeth now share a pivot group that rotates
+ * about the optical axis, and the seven iris blades moved from one welded
+ * buffer to a seven-instance InstancedMesh whose matrices are rewritten per
+ * frame. Both changes are draw-call neutral: the ring group adds no mesh, and
+ * the InstancedMesh replaces the merged buffer one-for-one.
+ *
+ * This component owns no motion. It exposes the two moving parts through refs
+ * and `CameraRig` drives them, because there must be exactly one place that
+ * decides where anything is on a given frame.
  */
-export default function LensAssembly({ materials: m }: { materials: CameraMaterials }) {
+export interface LensAssemblyProps {
+  materials: CameraMaterials;
+  /** Pivot for the focus ring + its knurling. Rotated about Z by the rig. */
+  focusRingRef?: MutableRefObject<THREE.Group | null>;
+  /**
+   * Depth-parallax pivot for the focus ring, counter-positioned so that its
+   * rotation happens about the OBJECT's origin rather than the optical axis.
+   *
+   * Rotating the ring about its own centre would tilt it on the barrel, which
+   * looks like a part working loose. Rotating it about the origin the body is
+   * already turning around translates it instead, by an amount proportional
+   * to how far forward it sits — which is what parallax physically is.
+   */
+  focusParallaxRef?: MutableRefObject<THREE.Group | null>;
+  /** Seven blades. Driven through `setIrisOpening`. */
+  irisRef?: MutableRefObject<THREE.InstancedMesh | null>;
+}
+
+const irisDummy = new THREE.Object3D();
+
+/**
+ * Write the blade matrices for an aperture radius, in world units.
+ *
+ * Each blade is baked with its inner edge on local y=0, so placing the blade
+ * at radius `opening` along its own outward axis puts that edge tangent to a
+ * circle of that radius — seven of them bound a regular heptagon with
+ * apothem `opening`, which is what an iris diaphragm actually is.
+ *
+ * Translating rather than pivoting is deliberate; see IRIS.open in
+ * proportions.ts for why the pivoting version does not fit inside the barrel.
+ */
+export function setIrisOpening(mesh: THREE.InstancedMesh, opening: number) {
+  for (let i = 0; i < IRIS.blades; i += 1) {
+    const a = (i / IRIS.blades) * Math.PI * 2;
+    // The blade's local +Y after a Z-rotation of `a`.
+    irisDummy.position.set(-Math.sin(a) * opening, Math.cos(a) * opening, LENS_Z.irisPlane + i * IRIS.stack);
+    irisDummy.rotation.set(0, 0, a);
+    irisDummy.updateMatrix();
+    mesh.setMatrixAt(i, irisDummy.matrix);
+  }
+  mesh.instanceMatrix.needsUpdate = true;
+}
+
+export default function LensAssembly({
+  materials: m,
+  focusRingRef,
+  focusParallaxRef,
+  irisRef,
+}: LensAssemblyProps) {
   const knurlRef = useRef<THREE.InstancedMesh>(null);
+  const localIris = useRef<THREE.InstancedMesh | null>(null);
 
   const geo = useMemo(() => {
     /** Annular shoulder whose face points BACK down the barrel (-Z). Used
@@ -136,21 +198,23 @@ export default function LensAssembly({ materials: m }: { materials: CameraMateri
       (LENS_Z.focus.to - LENS_Z.focus.from) * 0.78,
     );
 
-    /* ---- seven blades, welded into one buffer -------------------------- */
-    const blades = merge(
-      Array.from({ length: IRIS.blades }, (_, i) => {
-        const a = (i / IRIS.blades) * Math.PI * 2;
-        const g = new THREE.BoxGeometry(
-          IRIS.halfWidth * 2,
-          IRIS.reach - IRIS.opening,
-          IRIS.thickness,
-        );
-        // Offset along the blade's own +Y, then swung into place.
-        const midR = (IRIS.opening + IRIS.reach) / 2;
-        bake(g, [0, midR, LENS_Z.irisPlane + i * IRIS.stack]);
-        g.rotateZ(a);
-        return g;
-      }),
+    /* ---- one blade, instanced seven times ------------------------------ */
+    // Baked with the INNER edge on y=0 and the body running out to +Y, so an
+    // instance's position along its own +Y axis is literally the aperture
+    // radius. The whole actuation is then one number.
+    const bladeLen = IRIS.reach - IRIS.opening;
+    const blade = new THREE.BoxGeometry(IRIS.halfWidth * 2, bladeLen, IRIS.thickness);
+    blade.translate(0, bladeLen / 2, 0);
+
+    // Static disc directly behind the blades, same material. As the blades
+    // retract they uncover this instead of uncovering the near-black rear
+    // stop, so stopping down reads as the opening shrinking rather than as a
+    // ring of daylight opening up at the bore wall.
+    const bladeBacking = annulus(
+      IRIS.backingFrom,
+      IRIS.backingTo,
+      LENS_Z.irisPlane - 0.008,
+      48,
     );
 
     /* ---- domed front element ------------------------------------------- */
@@ -207,7 +271,8 @@ export default function LensAssembly({ materials: m }: { materials: CameraMateri
       bore,
       stop,
       knurl,
-      blades,
+      blade,
+      bladeBacking,
       glass,
       glassInner,
       index,
@@ -240,6 +305,15 @@ export default function LensAssembly({ materials: m }: { materials: CameraMateri
     mesh.computeBoundingSphere();
   }, []);
 
+  /* Seed the iris at its resting aperture, so the first painted frame is
+     already correct rather than showing seven blades stacked at the centre. */
+  useLayoutEffect(() => {
+    const mesh = localIris.current;
+    if (!mesh) return;
+    setIrisOpening(mesh, IRIS.open);
+    mesh.computeBoundingSphere();
+  }, []);
+
   return (
     <group position={[LENS.x, LENS.y, 0]}>
       {/* ---- mounting hardware ---- */}
@@ -250,17 +324,27 @@ export default function LensAssembly({ materials: m }: { materials: CameraMateri
       <mesh geometry={geo.barrelLight} material={m.satin} />
       <mesh geometry={geo.barrelDark} material={m.lensBody} />
       <mesh geometry={geo.apRing} material={m.metalDark} />
-      <mesh geometry={geo.focusRing} material={m.rubber} />
+
+      {/* ---- focus ring: the one rotating control ----
+          Ring and knurling share this pivot so the teeth travel with the
+          rubber. It sits at the group origin, which is already on the
+          optical axis, so a Z rotation here is a rotation about the axis. */}
+      <group ref={focusParallaxRef} position={[-LENS.x, -LENS.y, 0]}>
+        <group position={[LENS.x, LENS.y, 0]}>
+          <group ref={focusRingRef}>
+            <mesh geometry={geo.focusRing} material={m.rubber} />
+            <instancedMesh
+              ref={knurlRef}
+              args={[geo.knurl, m.rubber, KNURL.focus]}
+              frustumCulled={false}
+            />
+          </group>
+        </group>
+      </group>
+
       <mesh geometry={geo.bezelFace} material={m.metalDark} />
       <mesh geometry={geo.bezelChamfer} material={m.metalMid} />
       <mesh geometry={geo.engravings} material={m.metalBright} />
-
-      {/* ---- knurling ---- */}
-      <instancedMesh
-        ref={knurlRef}
-        args={[geo.knurl, m.rubber, KNURL.focus]}
-        frustumCulled={false}
-      />
 
       {/* ---- index marks ---- */}
       <mesh geometry={geo.index} material={m.yellow} />
@@ -272,7 +356,15 @@ export default function LensAssembly({ materials: m }: { materials: CameraMateri
       <mesh geometry={geo.stop} material={m.lensStop} />
 
       {/* ---- iris ---- */}
-      <mesh geometry={geo.blades} material={m.blade} />
+      <mesh geometry={geo.bladeBacking} material={m.blade} />
+      <instancedMesh
+        ref={(node) => {
+          localIris.current = node;
+          if (irisRef) irisRef.current = node;
+        }}
+        args={[geo.blade, m.blade, IRIS.blades]}
+        frustumCulled={false}
+      />
 
       {/* ---- glass ---- */}
       <mesh geometry={geo.glassInner} material={m.glassInner} renderOrder={2} />

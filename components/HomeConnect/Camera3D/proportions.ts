@@ -201,6 +201,37 @@ export const IRIS = {
   thickness: 0.012,
   /** Blades physically stack — a hair of z per blade avoids coplanar fighting. */
   stack: 0.0018,
+
+  /* --- Stage 2: the iris now actuates ---------------------------------- */
+
+  /**
+   * Travel limits for the blade inner edge (the aperture radius).
+   *
+   * `open` is the Stage 1B resting value, so the lens at rest looks exactly
+   * as it was signed off. The blades TRANSLATE radially rather than pivot:
+   * a pivoting blade swings its outer end out to hypot(halfWidth, reach)
+   * ≈ 0.70 at full open, which clears `rFocus` (0.690) and pokes visibly out
+   * of the side of the lens barrel. Translation keeps the corner budget
+   * fixed at the value Stage 1B already validated.
+   */
+  open: 0.195,
+  /** Where the iris rests when the cursor is on the lens. ~12% stop-down. */
+  near: 0.172,
+  /** Shutter actuation. Not fully shut — a real leaf shutter at speed never
+   *  reads as a hard black disc, and driving it to zero makes the blade
+   *  overlap geometry self-intersect. */
+  shut: 0.07,
+  /**
+   * Static disc sitting one hair behind the blades, in the SAME material.
+   *
+   * Translating blades inward would otherwise expose a ring of the dark rear
+   * stop between the retracted tips and the bore wall — a bright-edged gap
+   * that instantly reads as broken geometry. Backing the blades with their
+   * own colour means a retracting blade reveals more blade, which is what an
+   * iris does.
+   */
+  backingFrom: 0.28,
+  backingTo: 0.498,
 } as const;
 
 /** Knurl bands. */
@@ -266,6 +297,11 @@ export const SHUTTER = {
   rCollar: 0.152,
   rButton: 0.1,
   h: 0.07,
+  /** How far the button's skirt hangs below the collar lip at rest, and how
+   *  deep the collar is bored. Both sized so the skirt never clears the bore
+   *  at full press (MOTION.shutterButton.press). */
+  skirt: 0.055,
+  bore: 0.115,
 } as const;
 
 /**
@@ -349,14 +385,172 @@ export const STAGING = {
 } as const;
 
 /**
- * Local-space extents of the assembled object, used by the fit solver.
- * Generous on +Z because the lens protrudes toward the camera and therefore
- * magnifies — a naive width/height fit crops it every time.
+ * Fit volume for the camera solver — a HULL of four boxes, not one box.
+ *
+ * Stage 1 fitted a single axis-aligned box around everything. That box has to
+ * be 1.16 deep (for the lens) AND 3.14 wide (for the body), so it claims a
+ * corner at x=±1.57, z=1.16 where there is nothing but air. Once the object
+ * is rotated 22° that phantom corner is the widest thing in the scene, and
+ * the solver dutifully pulls the camera back to frame it. Measured cost:
+ * the object was rendering 15% smaller than it needed to.
+ *
+ * Splitting the volume into body / prism hump / deck controls / lens barrel
+ * recovers all of it, which is where most of the Stage 2 scale increase comes
+ * from. Only the last ~6% needed a bigger canvas.
+ *
+ * `p` is the parallax factor that part is driven at (see MOTION.parallax).
+ * The fit sweep uses it per-part, so the lens — which swings furthest — gets
+ * the margin it needs without the body claiming margin it never uses.
  */
-export const OBJECT_BOUNDS = {
-  min: [-BODY_W / 2 - 0.07, -toL(168) / 2 - 0.02, -0.58] as const,
-  max: [BODY_W / 2 + 0.07, toL(168) / 2 + 0.24, 1.16] as const,
-};
+export interface HullBox {
+  p: number;
+  min: readonly [number, number, number];
+  max: readonly [number, number, number];
+}
+
+export const OBJECT_HULL: readonly HullBox[] = [
+  /* casting + top plate overhang + strap lugs + proud grip pad */
+  { p: 1.0, min: [-1.57, -0.98, -0.56], max: [1.57, 0.98, 0.63] },
+  /* prism hump */
+  { p: 1.0, min: [-0.68, 0.95, -0.24], max: [0.25, 1.15, 0.4] },
+  /* mode dial + shutter collar */
+  { p: 1.0, min: [0.46, 0.95, -0.3], max: [1.38, 1.12, 0.21] },
+  /* lens barrel out to the knurled focus ring; the wider plinth sits inside
+     the body box already. Driven at the focus ring's parallax factor. */
+  { p: 1.25, min: [-0.98, -0.77, 0.55], max: [0.48, 0.68, 1.13] },
+];
 
 /** Ground plane height for the contact shadow. */
 export const GROUND_Y = -BODY.h / 2 - 0.045;
+
+const DEG = Math.PI / 180;
+
+/**
+ * MOTION
+ * ======
+ *
+ * Every number the Stage 2 physics reads. Kept here, next to the geometry,
+ * because several of them are geometric constraints in disguise — the focus
+ * ring travel has to stay under the knurl pitch, the shutter button depth
+ * has to stay under the button height, and the fit solver has to know the
+ * rotation sweep or it crops the object mid-gesture.
+ *
+ * Spring pairs are quoted with their damping ratio ζ = damping/(2·√stiffness),
+ * because that, not the raw numbers, is what you actually feel:
+ *   ζ ≈ 0.6  a single soft overshoot — alive
+ *   ζ ≈ 0.8  barely overshoots — mechanical
+ *   ζ ≈ 1.0  dead stop — inert
+ */
+export const MOTION = {
+  /**
+   * Cursor → rotation limits. Yaw is allowed more travel than pitch because
+   * a camera turning to follow you horizontally is a natural gesture, while
+   * the same amount of vertical nod reads as the object tipping over.
+   */
+  maxYaw: 7 * DEG,
+  maxPitch: 4.5 * DEG,
+
+  /** The main body. ζ ≈ 0.63 — overshoots once, settles clean. */
+  rotation: { stiffness: 40, damping: 8 },
+
+  /**
+   * Depth parallax. These are ADDITIVE fractions of the body rotation
+   * applied to nested sub-groups, so the effective response is:
+   *   body 100% · lens housing 115% · focus ring 130% · controls 92%
+   *
+   * They are rotations about the object's own origin, not translations, so
+   * the parts stay mechanically attached — the lens shifts a couple of
+   * pixels relative to the body, which is exactly what real parallax on a
+   * 40mm-deep object looks like. Anything larger and the lens visibly
+   * detaches.
+   */
+  parallax: { lens: 0.15, focusRing: 0.15, controls: -0.08 },
+
+  /**
+   * Idle float. Two incommensurate periods per channel so the loop never
+   * lines up with itself — a single sine is immediately readable as a loop,
+   * which is the thing that makes a hero object look like a screensaver.
+   */
+  idle: {
+    floatY: 0.019,
+    driftYaw: 0.012,
+    driftRoll: 0.0045,
+    driftPitch: 0.0055,
+  },
+
+  /**
+   * Focus ring. ζ ≈ 0.80: it arrives, nudges, and stops.
+   *
+   * 14° is the CAP, not the travel. The cap is only approached with the
+   * cursor at the edge of the object, where proximity has already started to
+   * fall, so the two terms never peak together. Measured in-browser against
+   * a deliberately exaggerated build, the realised travel is 46% of the cap
+   * — so 14° here produces about ±6.4° in practice, a little over one knurl
+   * pitch (360/64 = 5.6°). Enough to watch the teeth step round by one, and
+   * far short of anything that reads as a wheel being spun.
+   */
+  focusRing: { max: 14 * DEG, stiffness: 22, damping: 7.5 },
+
+  /** Iris. ζ ≈ 0.83 and very stiff — a shutter is a fast, tight mechanism,
+   *  and the spring has only MOTION.shutter.closeFor to travel in. ω_n 20.5
+   *  covers 83% of the closure inside that window; the previous ω_n 12.2
+   *  managed 31%, which is why the click used to read as a twitch. */
+  aperture: { stiffness: 420, damping: 34 },
+
+  /**
+   * Shutter button travel, in world units. The body is 1.938 units for a
+   * ~70mm camera, so 1 unit ≈ 36.1mm:
+   *
+   *   hover 0.028 -> 1.0mm   finger resting on the button
+   *   press 0.045 -> 1.6mm   actuation
+   *
+   * Both are bounded by geometry, not taste: the button's skirt and the
+   * collar's bore were lengthened (see Controls.tsx) so that even at full
+   * press the open bottom of the skirt stays inside the collar wall. Without
+   * that, a press deeper than 0.018 lifts the skirt's open end clear of the
+   * bore and you can see straight through the button.
+   *
+   * ζ ≈ 0.66 gives the springy return the brief asks for.
+   */
+  shutterButton: { hover: 0.028, press: 0.045, stiffness: 210, damping: 19 },
+
+  /**
+   * Recoil. Velocity impulses injected into the springs that the cursor is
+   * already driving, NOT a separate tween — that is the whole reason the
+   * rotation is a spring. Clicking mid-gesture adds a kick to the motion in
+   * progress and the two resolve together, instead of one animation
+   * stamping over the other.
+   */
+  /**
+   * Impulses are quoted in rad/s, which is NOT what you see — the peak angle
+   * a spring reaches from an impulse is v0/omega_d * e^(-zeta*omega_n*t_peak)
+   * * sin(omega_d*t_peak). For the rotation spring that works out at
+   * 0.0767 * v0, so the first guess of 1.35 rad/s would have thrown the body
+   * through 5.9 degrees — larger than the entire cursor range, and nothing
+   * like "a tiny recoil". These values were solved backwards from the angle:
+   *
+   *   pitch  -0.35 rad/s -> 1.54 deg peak at 181ms
+   *   yaw     0.20 rad/s -> 0.88 deg peak at 181ms
+   *   push    0.55 u/s   -> 0.028 units toward the viewer at 119ms
+   */
+  recoil: {
+    pitch: -0.35,
+    yaw: 0.2,
+    push: { impulse: 0.55, stiffness: 95, damping: 11.5 },
+  },
+
+  /** Shutter flash: a brief lift of a dedicated light, peak then decay.
+   *  0.34 against a 1.18 key — a catch of light, not a photographic flash. */
+  flash: { peak: 0.34, attack: 0.04, decay: 0.26 },
+
+  /** How long the iris is commanded shut after a click, in seconds.
+   *
+   *  This is a spring, not a tween, so the window has to be long enough for
+   *  the spring to actually get there. Measured in-browser, an 85ms window
+   *  moved the iris only 31% of the way (0.195 -> 0.142) and the button 42%:
+   *  the click read as a twitch rather than a shutter firing. Solving the
+   *  step response for the current constants gives 83% at 130ms, which lands
+   *  the iris at 0.091 — visibly shut — and the button at 71% of its press.
+   *  Longer than this and the closure stops reading as "quick". */
+  shutter: { closeFor: 0.13 },
+} as const;
