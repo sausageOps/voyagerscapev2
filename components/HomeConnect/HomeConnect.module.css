@@ -37,23 +37,25 @@
   pointer-events: auto;
 }
 
-.eyebrow {
-  display: inline-flex;
+/* ---------------- Say hi ---------------- */
+/* The rotating greeting pill beside the static general enquiries address,
+   in the slot the transmission desk label used to occupy. The pill's width
+   is fixed by its widest language, so this row — and the title below it —
+   never move as the greetings roll. */
+.sayHi {
+  display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px 10px;
   opacity: 0;
 }
 
-.eyebrowShort {
-  display: none;
-}
-
-.eyebrowDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--vs-pink);
-  box-shadow: 0 0 0 3px rgba(241, 184, 228, 0.28);
+/* Plain, non-interactive text beside the pill — intentionally not a link. */
+.sayHiText {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-tight);
+  color: var(--vs-ink);
 }
 
 .title {
@@ -147,12 +149,6 @@
   .head {
     max-width: 100%;
     gap: 14px;
-  }
-  .eyebrowFull {
-    display: none;
-  }
-  .eyebrowShort {
-    display: inline;
   }
   .stage {
     order: 2;
