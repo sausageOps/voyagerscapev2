@@ -16,6 +16,11 @@ import Controls from "./Controls";
 import ContactShadow from "./ContactShadow";
 import Lighting from "./Lighting";
 
+/* Two degrees before device scaling: enough to reveal the object in depth,
+   well below the desktop cursor range, and slow enough not to read as a spin. */
+const MOBILE_IDLE_YAW = (2 * Math.PI) / 180;
+const MOBILE_IDLE_SPEED = 0.16;
+
 interface RigProps {
   status: TallyState;
   /** True during the short capture readout window. */
@@ -27,6 +32,10 @@ interface RigProps {
   /** Amplitude of the continuous (non-cursor) motion. 1 desktop, less on
    *  tablet, less again on phones. Cursor response is unaffected. */
   motionScale: number;
+  /** Touch-only devices get a restrained yaw drift in place of cursor hover. */
+  mobileIdle: boolean;
+  /** True only while a touch/pen is held on the camera button. */
+  mobileInteracting: MutableRefObject<boolean>;
 }
 
 /**
@@ -75,10 +84,19 @@ interface RigProps {
  * ----------------------
  * `idle=false` freezes everything at the resting pose in a single branch, so
  * there is no partially-animated state to reason about. On a coarse pointer
- * the pointer field never activates, so the cursor terms are all zero and
- * only the idle float runs — no cursor is faked from touch positions.
+ * the pointer field never activates, so the cursor terms are all zero; the
+ * touch-only yaw drift supplies motion without faking a touch cursor.
  */
-export default function CameraRig({ status, capture, idle, pointer, shutter, motionScale }: RigProps) {
+export default function CameraRig({
+  status,
+  capture,
+  idle,
+  pointer,
+  shutter,
+  motionScale,
+  mobileIdle,
+  mobileInteracting,
+}: RigProps) {
   const objectRef = useRef<THREE.Group>(null);
   const lensParallaxRef = useRef<THREE.Group | null>(null);
   const focusParallaxRef = useRef<THREE.Group | null>(null);
@@ -132,6 +150,7 @@ export default function CameraRig({ status, capture, idle, pointer, shutter, mot
   /* Shutter sequence bookkeeping. `t` is seconds since the click, or -1. */
   const seq = useRef({ last: -1, t: -1 });
   const hovering = useRef(false);
+  const mobileIdlePausedUntil = useRef(0);
 
   useFrame((state, rawDelta) => {
     const group = objectRef.current;
@@ -182,6 +201,9 @@ export default function CameraRig({ status, capture, idle, pointer, shutter, mot
       sp.pitch.impulse(MOTION.recoil.pitch);
       sp.yaw.impulse(MOTION.recoil.yaw);
       sp.push.impulse(MOTION.recoil.push.impulse);
+      // A tap lets the touch-only drift settle through the shutter cycle,
+      // rather than immediately resuming while the camera is recoiling.
+      if (mobileIdle) mobileIdlePausedUntil.current = t + 1.1;
     }
     if (seq.current.t >= 0) {
       seq.current.t += dt;
@@ -210,8 +232,16 @@ export default function CameraRig({ status, capture, idle, pointer, shutter, mot
     /* ------------------------------------------------- body: the spring -- */
     // Cursor right → yaw right; cursor down → nose down. Both fall to zero
     // when the pointer leaves the window, so the object returns to its
-    // staged pose rather than freezing wherever it was last looking.
-    sp.yaw.target = f.x * MOTION.maxYaw * active;
+    // staged pose rather than freezing wherever it was last looking. Touch
+    // hardware without hover gets the same spring driving a slow, bounded yaw
+    // instead; it settles to centre while the user is pressing or capturing.
+    const mobileYaw =
+      mobileIdle &&
+      !mobileInteracting.current &&
+      t >= mobileIdlePausedUntil.current
+        ? Math.sin(t * MOBILE_IDLE_SPEED) * MOBILE_IDLE_YAW * motionScale
+        : 0;
+    sp.yaw.target = f.x * MOTION.maxYaw * active + mobileYaw;
     sp.pitch.target = f.y * MOTION.maxPitch * active;
     // Lean away from the side the cursor is on, like a hung mass being
     // pushed. Same spring constants as yaw/pitch, so it settles in company
