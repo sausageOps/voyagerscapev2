@@ -1,0 +1,87 @@
+/* =========================================================
+   ROTATING GREETING PILL
+   The soft-yellow chip language of the existing enquiry tags
+   (see .footLabelEnquiries), promoted to a live object: the
+   greeting rolls vertically inside a fixed silhouette so the
+   address beside it never moves.
+   ========================================================= */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  /* Small rounded rectangle (6–8px) — a soft chip, deliberately not a
+     capsule. */
+  border-radius: 8px;
+  /* Pale cream-yellow: the site's existing washed-yellow chip treatment
+     (same as the general-enquiries tags) — --vs-yellow eased 50% into the
+     page ground. The rgba line is the no-color-mix fallback and lands on
+     the identical tone over --vs-bg. */
+  background: rgba(243, 229, 181, 0.5);
+  background: color-mix(in srgb, var(--vs-yellow) 50%, var(--vs-bg));
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  font-family: var(--font-mono);
+  font-size: var(--fs-nano);
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--vs-ink);
+  /* never squeezed by the row — it wraps instead */
+  flex: none;
+  transition: transform var(--t-fast) var(--e-out), background-color var(--t-fast) var(--e-out);
+}
+
+/* The clip window. Its width is tweened by GSAP to the active greeting —
+   text width plus the pill's consistent horizontal padding, no fixed or
+   minimum width. It is deliberately NOT a grid: a grid's auto track sizes
+   to the widest sibling and centres each word in that ghost column rather
+   than in the animated window, which is what clipped the greetings. Words
+   are absolutely positioned and centred geometrically, so their layout can
+   never depend on the window's width or on their siblings. The hidden
+   in-flow sizer gives the window its natural pre-hydration width (the
+   first greeting) and its constant height. */
+.track {
+  position: relative;
+  overflow: hidden;
+  flex: none;
+}
+
+.sizer {
+  display: block;
+  visibility: hidden;
+  white-space: nowrap;
+  /* one uniform text row: sets the window's height (and matches the
+     greeting rows exactly) */
+  line-height: 1.5;
+}
+
+.greeting {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* left/right + auto margins + max-content = exact horizontal centring in
+     the clip window — no transform, no grid track, no sibling influence */
+  margin-inline: auto;
+  width: max-content;
+  white-space: nowrap;
+  text-align: center;
+  /* Tall scripts (Devanagari matras, Arabic ascenders) paint beyond a 1.2
+     line box and would be shaved by the clip window — give the row room.
+     Uniform across greetings, so the window height never changes. */
+  line-height: 1.5;
+}
+
+/* Cursive and conjunct scripts must not be letter-spaced: tracking breaks
+   Arabic joining and separates Devanagari conjuncts. */
+.noTrack {
+  letter-spacing: normal;
+}
+
+/* Resting state (pre-hydration, no-JS and reduced motion): every greeting
+   except the first starts hidden. GSAP's inline styles take over once the
+   animation begins. */
+.dormant {
+  opacity: 0;
+}

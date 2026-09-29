@@ -4,15 +4,16 @@ import { useCallback, useEffect, useRef } from "react";
 import { useUI } from "@/lib/ui-store";
 import { useRecorder } from "@/lib/use-recorder";
 import { gsap, revealUp, prefersReducedMotion } from "@/lib/motion";
-import TechLabel from "@/components/primitives/TechLabel";
 import WordBlocks, { type WordDef } from "@/components/primitives/WordBlocks";
 import Camera from "./Camera";
+import GreetingPill from "./GreetingPill";
 import MessageCTA from "./MessageCTA";
 import RecorderPanel from "./RecorderPanel";
 import Directory from "./Directory";
 import styles from "./HomeConnect.module.css";
 
 const STUDIO_EMAIL = "studio@voyagerscape.co";
+const GENERAL_EMAIL = "hello@voyagerscape";
 
 /** Oversized statement, set as word capsules like the reference. */
 const HERO: WordDef[] = [
@@ -47,7 +48,7 @@ export default function HomeConnect() {
   const recorder = useRecorder();
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  /* Entry: one short coordinated timeline — eyebrow, word blocks, address,
+  /* Entry: one short coordinated timeline — say-hi row, word blocks, address,
      object, control, cards — rather than several competing delays. */
   useEffect(() => {
     if (!loaded || !rootRef.current) return;
@@ -124,11 +125,14 @@ export default function HomeConnect() {
       <div className={styles.inner}>
         {/* ---- Statement, upper-left ---- */}
         <div className={styles.head} data-parallax="head">
-          <TechLabel className={styles.eyebrow} data-hero-fade>
-            <span className={styles.eyebrowDot} aria-hidden="true" />
-            <span className={styles.eyebrowFull}>Voyagerscape — transmission desk</span>
-            <span className={styles.eyebrowShort}>Transmission desk</span>
-          </TechLabel>
+          {/* Say hi: the rotating greeting pill beside the static general
+              enquiries address, in the slot the transmission desk label held. */}
+          <div className={styles.sayHi} data-hero-fade>
+            <GreetingPill />
+            {/* Deliberately plain text: the greeting pill is the only live
+                element in this row. */}
+            <span className={styles.sayHiText}>{GENERAL_EMAIL}</span>
+          </div>
 
           <h1 className={styles.title}>
             <WordBlocks words={HERO} reveal interactive />
