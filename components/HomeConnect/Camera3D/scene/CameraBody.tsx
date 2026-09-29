@@ -27,6 +27,7 @@ import {
   merge,
 } from "../geometry/shapes";
 import type { CameraMaterials } from "../materials/materials";
+import DisplayPanels from "./DisplayPanels";
 
 /**
  * CAMERA BODY
@@ -57,7 +58,13 @@ import type { CameraMaterials } from "../materials/materials";
  * The object carries NO typography — the readout and counter are abstract
  * recessed windows, exactly as in the SVG hero.
  */
-export default function CameraBody({ materials: m }: { materials: CameraMaterials }) {
+export default function CameraBody({
+  materials: m,
+  capture,
+}: {
+  materials: CameraMaterials;
+  capture: boolean;
+}) {
   const geo = useMemo(() => {
     /* ---- the three castings -------------------------------------------- */
 
@@ -317,6 +324,7 @@ export default function CameraBody({ materials: m }: { materials: CameraMaterial
       {/* ---------------------------------------------------- windows ----- */}
       <mesh geometry={geo.surrounds} material={m.bezel} />
       <mesh geometry={geo.panes} material={m.darkGlass} />
+      <DisplayPanels capture={capture} />
 
       {/* --------------------------------------------------- hardware ----- */}
       <mesh geometry={geo.hardware} material={m.metalMid} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { RecordingState, AudioPlaybackState } from "@/lib/ui-store";
 import { prefersReducedMotion } from "@/lib/motion";
 import CameraCanvas from "./CameraCanvas";
@@ -58,8 +58,17 @@ export default function Camera3D({
      null on the render that mounts the observer. */
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [lost, setLost] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const captureTimer = useRef<number | null>(null);
 
   const reducedMotion = prefersReducedMotion();
+
+  useEffect(
+    () => () => {
+      if (captureTimer.current !== null) window.clearTimeout(captureTimer.current);
+    },
+    [],
+  );
 
   /* Cursor position, sampled on the window rather than the canvas so the
      object reacts to the pointer approaching it, not just arriving on it.
@@ -74,8 +83,20 @@ export default function Camera3D({
 
   const onClick = useCallback(() => {
     shutter.current.seq += 1;
+    setCapturing(true);
+
+    if (captureTimer.current !== null) window.clearTimeout(captureTimer.current);
+    captureTimer.current = window.setTimeout(
+      () => {
+        captureTimer.current = null;
+        setCapturing(false);
+      },
+      reducedMotion ? 80 : 420,
+    );
+
+    // The existing signal remains the sole shutter/recoil trigger.
     onShutter();
-  }, [onShutter]);
+  }, [onShutter, reducedMotion]);
 
   /* A lost context would leave a hole in the hero — drop to the SVG instead. */
   if (lost) return <>{fallback}</>;
@@ -94,6 +115,7 @@ export default function Camera3D({
           <div className={styles.gl}>
             <CameraCanvas
               status={status}
+              capture={capturing}
               onContextLost={onContextLost}
               container={container}
               reducedMotion={reducedMotion}
@@ -104,7 +126,7 @@ export default function Camera3D({
         </div>
       </button>
       <span className="vs-sr-only" aria-live="polite">
-        Device status: {STATUS_TEXT[status]}
+        Device status: {capturing ? "Capturing" : STATUS_TEXT[status]}
       </span>
     </div>
   );

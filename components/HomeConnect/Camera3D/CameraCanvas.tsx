@@ -157,6 +157,7 @@ function useVisibility(el: HTMLElement | null) {
 
 interface CanvasProps {
   status: TallyState;
+  capture: boolean;
   /** Raised when the GL context is lost so the host can fall back to the SVG. */
   onContextLost: () => void;
   container: HTMLElement | null;
@@ -167,6 +168,7 @@ interface CanvasProps {
 
 export default function CameraCanvas({
   status,
+  capture,
   onContextLost,
   container,
   reducedMotion,
@@ -226,6 +228,7 @@ export default function CameraCanvas({
       <FitCamera />
       <CameraRig
         status={status}
+        capture={capture}
         idle={!reducedMotion}
         pointer={pointer}
         shutter={shutter}

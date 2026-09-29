@@ -18,6 +18,8 @@ import Lighting from "./Lighting";
 
 interface RigProps {
   status: TallyState;
+  /** True during the short capture readout window. */
+  capture: boolean;
   /** Master motion switch. False = a completely static object. */
   idle: boolean;
   pointer: MutableRefObject<PointerField>;
@@ -76,7 +78,7 @@ interface RigProps {
  * the pointer field never activates, so the cursor terms are all zero and
  * only the idle float runs — no cursor is faked from touch positions.
  */
-export default function CameraRig({ status, idle, pointer, shutter, motionScale }: RigProps) {
+export default function CameraRig({ status, capture, idle, pointer, shutter, motionScale }: RigProps) {
   const objectRef = useRef<THREE.Group>(null);
   const lensParallaxRef = useRef<THREE.Group | null>(null);
   const focusParallaxRef = useRef<THREE.Group | null>(null);
@@ -155,7 +157,10 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
       }
       materials.glass.envMapIntensity = glassBase.current;
       materials.glassInner.envMapIntensity = glassInnerBase.current;
-      if (flashRef.current) flashRef.current.intensity = 0;
+      // Reduced-motion capture keeps only a tiny, static warm glint for the
+      // short display-state window; normal motion uses the existing impulse
+      // flash envelope below.
+      if (flashRef.current) flashRef.current.intensity = capture ? 0.08 : 0;
       return;
     }
 
@@ -387,7 +392,7 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
       </group>
 
       <group ref={objectRef} rotation={[0, STAGING.yaw, STAGING.roll]}>
-        <CameraBody materials={materials} />
+        <CameraBody materials={materials} capture={capture} />
 
         <group ref={lensParallaxRef}>
           <LensAssembly
