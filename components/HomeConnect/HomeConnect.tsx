@@ -5,7 +5,7 @@ import { useUI } from "@/lib/ui-store";
 import { useRecorder } from "@/lib/use-recorder";
 import { gsap, revealUp, prefersReducedMotion } from "@/lib/motion";
 import WordBlocks, { type WordDef } from "@/components/primitives/WordBlocks";
-import Camera from "./Camera";
+import HeroObject from "./HeroObject";
 import GreetingPill from "./GreetingPill";
 import MessageCTA from "./MessageCTA";
 import RecorderPanel from "./RecorderPanel";
@@ -143,7 +143,7 @@ export default function HomeConnect() {
         <div className={styles.stage}>
           <div className={styles.objectWrap} data-hero-device>
             <div data-parallax="object">
-            <Camera
+            <HeroObject
               recordingState={recorder.recordingState}
               playbackState={recorder.playbackState}
               level={recorder.level}
