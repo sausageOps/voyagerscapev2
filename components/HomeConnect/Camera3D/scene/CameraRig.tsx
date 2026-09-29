@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { MutableRefObject } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { IRIS, LENS, MOTION, STAGING } from "../proportions";
+import { IRIS, MOTION, STAGING } from "../proportions";
 import { useCameraMaterials } from "../materials/materials";
 import { TALLY_COLOR, type TallyState } from "../materials/palette";
 import { Spring, damp, clamp } from "../motion/spring";
@@ -94,9 +94,10 @@ export default function CameraRig({ status, capture, idle, pointer, shutter, mot
 
   /* Tally lamp is state display, not interaction. */
   const tallyColor = TALLY_COLOR[status];
+  const tallyRestIntensity = status === "idle" ? 0.2 : 0.75;
   materials.tally.color.set(tallyColor);
   materials.tally.emissive.set(tallyColor);
-  materials.tally.emissiveIntensity = status === "idle" ? 0.2 : 0.75;
+  materials.tally.emissiveIntensity = tallyRestIntensity;
 
   /* Baselines for the optical highlights, captured once so proximity always
      modulates around the signed-off resting values rather than compounding on
@@ -157,6 +158,7 @@ export default function CameraRig({ status, capture, idle, pointer, shutter, mot
       }
       materials.glass.envMapIntensity = glassBase.current;
       materials.glassInner.envMapIntensity = glassInnerBase.current;
+      materials.tally.emissiveIntensity = capture ? tallyRestIntensity + 1.2 : tallyRestIntensity;
       // Reduced-motion capture keeps only a tiny, static warm glint for the
       // short display-state window; normal motion uses the existing impulse
       // flash envelope below.
@@ -362,34 +364,22 @@ export default function CameraRig({ status, capture, idle, pointer, shutter, mot
     }
 
     /* --------------------------------------------------------- flash ----- */
-    if (flashRef.current) {
-      const s = seq.current.t;
-      let env = 0;
-      if (s >= 0) {
-        env =
-          s < MOTION.flash.attack
-            ? s / MOTION.flash.attack
-            : Math.max(0, 1 - (s - MOTION.flash.attack) / MOTION.flash.decay);
-      }
-      flashRef.current.intensity = env * env * MOTION.flash.peak;
+    const s = seq.current.t;
+    let env = 0;
+    if (s >= 0) {
+      env =
+        s < MOTION.flash.attack
+          ? s / MOTION.flash.attack
+          : Math.max(0, 1 - (s - MOTION.flash.attack) / MOTION.flash.decay);
     }
+    const burst = env * env;
+    materials.tally.emissiveIntensity = tallyRestIntensity + burst * 3.6;
+    if (flashRef.current) flashRef.current.intensity = burst * MOTION.flash.peak;
   });
 
   return (
     <>
       <Lighting />
-
-      {/* Shutter flash. A small point source just in front of the lens makes
-          the burst read as a photographic flash and gives the glass a brief
-          warm catchlight without changing the resting lighting rig. */}
-      <pointLight
-        ref={flashRef}
-        intensity={0}
-        position={[LENS.x, LENS.y, 1.55]}
-        distance={3.5}
-        decay={2}
-        color="#fff6ee"
-      />
 
       {/* Ground shadow lives outside the object's roll so it stays level. */}
       <group ref={shadowGroupRef}>
@@ -399,7 +389,11 @@ export default function CameraRig({ status, capture, idle, pointer, shutter, mot
       </group>
 
       <group ref={objectRef} rotation={[0, STAGING.yaw, STAGING.roll]}>
-        <CameraBody materials={materials} capture={capture} />
+        <CameraBody
+          materials={materials}
+          capture={capture}
+          flashLightRef={flashRef}
+        />
 
         <group ref={lensParallaxRef}>
           <LensAssembly
