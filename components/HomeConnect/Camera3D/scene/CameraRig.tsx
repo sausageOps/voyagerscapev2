@@ -18,6 +18,8 @@ import Lighting from "./Lighting";
 
 interface RigProps {
   status: TallyState;
+  /** True during the short capture readout window. */
+  capture: boolean;
   /** Master motion switch. False = a completely static object. */
   idle: boolean;
   pointer: MutableRefObject<PointerField>;
@@ -76,7 +78,7 @@ interface RigProps {
  * the pointer field never activates, so the cursor terms are all zero and
  * only the idle float runs — no cursor is faked from touch positions.
  */
-export default function CameraRig({ status, idle, pointer, shutter, motionScale }: RigProps) {
+export default function CameraRig({ status, capture, idle, pointer, shutter, motionScale }: RigProps) {
   const objectRef = useRef<THREE.Group>(null);
   const lensParallaxRef = useRef<THREE.Group | null>(null);
   const focusParallaxRef = useRef<THREE.Group | null>(null);
@@ -84,7 +86,7 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
   const focusRingRef = useRef<THREE.Group | null>(null);
   const irisRef = useRef<THREE.InstancedMesh | null>(null);
   const buttonRef = useRef<THREE.Group | null>(null);
-  const flashRef = useRef<THREE.DirectionalLight>(null);
+  const flashRef = useRef<THREE.PointLight>(null);
 
   const shadowMatRef = useRef<THREE.ShaderMaterial | null>(null);
   const shadowGroupRef = useRef<THREE.Group | null>(null);
@@ -92,16 +94,20 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
 
   /* Tally lamp is state display, not interaction. */
   const tallyColor = TALLY_COLOR[status];
+  const tallyRestIntensity = status === "idle" ? 0.2 : 0.75;
   materials.tally.color.set(tallyColor);
   materials.tally.emissive.set(tallyColor);
-  materials.tally.emissiveIntensity = status === "idle" ? 0.2 : 0.75;
+  materials.tally.emissiveIntensity = tallyRestIntensity;
 
-  /* Baseline for the glass specular, captured once so the proximity response
-     always modulates around the value Stage 1B was signed off with rather
-     than compounding on itself frame after frame. */
+  /* Baselines for the optical highlights, captured once so proximity always
+     modulates around the signed-off resting values rather than compounding on
+     itself frame after frame. The inner element gets its own restrained lift:
+     two highlights at two depths make the lens read as glass in a barrel. */
   const glassBase = useRef(materials.glass.envMapIntensity);
+  const glassInnerBase = useRef(materials.glassInner.envMapIntensity);
   useEffect(() => {
     glassBase.current = materials.glass.envMapIntensity;
+    glassInnerBase.current = materials.glassInner.envMapIntensity;
   }, [materials]);
 
   /* One spring per degree of freedom. Created once; never re-allocated. */
@@ -138,7 +144,25 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
       if (shadowGroupRef.current) shadowGroupRef.current.position.set(0, 0, 0);
       if (shadowMatRef.current) shadowMatRef.current.uniforms.uLift.value = 0;
       if (lensParallaxRef.current) lensParallaxRef.current.position.z = 0;
-      if (flashRef.current) flashRef.current.intensity = 0;
+      if (focusParallaxRef.current) focusParallaxRef.current.rotation.set(0, 0, 0);
+      if (controlsParallaxRef.current) controlsParallaxRef.current.rotation.set(0, 0, 0);
+      if (focusRingRef.current) {
+        focusRingRef.current.position.z = 0;
+        focusRingRef.current.rotation.z = 0;
+      }
+      if (buttonRef.current) buttonRef.current.position.y = 0;
+      sp.iris.snap(IRIS.open);
+      if (irisRef.current && smooth.current.lastIris !== IRIS.open) {
+        setIrisOpening(irisRef.current, IRIS.open);
+        smooth.current.lastIris = IRIS.open;
+      }
+      materials.glass.envMapIntensity = glassBase.current;
+      materials.glassInner.envMapIntensity = glassInnerBase.current;
+      materials.tally.emissiveIntensity = capture ? tallyRestIntensity + 1.2 : tallyRestIntensity;
+      // Reduced-motion capture keeps only a tiny, static warm glint for the
+      // short display-state window; normal motion uses the existing impulse
+      // flash envelope below.
+      if (flashRef.current) flashRef.current.intensity = capture ? 0.08 : 0;
       return;
     }
 
@@ -223,25 +247,19 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
         Math.sin(t * 0.117 + 2.3) * MOTION.idle.floatZ * 0.4 +
         Math.sin(t * 0.0613 + 1.1) * MOTION.idle.floatZ * 0.25) *
       motionScale;
-    const driftYaw = Math.sin(t * 0.33) * MOTION.idle.driftYaw + Math.sin(t * 0.127) * MOTION.idle.driftYaw * 0.4;
-    const driftPitch = Math.sin(t * 0.239 + 0.9) * MOTION.idle.driftPitch;
-    const driftRoll = Math.sin(t * 0.27) * MOTION.idle.driftRoll;
-
-    // Scroll lag. Lenis drives native scroll, so this is a real signal and
-    // costs one property read — no listener, no library, no change to
-    // SmoothScroll. The object simply trails the page a little.
-    const scrollRise =
-      clamp(window.scrollY * MOTION.scroll.perPixel, 0, MOTION.scroll.max) * motionScale;
+    const driftYaw =
+      (Math.sin(t * 0.33) * MOTION.idle.driftYaw +
+        Math.sin(t * 0.127) * MOTION.idle.driftYaw * 0.4) *
+      motionScale;
+    const driftPitch = Math.sin(t * 0.239 + 0.9) * MOTION.idle.driftPitch * motionScale;
+    const driftRoll = Math.sin(t * 0.27) * MOTION.idle.driftRoll * motionScale;
 
     // FINAL COMPOSE. Every channel is additive and every one of them is
-    // written here, once, from this single useFrame:
-    //   idle float + cursor translation + scroll + shutter recoil (push)
-    const bodyZ = floatZ + sp.push.value - scrollRise * MOTION.scroll.backRatio;
-    group.position.set(
-      sp.tx.value,
-      floatY + sp.ty.value + scrollRise,
-      bodyZ,
-    );
+    // written here, once, from this single useFrame. Document scrolling is
+    // intentionally not part of the world transform: page position belongs
+    // to the hero layout, while the camera's motion belongs to this rig.
+    const bodyZ = floatZ + sp.push.value;
+    group.position.set(sp.tx.value, floatY + sp.ty.value, bodyZ);
 
     // The shadow stays on the ground but tracks the object in depth, and
     // loosens as it rises: an object that floats up without its contact
@@ -306,12 +324,18 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     // from a linear offset gives a control that is turned, and then stops.
     sp.focus.target = -f.lx * MOTION.focusRing.max * prox * active;
     sp.focus.step(dt);
-    if (focusRingRef.current) focusRingRef.current.rotation.z = sp.focus.value;
+    if (focusRingRef.current) {
+      focusRingRef.current.rotation.z = sp.focus.value;
+      // A fractional forward separation gives the moving ring its own
+      // highlight while leaving the barrel mechanically seated.
+      focusRingRef.current.position.z = prox * MOTION.focusRingNear;
+    }
 
     /* ------------------------------------------------------------ iris --- */
-    sp.iris.target = firing
-      ? IRIS.shut
-      : IRIS.open + (IRIS.near - IRIS.open) * prox;
+    // The aperture has one resting state: fully open. Proximity still
+    // drives the lens ring, glass and depth response, but it must not leave
+    // the iris stopped down after a shutter cycle.
+    sp.iris.target = firing ? IRIS.shut : IRIS.open;
     sp.iris.step(dt);
     const opening = clamp(sp.iris.value, IRIS.shut * 0.6, IRIS.open * 1.04);
     // Seven matrix writes per frame is nothing, but skipping them while the
@@ -327,6 +351,7 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     // to "brighten" the glass fades the specular out with it.
     materials.glass.envMapIntensity =
       glassBase.current * (1 + prox * 0.22 + smooth.current.hover * 0.06);
+    materials.glassInner.envMapIntensity = glassInnerBase.current * (1 + prox * 0.1);
 
     /* --------------------------------------------------- shutter button -- */
     const btn = MOTION.shutterButton;
@@ -339,27 +364,22 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     }
 
     /* --------------------------------------------------------- flash ----- */
-    if (flashRef.current) {
-      const s = seq.current.t;
-      let env = 0;
-      if (s >= 0) {
-        env =
-          s < MOTION.flash.attack
-            ? s / MOTION.flash.attack
-            : Math.max(0, 1 - (s - MOTION.flash.attack) / MOTION.flash.decay);
-      }
-      flashRef.current.intensity = env * env * MOTION.flash.peak;
+    const s = seq.current.t;
+    let env = 0;
+    if (s >= 0) {
+      env =
+        s < MOTION.flash.attack
+          ? s / MOTION.flash.attack
+          : Math.max(0, 1 - (s - MOTION.flash.attack) / MOTION.flash.decay);
     }
+    const burst = env * env;
+    materials.tally.emissiveIntensity = tallyRestIntensity + burst * 3.6;
+    if (flashRef.current) flashRef.current.intensity = burst * MOTION.flash.peak;
   });
 
   return (
     <>
       <Lighting />
-
-      {/* Shutter flash. A dedicated light at zero intensity rather than a
-          modulation of the key light, so the base lighting rig stays exactly
-          as Stage 1B left it and the effect cannot drift the resting look. */}
-      <directionalLight ref={flashRef} intensity={0} position={[-3.2, 2.6, 5.2]} color="#fff6ee" />
 
       {/* Ground shadow lives outside the object's roll so it stays level. */}
       <group ref={shadowGroupRef}>
@@ -369,7 +389,11 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
       </group>
 
       <group ref={objectRef} rotation={[0, STAGING.yaw, STAGING.roll]}>
-        <CameraBody materials={materials} />
+        <CameraBody
+          materials={materials}
+          capture={capture}
+          flashLightRef={flashRef}
+        />
 
         <group ref={lensParallaxRef}>
           <LensAssembly

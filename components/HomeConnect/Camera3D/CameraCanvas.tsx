@@ -30,11 +30,9 @@ const CORNERS: THREE.Vector3[] = (() => {
   // Idle float translates the object; fold it into the box rather than the
   // rotation sweep. Recoil push is along Z and does not change the silhouette.
   // Everything that translates the object is folded into the box as slack;
-  // everything that rotates it is swept. Stage 4 added cursor translation,
-  // cursor roll and a scroll rise, and all three have to be in here or the
-  // object clips exactly when the cursor reaches a corner of the screen.
-  const slackY =
-    MOTION.idle.floatY * 1.2 + MOTION.translate.y + MOTION.scroll.max;
+  // everything that rotates it is swept. Cursor translation is included so
+  // the object does not clip when the cursor reaches a corner of the screen.
+  const slackY = MOTION.idle.floatY * 1.2 + MOTION.translate.y;
   const slackX = MOTION.translate.x;
   const pts: THREE.Vector3[] = [];
 
@@ -159,6 +157,7 @@ function useVisibility(el: HTMLElement | null) {
 
 interface CanvasProps {
   status: TallyState;
+  capture: boolean;
   /** Raised when the GL context is lost so the host can fall back to the SVG. */
   onContextLost: () => void;
   container: HTMLElement | null;
@@ -169,6 +168,7 @@ interface CanvasProps {
 
 export default function CameraCanvas({
   status,
+  capture,
   onContextLost,
   container,
   reducedMotion,
@@ -228,6 +228,7 @@ export default function CameraCanvas({
       <FitCamera />
       <CameraRig
         status={status}
+        capture={capture}
         idle={!reducedMotion}
         pointer={pointer}
         shutter={shutter}

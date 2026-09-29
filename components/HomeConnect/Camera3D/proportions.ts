@@ -207,16 +207,14 @@ export const IRIS = {
   /**
    * Travel limits for the blade inner edge (the aperture radius).
    *
-   * `open` is the Stage 1B resting value, so the lens at rest looks exactly
-   * as it was signed off. The blades TRANSLATE radially rather than pivot:
-   * a pivoting blade swings its outer end out to hypot(halfWidth, reach)
-   * ≈ 0.70 at full open, which clears `rFocus` (0.690) and pokes visibly out
-   * of the side of the lens barrel. Translation keeps the corner budget
-   * fixed at the value Stage 1B already validated.
+   * `open` is the fully-open resting aperture. The blades TRANSLATE radially
+   * rather than pivot: a pivoting blade swings its outer end out to
+   * hypot(halfWidth, reach) and can poke visibly out of the lens barrel.
+   * Translation keeps the existing corner budget fixed.
    */
-  open: 0.195,
-  /** Where the iris rests when the cursor is on the lens. ~12% stop-down. */
-  near: 0.172,
+  /** Fully-open resting aperture. This is the single source of truth for the
+   * initial seed and the post-shutter return target. */
+  open: 0.30,
   /** Shutter actuation. Not fully shut — a real leaf shutter at speed never
    *  reads as a hard black disc, and driving it to zero makes the blade
    *  overlap geometry self-intersect. */
@@ -506,6 +504,10 @@ export const MOTION = {
    * barrel starts to look unseated from the front panel.
    */
   lensNear: 0.01,
+  /** A smaller forward separation for the focus ring alone. It is just enough
+   * to catch a different highlight from the fixed barrel without unseating
+   * the ring. */
+  focusRingNear: 0.0025,
 
   /**
    * Cursor translation. Rotation alone reads as a turntable; a real object
@@ -515,14 +517,6 @@ export const MOTION = {
    * the height budget. Rotation stays the dominant effect by a wide margin.
    */
   translate: { x: 0.103, y: 0.052 },
-
-  /**
-   * Scroll lag. Lenis drives native window scroll, so window.scrollY is a
-   * true signal and needs no listener and no change to SmoothScroll. The
-   * object trails the page by at most 0.05 u (~6 px), reached after ~455 px
-   * of scroll — by which point the hero is nearly out of frame anyway.
-   */
-  scroll: { perPixel: 0.00009, max: 0.032, backRatio: 0.6 },
 
   /**
    * Focus ring. ζ ≈ 0.80: it arrives, nudges, and stops.
@@ -585,9 +579,9 @@ export const MOTION = {
     push: { impulse: 0.55, stiffness: 95, damping: 11.5 },
   },
 
-  /** Shutter flash: a brief lift of a dedicated light, peak then decay.
-   *  0.34 against a 1.18 key — a catch of light, not a photographic flash. */
-  flash: { peak: 0.34, attack: 0.04, decay: 0.26 },
+  /** Shutter flash: a short warm burst from the small lens-side point light.
+   *  It peaks clearly, then is gone in roughly 160ms. */
+  flash: { peak: 1.8, attack: 0.02, decay: 0.14 },
 
   /** How long the iris is commanded shut after a click, in seconds.
    *

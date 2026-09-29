@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import type { MutableRefObject } from "react";
 import * as THREE from "three";
 import {
   BODY,
@@ -27,6 +28,7 @@ import {
   merge,
 } from "../geometry/shapes";
 import type { CameraMaterials } from "../materials/materials";
+import DisplayPanels from "./DisplayPanels";
 
 /**
  * CAMERA BODY
@@ -57,7 +59,15 @@ import type { CameraMaterials } from "../materials/materials";
  * The object carries NO typography — the readout and counter are abstract
  * recessed windows, exactly as in the SVG hero.
  */
-export default function CameraBody({ materials: m }: { materials: CameraMaterials }) {
+export default function CameraBody({
+  materials: m,
+  capture,
+  flashLightRef,
+}: {
+  materials: CameraMaterials;
+  capture: boolean;
+  flashLightRef: MutableRefObject<THREE.PointLight | null>;
+}) {
   const geo = useMemo(() => {
     /* ---- the three castings -------------------------------------------- */
 
@@ -317,13 +327,26 @@ export default function CameraBody({ materials: m }: { materials: CameraMaterial
       {/* ---------------------------------------------------- windows ----- */}
       <mesh geometry={geo.surrounds} material={m.bezel} />
       <mesh geometry={geo.panes} material={m.darkGlass} />
+      <DisplayPanels capture={capture} />
 
       {/* --------------------------------------------------- hardware ----- */}
       <mesh geometry={geo.hardware} material={m.metalMid} />
       <mesh geometry={geo.darkDetail} material={m.metalDark} />
 
       {/* ---------------------------------------------------- accents ----- */}
-      <mesh geometry={geo.tally} material={m.tally} />
+      <mesh geometry={geo.tally} material={m.tally}>
+        {/* This light is parented to the existing tally/flash mesh. Its
+            position uses the same local coordinates as that geometry, so it
+            follows every transform applied to the camera body. */}
+        <pointLight
+          ref={flashLightRef}
+          intensity={0}
+          position={[TALLY.x, TALLY.y, FRONT_Z + 0.12]}
+          distance={3.5}
+          decay={2}
+          color="#fff6ee"
+        />
+      </mesh>
       <mesh geometry={geo.pipY} material={m.yellow} />
       <mesh geometry={geo.pipP} material={m.pink} />
     </group>
