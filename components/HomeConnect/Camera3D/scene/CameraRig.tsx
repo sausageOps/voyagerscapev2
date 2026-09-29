@@ -22,6 +22,9 @@ interface RigProps {
   idle: boolean;
   pointer: MutableRefObject<PointerField>;
   shutter: MutableRefObject<ShutterSignal>;
+  /** Amplitude of the continuous (non-cursor) motion. 1 desktop, less on
+   *  tablet, less again on phones. Cursor response is unaffected. */
+  motionScale: number;
 }
 
 /**
@@ -73,7 +76,7 @@ interface RigProps {
  * the pointer field never activates, so the cursor terms are all zero and
  * only the idle float runs — no cursor is faked from touch positions.
  */
-export default function CameraRig({ status, idle, pointer, shutter }: RigProps) {
+export default function CameraRig({ status, idle, pointer, shutter, motionScale }: RigProps) {
   const objectRef = useRef<THREE.Group>(null);
   const lensParallaxRef = useRef<THREE.Group | null>(null);
   const focusParallaxRef = useRef<THREE.Group | null>(null);
@@ -84,6 +87,7 @@ export default function CameraRig({ status, idle, pointer, shutter }: RigProps) 
   const flashRef = useRef<THREE.DirectionalLight>(null);
 
   const shadowMatRef = useRef<THREE.ShaderMaterial | null>(null);
+  const shadowGroupRef = useRef<THREE.Group | null>(null);
   const materials = useCameraMaterials();
 
   /* Tally lamp is state display, not interaction. */
@@ -105,6 +109,7 @@ export default function CameraRig({ status, idle, pointer, shutter }: RigProps) 
     () => ({
       yaw: new Spring(0, MOTION.rotation.stiffness, MOTION.rotation.damping),
       pitch: new Spring(0, MOTION.rotation.stiffness, MOTION.rotation.damping),
+      roll: new Spring(0, MOTION.rotation.stiffness, MOTION.rotation.damping),
       push: new Spring(0, MOTION.recoil.push.stiffness, MOTION.recoil.push.damping),
       focus: new Spring(0, MOTION.focusRing.stiffness, MOTION.focusRing.damping),
       iris: new Spring(IRIS.open, MOTION.aperture.stiffness, MOTION.aperture.damping),
@@ -128,6 +133,9 @@ export default function CameraRig({ status, idle, pointer, shutter }: RigProps) 
     if (!idle) {
       group.position.set(0, 0, 0);
       group.rotation.set(0, STAGING.yaw, STAGING.roll);
+      if (shadowGroupRef.current) shadowGroupRef.current.position.z = 0;
+      if (shadowMatRef.current) shadowMatRef.current.uniforms.uLift.value = 0;
+      if (lensParallaxRef.current) lensParallaxRef.current.position.z = 0;
       if (flashRef.current) flashRef.current.intensity = 0;
       return;
     }
@@ -179,52 +187,84 @@ export default function CameraRig({ status, idle, pointer, shutter }: RigProps) 
     // staged pose rather than freezing wherever it was last looking.
     sp.yaw.target = f.x * MOTION.maxYaw * active;
     sp.pitch.target = f.y * MOTION.maxPitch * active;
+    // Lean away from the side the cursor is on, like a hung mass being
+    // pushed. Same spring constants as yaw/pitch, so it settles in company
+    // with them instead of arriving separately.
+    sp.roll.target = -f.x * MOTION.maxRoll * active;
     sp.push.target = 0;
 
     sp.yaw.step(dt);
     sp.pitch.step(dt);
+    sp.roll.step(dt);
     sp.push.step(dt);
 
     // Idle drift: incommensurate periods on every channel so no two ever
     // line up and the loop stays unreadable. Amplitudes are ~0.6° and ~0.02
     // units — the object should look suspended, not animated.
     const floatY =
-      Math.sin(t * 0.46) * MOTION.idle.floatY + Math.sin(t * 0.181 + 1.7) * MOTION.idle.floatY * 0.35;
+      (Math.sin(t * 0.46) * MOTION.idle.floatY +
+        Math.sin(t * 0.181 + 1.7) * MOTION.idle.floatY * 0.35) *
+      motionScale;
+    // Depth breathes on its own periods so y and z never resolve into a
+    // circle — that is what would read as an orbit instead of a drift.
+    const floatZ =
+      (Math.sin(t * 0.283 + 0.6) * MOTION.idle.floatZ +
+        Math.sin(t * 0.117 + 2.3) * MOTION.idle.floatZ * 0.4) *
+      motionScale;
     const driftYaw = Math.sin(t * 0.33) * MOTION.idle.driftYaw + Math.sin(t * 0.127) * MOTION.idle.driftYaw * 0.4;
     const driftPitch = Math.sin(t * 0.239 + 0.9) * MOTION.idle.driftPitch;
     const driftRoll = Math.sin(t * 0.27) * MOTION.idle.driftRoll;
 
-    group.position.set(0, floatY, sp.push.value);
+    // Scroll lag. Lenis drives native scroll, so this is a real signal and
+    // costs one property read — no listener, no library, no change to
+    // SmoothScroll. The object simply trails the page a little.
+    const scrollLag =
+      clamp(window.scrollY * MOTION.scroll.perPixel, 0, MOTION.scroll.max) * motionScale;
 
-    // The ground shadow is the one thing that must answer to the float: an
-    // object that rises without its contact loosening looks pasted on.
+    const bodyZ = floatZ + sp.push.value;
+    group.position.set(0, floatY - scrollLag, bodyZ);
+
+    // The shadow stays on the ground but tracks the object in depth, and
+    // loosens as it rises: an object that floats up without its contact
+    // softening looks pasted on. Outside the staging yaw, so this z is the
+    // same world z the body uses.
+    if (shadowGroupRef.current) shadowGroupRef.current.position.z = bodyZ;
     if (shadowMatRef.current) {
-      shadowMatRef.current.uniforms.uLift.value = floatY / MOTION.idle.floatY;
+      shadowMatRef.current.uniforms.uLift.value = floatY / (MOTION.idle.floatY || 1);
     }
+
     group.rotation.set(
       sp.pitch.value + driftPitch,
       STAGING.yaw + sp.yaw.value + driftYaw,
-      STAGING.roll + driftRoll,
+      STAGING.roll + driftRoll + sp.roll.value,
     );
 
     /* ------------------------------------------------ depth parallax ----- */
     // Additive fractions of the body rotation, about the object origin.
     const px = MOTION.parallax;
     if (lensParallaxRef.current) {
-      lensParallaxRef.current.rotation.set(sp.pitch.value * px.lens, sp.yaw.value * px.lens, 0);
+      lensParallaxRef.current.rotation.set(
+        sp.pitch.value * px.lens,
+        sp.yaw.value * px.lens,
+        sp.roll.value * px.lens,
+      );
+      // The front group eases toward the viewer as the cursor closes on it.
+      // A fraction of a millimetre at model scale — it separates the lens
+      // from the body in depth without unseating it from the panel.
+      lensParallaxRef.current.position.z = prox * MOTION.lensNear;
     }
     if (focusParallaxRef.current) {
       focusParallaxRef.current.rotation.set(
         sp.pitch.value * px.focusRing,
         sp.yaw.value * px.focusRing,
-        0,
+        sp.roll.value * px.focusRing,
       );
     }
     if (controlsParallaxRef.current) {
       controlsParallaxRef.current.rotation.set(
         sp.pitch.value * px.controls,
         sp.yaw.value * px.controls,
-        0,
+        sp.roll.value * px.controls,
       );
     }
 
@@ -301,8 +341,10 @@ export default function CameraRig({ status, idle, pointer, shutter }: RigProps) 
       <directionalLight ref={flashRef} intensity={0} position={[-3.2, 2.6, 5.2]} color="#fff6ee" />
 
       {/* Ground shadow lives outside the object's roll so it stays level. */}
-      <group rotation={[0, STAGING.yaw, 0]}>
-        <ContactShadow materialRef={shadowMatRef} />
+      <group ref={shadowGroupRef}>
+        <group rotation={[0, STAGING.yaw, 0]}>
+          <ContactShadow materialRef={shadowMatRef} />
+        </group>
       </group>
 
       <group ref={objectRef} rotation={[0, STAGING.yaw, STAGING.roll]}>

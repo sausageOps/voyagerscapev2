@@ -170,10 +170,20 @@ export default function CameraCanvas({
 
   /* Coarse pointers are the phones/tablets: hold the pixel ratio down. */
   const [maxDpr, setMaxDpr] = useState(1.75);
+
+  /* Amplitude of the continuous idle motion, by device class. There is no
+     cursor on a touch device, so the float is the ONLY motion there and a
+     desktop amplitude reads as drifting rather than suspended — and on a
+     small screen the same world-space travel is a larger share of the
+     object. Cursor-driven rotation is not scaled by this. */
+  const [motionScale, setMotionScale] = useState(1);
+
   useEffect(() => {
     const coarse = window.matchMedia("(pointer: coarse)").matches;
     const small = window.matchMedia("(max-width: 767px)").matches;
+    const tablet = window.matchMedia("(max-width: 1023px)").matches;
     setMaxDpr(coarse || small ? 1.5 : 1.75);
+    setMotionScale(small ? 0.4 : coarse || tablet ? 0.65 : 1);
   }, []);
 
   return (
@@ -207,7 +217,13 @@ export default function CameraCanvas({
       }}
     >
       <FitCamera />
-      <CameraRig status={status} idle={!reducedMotion} pointer={pointer} shutter={shutter} />
+      <CameraRig
+        status={status}
+        idle={!reducedMotion}
+        pointer={pointer}
+        shutter={shutter}
+        motionScale={motionScale}
+      />
     </Canvas>
   );
 }

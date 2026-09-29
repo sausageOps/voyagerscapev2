@@ -472,11 +472,48 @@ export const MOTION = {
    * which is the thing that makes a hero object look like a screensaver.
    */
   idle: {
-    floatY: 0.019,
+    /* At the current framing the object is ~404 CSS px wide for ~3.36 world
+       units, so 1 unit ≈ 120 CSS px. The two stacked sines peak together at
+       1.35x the base amplitude, so floatY 0.027 -> 0.0365 u -> ~4.4 px of
+       vertical travel: inside the 3-6 px the brief asks for, and slow
+       enough (0.46 and 0.181 rad/s) that it is felt rather than watched. */
+    floatY: 0.027,
+    /* Depth float. Larger in world units than floatY and still much smaller
+       on screen, because z is foreshortened by the ~14° downward view: at
+       0.028 u the object shifts ~1.1 px down-screen and its silhouette
+       changes size by ~0.7 px: about 1.8 px of total effect, a little over
+       a third of the vertical, so depth is clearly the subordinate channel.
+       Deliberately on its own periods so the vertical and depth channels
+       never resolve into one circular path. */
+    floatZ: 0.028,
     driftYaw: 0.012,
     driftRoll: 0.0045,
     driftPitch: 0.0055,
   },
+
+  /**
+   * Cursor roll. A suspended object pushed sideways does not only turn, it
+   * leans — without this the rotation reads as a flat UI transform. Rolls
+   * AWAY from the cursor (top leans toward the side you are pushing from),
+   * which is what a hanging mass does. Runs on the same spring constants as
+   * yaw and pitch so all three settle with one character.
+   */
+  maxRoll: 2.5 * DEG,
+
+  /**
+   * Extra depth the lens assembly takes on as the cursor nears it — the
+   * front group easing toward the viewer. 0.01 u ≈ 1.2 px. Any more and the
+   * barrel starts to look unseated from the front panel.
+   */
+  lensNear: 0.01,
+
+  /**
+   * Scroll lag. Lenis drives native window scroll, so window.scrollY is a
+   * true signal and needs no listener and no change to SmoothScroll. The
+   * object trails the page by at most 0.05 u (~6 px), reached after ~455 px
+   * of scroll — by which point the hero is nearly out of frame anyway.
+   */
+  scroll: { perPixel: 0.00011, max: 0.05 },
 
   /**
    * Focus ring. ζ ≈ 0.80: it arrives, nudges, and stops.
