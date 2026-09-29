@@ -517,14 +517,6 @@ export const MOTION = {
   translate: { x: 0.103, y: 0.052 },
 
   /**
-   * Scroll lag. Lenis drives native window scroll, so window.scrollY is a
-   * true signal and needs no listener and no change to SmoothScroll. The
-   * object trails the page by at most 0.05 u (~6 px), reached after ~455 px
-   * of scroll — by which point the hero is nearly out of frame anyway.
-   */
-  scroll: { perPixel: 0.00009, max: 0.032, backRatio: 0.6 },
-
-  /**
    * Focus ring. ζ ≈ 0.80: it arrives, nudges, and stops.
    *
    * 14° is the CAP, not the travel. The cap is only approached with the

@@ -74,20 +74,20 @@ export default function HomeConnect() {
     return () => ctx.revert();
   }, [loaded]);
 
-  /* Scroll: a small depth offset per layer. Driven by one rAF-throttled
-     scroll listener writing through quickTo — no state updates. */
+  /* Keep the existing depth offset on the surrounding hero content, but do
+     not apply document-scroll motion to the camera host. The rig owns only
+     cursor, inertia, idle, depth and shutter motion; its world transform must
+     stay independent of the document's scroll position. */
   useEffect(() => {
     const root = rootRef.current;
     if (!root || prefersReducedMotion()) return;
 
     const head = root.querySelector<HTMLElement>("[data-parallax='head']");
-    const object = root.querySelector<HTMLElement>("[data-parallax='object']");
     const cards = root.querySelector<HTMLElement>("[data-parallax='cards']");
-    if (!head || !object || !cards) return;
+    if (!head || !cards) return;
 
     const setters = [
       { el: head, factor: -0.05, to: gsap.quickTo(head, "y", { duration: 0.5, ease: "power2.out" }) },
-      { el: object, factor: 0.075, to: gsap.quickTo(object, "y", { duration: 0.5, ease: "power2.out" }) },
       { el: cards, factor: -0.03, to: gsap.quickTo(cards, "y", { duration: 0.5, ease: "power2.out" }) },
     ];
 
@@ -142,14 +142,12 @@ export default function HomeConnect() {
         {/* ---- The object: optically centred in the composition ---- */}
         <div className={styles.stage}>
           <div className={styles.objectWrap} data-hero-device>
-            <div data-parallax="object">
             <HeroObject
               recordingState={recorder.recordingState}
               playbackState={recorder.playbackState}
               level={recorder.level}
               onShutter={onShutter}
             />
-            </div>
           </div>
         </div>
 

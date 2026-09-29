@@ -227,21 +227,12 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     const driftPitch = Math.sin(t * 0.239 + 0.9) * MOTION.idle.driftPitch;
     const driftRoll = Math.sin(t * 0.27) * MOTION.idle.driftRoll;
 
-    // Scroll lag. Lenis drives native scroll, so this is a real signal and
-    // costs one property read — no listener, no library, no change to
-    // SmoothScroll. The object simply trails the page a little.
-    const scrollRise =
-      clamp(window.scrollY * MOTION.scroll.perPixel, 0, MOTION.scroll.max) * motionScale;
-
     // FINAL COMPOSE. Every channel is additive and every one of them is
-    // written here, once, from this single useFrame:
-    //   idle float + cursor translation + scroll + shutter recoil (push)
-    const bodyZ = floatZ + sp.push.value - scrollRise * MOTION.scroll.backRatio;
-    group.position.set(
-      sp.tx.value,
-      floatY + sp.ty.value + scrollRise,
-      bodyZ,
-    );
+    // written here, once, from this single useFrame. Document scrolling is
+    // intentionally not part of the world transform: page position belongs
+    // to the hero layout, while the camera's motion belongs to this rig.
+    const bodyZ = floatZ + sp.push.value;
+    group.position.set(sp.tx.value, floatY + sp.ty.value, bodyZ);
 
     // The shadow stays on the ground but tracks the object in depth, and
     // loosens as it rises: an object that floats up without its contact
