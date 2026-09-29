@@ -50,11 +50,10 @@ export interface CameraMaterials {
   pink: THREE.MeshStandardMaterial;
   yellow: THREE.MeshStandardMaterial;
   tally: THREE.MeshStandardMaterial;
-  shadow: THREE.MeshBasicMaterial;
   dispose: () => void;
 }
 
-export function useCameraMaterials(shadowMap: THREE.Texture | null): CameraMaterials {
+export function useCameraMaterials(): CameraMaterials {
   const materials = useMemo<CameraMaterials>(() => {
     /* ------------------------------------------------ painted castings ---- */
 
@@ -261,14 +260,6 @@ export function useCameraMaterials(shadowMap: THREE.Texture | null): CameraMater
       emissiveIntensity: 0.25,
     });
 
-    const shadow = new THREE.MeshBasicMaterial({
-      color: PALETTE.shadow,
-      transparent: true,
-      opacity: 0.5,
-      depthWrite: false,
-      alphaMap: shadowMap ?? undefined,
-    });
-
     const all: THREE.Material[] = [
       shell,
       deck,
@@ -291,7 +282,6 @@ export function useCameraMaterials(shadowMap: THREE.Texture | null): CameraMater
       pink,
       yellow,
       tally,
-      shadow,
     ];
 
     return {
@@ -316,10 +306,9 @@ export function useCameraMaterials(shadowMap: THREE.Texture | null): CameraMater
       pink,
       yellow,
       tally,
-      shadow,
       dispose: () => all.forEach((m) => m.dispose()),
     };
-  }, [shadowMap]);
+  }, []);
 
   useEffect(() => () => materials.dispose(), [materials]);
 

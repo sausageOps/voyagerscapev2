@@ -6,7 +6,6 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { IRIS, MOTION, STAGING } from "../proportions";
 import { useCameraMaterials } from "../materials/materials";
-import { radialShadowTexture } from "../geometry/shapes";
 import { TALLY_COLOR, type TallyState } from "../materials/palette";
 import { Spring, damp, clamp } from "../motion/spring";
 import type { PointerField } from "../motion/usePointerField";
@@ -84,8 +83,8 @@ export default function CameraRig({ status, idle, pointer, shutter }: RigProps) 
   const buttonRef = useRef<THREE.Group | null>(null);
   const flashRef = useRef<THREE.DirectionalLight>(null);
 
-  const shadowTex = useMemo(() => radialShadowTexture(), []);
-  const materials = useCameraMaterials(shadowTex);
+  const shadowMatRef = useRef<THREE.ShaderMaterial | null>(null);
+  const materials = useCameraMaterials();
 
   /* Tally lamp is state display, not interaction. */
   const tallyColor = TALLY_COLOR[status];
@@ -196,6 +195,12 @@ export default function CameraRig({ status, idle, pointer, shutter }: RigProps) 
     const driftRoll = Math.sin(t * 0.27) * MOTION.idle.driftRoll;
 
     group.position.set(0, floatY, sp.push.value);
+
+    // The ground shadow is the one thing that must answer to the float: an
+    // object that rises without its contact loosening looks pasted on.
+    if (shadowMatRef.current) {
+      shadowMatRef.current.uniforms.uLift.value = floatY / MOTION.idle.floatY;
+    }
     group.rotation.set(
       sp.pitch.value + driftPitch,
       STAGING.yaw + sp.yaw.value + driftYaw,
@@ -297,7 +302,7 @@ export default function CameraRig({ status, idle, pointer, shutter }: RigProps) 
 
       {/* Ground shadow lives outside the object's roll so it stays level. */}
       <group rotation={[0, STAGING.yaw, 0]}>
-        <ContactShadow materials={materials} />
+        <ContactShadow materialRef={shadowMatRef} />
       </group>
 
       <group ref={objectRef} rotation={[0, STAGING.yaw, STAGING.roll]}>
