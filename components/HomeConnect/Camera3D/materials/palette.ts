@@ -20,10 +20,10 @@ export const PALETTE = {
   /* ---- body: warm cream / off-white, the dominant surface ---- */
   shell: "#ece2cf",
   shellDeep: "#dbd0b9",
-  deck: "#f4ecdd",
+  deck: "#f0e7d6",
 
   /* ---- dark leatherette front + lens interior ---- */
-  leather: "#1c1c20",
+  leather: "#212126",
   ink: "#111111",
   void: "#07070a",
 
@@ -32,10 +32,27 @@ export const PALETTE = {
   metalMid: "#9a9182",
   metalBright: "#c9c0ae",
 
+  /* ---- moulded rubber: focus ring + hand grip. Reads darker and flatter
+     than the leatherette so the two do not merge into one black mass. ---- */
+  rubber: "#17171b",
+
+  /* ---- satin hardware: lens plinth, mount collar ---- */
+  satin: "#24262c",
+
+  /* ---- window surrounds. Between leatherette and bright metal: enough to
+     separate a recessed pane from the panel it sits in, without turning the
+     front of the camera into a row of chrome picture frames. ---- */
+  bezel: "#6b6456",
+
+  /* ---- the modelled shadow in the top-plate seam. Not black: a groove in a
+     cream casting is a warm mid-tone, and painting it dark reads as a
+     printed line rather than a gap. ---- */
+  seamGap: "#8d8474",
+
   /* ---- lens ---- */
   lensBody: "#15151a",
   lensInner: "#0a0a0e",
-  glass: "#0b1016",
+  glass: "#0c1218",
   coating: "#d8ccff", // --vs-lavender
 
   /* ---- brand accents ---- */

@@ -32,7 +32,7 @@ export default function Lighting() {
     if (!env) return;
     scene.environment = env;
     // Held below 1 so reflections read as a lit room, not a mirror.
-    scene.environmentIntensity = 0.85;
+    scene.environmentIntensity = 0.72;
     return () => {
       scene.environment = null;
       env.dispose();
@@ -42,18 +42,28 @@ export default function Lighting() {
   return (
     <>
       <hemisphereLight
-        args={[new THREE.Color(PALETTE.lightSky), new THREE.Color(PALETTE.lightGround), 0.34]}
+        args={[new THREE.Color(PALETTE.lightSky), new THREE.Color(PALETTE.lightGround), 0.22]}
       />
-      <ambientLight color={PALETTE.lightKey} intensity={0.1} />
+      <ambientLight color={PALETTE.lightKey} intensity={0.08} />
 
-      {/* key */}
-      <directionalLight color={PALETTE.lightKey} intensity={1.65} position={[-3.4, 4.2, 5.2]} />
+      {/* key — swung further round to the side than Stage 1 so it rakes
+          across the bevels and the barrel shoulders instead of washing the
+          front face flat. This is the light doing the form description. */}
+      <directionalLight color={PALETTE.lightKey} intensity={1.18} position={[-4.4, 3.4, 4.0]} />
 
-      {/* fill — pale pink, deliberately weak */}
-      <directionalLight color={PALETTE.lightFill} intensity={0.5} position={[4.6, -1.2, 3.0]} />
+      {/* fill — pale pink, deliberately weak. Held down further in Stage 1B:
+          the barrel is metallic, so a saturated light on it produces a
+          coloured specular, and at 0.5 that landed as a magenta blotch on
+          the lower right of the lens. */}
+      <directionalLight color={PALETTE.lightFill} intensity={0.34} position={[4.6, -1.2, 3.0]} />
 
-      {/* rim / separation — pale yellow from behind */}
-      <directionalLight color={PALETTE.lightRim} intensity={1.0} position={[3.2, 2.6, -4.2]} />
+      {/* rim / separation — pale yellow from behind. Stronger in Stage 1B:
+          the right flank was reading at almost the same value as the cream
+          page behind it, so the silhouette dissolved on that side. */}
+      <directionalLight color={PALETTE.lightRim} intensity={0.88} position={[4.0, 2.2, -3.6]} />
+
+      {/* a skim along the top plate, to pick out the seam and the controls */}
+      <directionalLight color={PALETTE.lightKey} intensity={0.15} position={[0.4, 6.0, 0.8]} />
 
       {/* a very low bounce from below so the underside never goes black */}
       <directionalLight color={PALETTE.lightGround} intensity={0.22} position={[-1.0, -3.5, 1.5]} />

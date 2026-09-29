@@ -55,10 +55,21 @@ export function createStudioEnvironment(renderer: THREE.WebGLRenderer): THREE.Te
          crisp specular line along the top edge of the lens barrel ---- */
   const strip = ctx.createLinearGradient(0, h * 0.42, 0, h * 0.52);
   strip.addColorStop(0, "rgba(255,255,255,0)");
-  strip.addColorStop(0.5, "rgba(255,255,255,0.7)");
+  strip.addColorStop(0.5, "rgba(255,255,255,0.92)");
   strip.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = strip;
   ctx.fillRect(0, h * 0.42, w, h * 0.1);
+
+  /* ---- one compact bright source just above the horizon. The broad strip
+         alone gives the glass an even sheen with no focus; a small hot spot
+         is what produces an actual travelling catchlight on the front
+         element and a glint on the machined rings. ---- */
+  const spot = ctx.createRadialGradient(w * 0.21, h * 0.38, 0, w * 0.21, h * 0.38, w * 0.105);
+  spot.addColorStop(0, "rgba(255,255,255,1)");
+  spot.addColorStop(0.45, "rgba(255,255,255,0.85)");
+  spot.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = spot;
+  ctx.fillRect(0, 0, w, h);
 
   const equirect = new THREE.CanvasTexture(canvas);
   equirect.mapping = THREE.EquirectangularReflectionMapping;

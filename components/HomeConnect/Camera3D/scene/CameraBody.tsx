@@ -6,6 +6,7 @@ import {
   BODY,
   FRONT_Z,
   TOP_Y,
+  TOP_PLATE,
   PANEL,
   HUMP,
   HUMP_WINDOW,
@@ -16,101 +17,281 @@ import {
   READOUT,
   COUNTER,
   LUG,
+  FLANK_SEAM,
 } from "../proportions";
-import { roundedRectShape, panelShape, extrudeCentred } from "../geometry/shapes";
+import {
+  roundedRectShape,
+  trapezoidShape,
+  extrudeCentred,
+  bake,
+  merge,
+} from "../geometry/shapes";
 import type { CameraMaterials } from "../materials/materials";
 
 /**
  * CAMERA BODY
  * ===========
  *
- * One continuous moulded shell with an integrated prism hump, a cream top-deck
- * band over a dark leatherette front, and the small hardware that makes it
- * read as a manufactured object rather than a shape.
+ * Stage 1 built this as one moulded shell with parts laid on the front. That
+ * is exactly what made it read as a rounded block: real cameras are an
+ * assembly, and the assembly lines are most of what the eye uses to tell a
+ * designed instrument from a primitive.
  *
- * Every large surface is a bevelled extrusion, not a box. The bevel is doing
- * most of the work: it is what produces the bright edge running along the top
- * deck and around the base, which in the SVG had to be painted in by hand as
- * the `vsCamEdge` gradient stroke.
+ * Stage 1B splits the casting in three along Y:
+ *
+ *   top plate   — its own slab, 13 thousandths PROUD on every side
+ *   seam groove — an undersized band in a matte dark material
+ *   lower body  — the main shell, carrying the leatherette and the lens
+ *
+ * The groove is modelled rather than shaded because there are no shadow maps
+ * in this scene: an overhang with nothing under it just looks like a wider
+ * box. Recessing a dark band into the step produces the shadow line for free
+ * and, unlike a painted stripe, it stays correct from every angle.
+ *
+ * Other form work, in order of how much it contributes:
+ *   - a chamfered plinth the lens grows out of (in LensAssembly)
+ *   - a trapezoidal prism housing with drafted sides, not a rounded box
+ *   - a proud rubber grip pad replacing two thin ribs that read as scratches
+ *   - a single door seam on the right flank
  *
  * The object carries NO typography — the readout and counter are abstract
  * recessed windows, exactly as in the SVG hero.
  */
 export default function CameraBody({ materials: m }: { materials: CameraMaterials }) {
   const geo = useMemo(() => {
-    /* ---- main shell ---------------------------------------------------- */
-    const shell = extrudeCentred(
-      roundedRectShape(BODY.w, BODY.h, BODY.rTop, BODY.rBot),
+    /* ---- the three castings -------------------------------------------- */
+
+    const gapTop = TOP_PLATE.fromY;
+    const gapBot = TOP_PLATE.fromY - TOP_PLATE.gapH;
+
+    // Lower body: everything below the seam. Square-ish at the top because
+    // that edge is a machined joint, generous at the base where it is moulded.
+    const lowerH = gapBot + BODY.h / 2;
+    const lower = extrudeCentred(
+      roundedRectShape(BODY.w, lowerH, 0.03, BODY.rBot),
       BODY.d,
       BODY.bevel,
       16,
     );
+    bake(lower, [0, gapBot - lowerH / 2, 0]);
 
-    /* ---- prism hump: a second, smaller extrusion seated on the deck ----- */
-    const humpShape = roundedRectShape(HUMP.w, HUMP.rise * 2, HUMP.r, HUMP.r);
-    const hump = extrudeCentred(humpShape, HUMP.d, 0.045, 12);
+    // Seam groove: undersized in both width and depth so it sits back in the
+    // step on the front, both flanks and the rear.
+    const gap = extrudeCentred(
+      roundedRectShape(
+        BODY.w - TOP_PLATE.gapInset * 2,
+        TOP_PLATE.gapH + 0.02,
+        0.02,
+        0.02,
+      ),
+      BODY.d - TOP_PLATE.gapInset * 2,
+      0.008,
+      12,
+    );
+    bake(gap, [0, (gapTop + gapBot) / 2, 0]);
 
-    /* ---- dark leatherette front panel ---------------------------------- */
-    const panel = extrudeCentred(
-      panelShape(PANEL.w, PANEL.topY, PANEL.botY, PANEL.rBot),
-      PANEL.thickness,
-      0.016,
+    // Top plate: proud on every side. The overhang is what the groove reads
+    // against.
+    const plateH = TOP_Y - gapTop;
+    const plate = extrudeCentred(
+      roundedRectShape(
+        BODY.w + TOP_PLATE.overhang * 2,
+        plateH,
+        BODY.rTop,
+        0.035,
+      ),
+      BODY.d + TOP_PLATE.overhang * 2,
+      BODY.bevel,
+      16,
+    );
+    bake(plate, [0, gapTop + plateH / 2, 0]);
+
+    /* ---- prism housing -------------------------------------------------- */
+    // Drafted sides and a rounded crown. A straight rounded box on a lid is
+    // the single most primitive-looking element a camera model can have.
+    const hump = extrudeCentred(
+      trapezoidShape(HUMP.wBase, HUMP.wTop, HUMP.rise * 2, HUMP.r),
+      HUMP.d,
+      0.04,
       14,
     );
+    bake(hump, [HUMP.x, TOP_Y, HUMP.z]);
 
-    /* ---- recessed window frames (viewfinder / hump / readout / counter) - */
-    const vfFrame = extrudeCentred(
-      roundedRectShape(VIEWFINDER.w, VIEWFINDER.h, 0.055, 0.055),
-      0.05,
-      0.014,
-      8,
+    /* ---- dark leatherette front panel ----------------------------------- */
+    // Inset on three sides, so the cream casting frames it. A flat-topped
+    // profile that butts into the body edges is no longer the right
+    // primitive — the panel now has four finished corners.
+    const panelFace = FRONT_Z + PANEL.proud + PANEL.thickness / 2;
+    const panelH = PANEL.topY - PANEL.botY;
+    const panel = extrudeCentred(
+      roundedRectShape(PANEL.w, panelH, PANEL.rTop, PANEL.rBot),
+      PANEL.thickness,
+      0.018,
+      14,
     );
-    const humpWin = extrudeCentred(
-      roundedRectShape(HUMP_WINDOW.w, HUMP_WINDOW.h, 0.05, 0.05),
-      0.04,
-      0.012,
-      8,
-    );
-    const readoutFrame = extrudeCentred(
-      roundedRectShape(READOUT.w, READOUT.h, 0.075, 0.075),
-      0.05,
-      0.014,
-      8,
-    );
-    const counterFrame = extrudeCentred(
-      roundedRectShape(COUNTER.w, COUNTER.h, 0.06, 0.06),
-      0.05,
-      0.014,
-      8,
-    );
+    bake(panel, [0, (PANEL.topY + PANEL.botY) / 2, FRONT_Z + PANEL.proud]);
 
-    /* ---- small parts --------------------------------------------------- */
-    const flatPane = new THREE.PlaneGeometry(1, 1);
-    const rib = extrudeCentred(roundedRectShape(GRIP.w, GRIP.h, GRIP.w / 2, GRIP.w / 2), 0.05, 0.016, 6);
-    const screw = new THREE.CylinderGeometry(SCREWS.r, SCREWS.r, 0.035, 18);
-    screw.rotateX(Math.PI / 2);
-    const screwSlot = new THREE.BoxGeometry(SCREWS.r * 1.7, 0.012, 0.02);
+    /* ---- rubber grip ---------------------------------------------------- */
+    const gripParts: THREE.BufferGeometry[] = [
+      bake(
+        extrudeCentred(
+          roundedRectShape(GRIP.w, GRIP.h, GRIP.r, GRIP.r),
+          GRIP.proud,
+          0.012,
+          12,
+        ),
+        [GRIP.x, GRIP.y, panelFace + GRIP.proud / 2],
+      ),
+    ];
+    // Fine moulded ridges. Vertical, so they survive the foreshortening the
+    // three-quarter view puts on the right of the front face.
+    for (let i = 0; i < GRIP.ridges; i += 1) {
+      const t = (i + 0.5) / GRIP.ridges;
+      gripParts.push(
+        bake(
+          new THREE.BoxGeometry(GRIP.w * 0.055, GRIP.h * 0.9, 0.012),
+          [
+            GRIP.x + (t - 0.5) * GRIP.w * 0.82,
+            GRIP.y,
+            panelFace + GRIP.proud + 0.003,
+          ],
+        ),
+      );
+    }
+    const grip = merge(gripParts);
+
+    /* ---- recessed window surrounds, welded into one buffer -------------- */
+    const frame = (w: number, h: number, r: number) =>
+      extrudeCentred(roundedRectShape(w, h, r, r), 0.05, 0.014, 10);
+
+    const surrounds = merge([
+      bake(frame(VIEWFINDER.w, VIEWFINDER.h, 0.05), [
+        VIEWFINDER.x,
+        VIEWFINDER.y,
+        FRONT_Z + 0.012,
+      ]),
+      bake(frame(HUMP_WINDOW.w, HUMP_WINDOW.h, 0.045), [
+        HUMP_WINDOW.x,
+        HUMP_WINDOW.y,
+        HUMP.z + HUMP.d / 2,
+      ]),
+      bake(frame(READOUT.w, READOUT.h, 0.07), [
+        READOUT.x,
+        READOUT.y,
+        panelFace + 0.012,
+      ]),
+      bake(frame(COUNTER.w, COUNTER.h, 0.055), [
+        COUNTER.x,
+        COUNTER.y,
+        panelFace + 0.012,
+      ]),
+    ]);
+
+    /* ---- the dark panes that sit in them -------------------------------- */
+    const pane = (w: number, h: number) => new THREE.PlaneGeometry(w, h);
+    const panes = merge([
+      bake(pane(VIEWFINDER.w * 0.84, VIEWFINDER.h * 0.72), [
+        VIEWFINDER.x,
+        VIEWFINDER.y,
+        FRONT_Z + 0.038,
+      ]),
+      bake(pane(HUMP_WINDOW.w * 0.86, HUMP_WINDOW.h * 0.74), [
+        HUMP_WINDOW.x,
+        HUMP_WINDOW.y,
+        HUMP.z + HUMP.d / 2 + 0.026,
+      ]),
+      bake(pane(READOUT.w * 0.86, READOUT.h * 0.82), [
+        READOUT.x,
+        READOUT.y,
+        panelFace + 0.038,
+      ]),
+      bake(pane(COUNTER.w * 0.86, COUNTER.h * 0.7), [
+        COUNTER.x,
+        COUNTER.y,
+        panelFace + 0.038,
+      ]),
+    ]);
+
+    /* ---- hardware: screws, lugs, flank seam ----------------------------- */
+    const screwBody = () => {
+      const g = new THREE.CylinderGeometry(SCREWS.r, SCREWS.r, 0.035, 18);
+      g.rotateX(Math.PI / 2);
+      return g;
+    };
+    const lugBlank = () =>
+      extrudeCentred(
+        roundedRectShape(LUG.d, LUG.h, LUG.h / 2.2, LUG.h / 2.2),
+        LUG.w,
+        0.02,
+        8,
+      );
+
+    const hardware = merge([
+      bake(screwBody(), [SCREWS.xs[0], SCREWS.y, panelFace + 0.012]),
+      bake(screwBody(), [SCREWS.xs[1], SCREWS.y, panelFace + 0.012]),
+      bake(lugBlank(), [-BODY.w / 2 - LUG.w * 0.25, LUG.y, 0], [0, Math.PI / 2, 0]),
+      bake(lugBlank(), [BODY.w / 2 + LUG.w * 0.25, LUG.y, 0], [0, Math.PI / 2, 0]),
+      // Tally bezel.
+      bake(
+        new THREE.TorusGeometry(TALLY.r * 1.55, TALLY.r * 0.34, 10, 24),
+        [TALLY.x, TALLY.y, FRONT_Z + 0.01],
+      ),
+    ]);
+
+    // Screw slots + the single door seam on the right flank.
+    const darkDetail = merge([
+      bake(
+        new THREE.BoxGeometry(SCREWS.r * 1.7, 0.012, 0.02),
+        [SCREWS.xs[0], SCREWS.y, panelFace + 0.028],
+      ),
+      bake(
+        new THREE.BoxGeometry(SCREWS.r * 1.7, 0.012, 0.02),
+        [SCREWS.xs[1], SCREWS.y, panelFace + 0.028],
+        [0, 0, Math.PI / 2],
+      ),
+      bake(
+        new THREE.BoxGeometry(
+          0.014,
+          FLANK_SEAM.to - FLANK_SEAM.from,
+          FLANK_SEAM.w,
+        ),
+        [
+          BODY.w / 2 - 0.002,
+          (FLANK_SEAM.from + FLANK_SEAM.to) / 2,
+          FLANK_SEAM.z,
+        ],
+      ),
+    ]);
+
+    /* ---- accents -------------------------------------------------------- */
     const tally = new THREE.SphereGeometry(TALLY.r, 20, 14);
-    const tallyRing = new THREE.TorusGeometry(TALLY.r * 1.55, TALLY.r * 0.34, 10, 24);
-    const lug = extrudeCentred(roundedRectShape(LUG.d, LUG.h, LUG.h / 2.2, LUG.h / 2.2), LUG.w, 0.02, 8);
-    const seamBar = new THREE.BoxGeometry(PANEL.w - 0.03, 0.02, 0.03);
+    bake(tally, [TALLY.x, TALLY.y, FRONT_Z + 0.022]);
+
+    const pipY = bake(new THREE.PlaneGeometry(0.045, 0.02), [
+      READOUT.x - READOUT.w * 0.28,
+      READOUT.y - READOUT.h * 0.3,
+      panelFace + 0.042,
+    ]);
+    const pipP = bake(new THREE.PlaneGeometry(0.045, 0.02), [
+      READOUT.x - READOUT.w * 0.16,
+      READOUT.y - READOUT.h * 0.3,
+      panelFace + 0.042,
+    ]);
 
     return {
-      shell,
+      lower,
+      gap,
+      plate,
       hump,
       panel,
-      vfFrame,
-      humpWin,
-      readoutFrame,
-      counterFrame,
-      flatPane,
-      rib,
-      screw,
-      screwSlot,
+      grip,
+      surrounds,
+      panes,
+      hardware,
+      darkDetail,
       tally,
-      tallyRing,
-      lug,
-      seamBar,
+      pipY,
+      pipP,
     };
   }, []);
 
@@ -121,133 +302,30 @@ export default function CameraBody({ materials: m }: { materials: CameraMaterial
     [geo],
   );
 
-  /** Front plane of the leatherette panel — everything mounted on it sits here. */
-  const panelFace = FRONT_Z + PANEL.proud + PANEL.thickness / 2;
-  const humpFace = HUMP.z + HUMP.d / 2;
-  const humpCentreY = TOP_Y + HUMP.rise - 0.05;
-
   return (
     <group>
-      {/* ---------------------------------------------------- prism hump -- */}
-      <group position={[HUMP.x, humpCentreY, HUMP.z]}>
-        <mesh geometry={geo.hump} material={m.shell} />
-        {/* rangefinder window, recessed into the face of the hump */}
-        <group position={[HUMP_WINDOW.x - HUMP.x, HUMP_WINDOW.y - humpCentreY, humpFace - HUMP.z]}>
-          <mesh geometry={geo.humpWin} material={m.metalDark} />
-          <mesh
-            geometry={geo.flatPane}
-            material={m.darkGlass}
-            scale={[HUMP_WINDOW.w * 0.86, HUMP_WINDOW.h * 0.76, 1]}
-            position={[0, 0, 0.021]}
-          />
-        </group>
-      </group>
+      {/* ------------------------------------------------ three castings -- */}
+      <mesh geometry={geo.lower} material={m.shell} />
+      <mesh geometry={geo.gap} material={m.seamGap} />
+      <mesh geometry={geo.plate} material={m.deck} />
+      <mesh geometry={geo.hump} material={m.deck} />
 
-      {/* --------------------------------------------------- main shell -- */}
-      <mesh geometry={geo.shell} material={m.shell} />
+      {/* ------------------------------------------ leatherette + grip ---- */}
+      <mesh geometry={geo.panel} material={m.leather} />
+      <mesh geometry={geo.grip} material={m.rubber} />
 
-      {/* Cream deck band: a thin brighter sliver laid over the top of the
-          front face, so the two-tone split reads as two materials meeting
-          rather than as a painted line. */}
-      <mesh
-        geometry={geo.flatPane}
-        material={m.deck}
-        scale={[BODY.w - BODY.bevel * 2, TOP_Y - BODY.bevel - PANEL.topY, 1]}
-        position={[0, (TOP_Y - BODY.bevel + PANEL.topY) / 2, FRONT_Z + 0.004]}
-      />
+      {/* ---------------------------------------------------- windows ----- */}
+      <mesh geometry={geo.surrounds} material={m.bezel} />
+      <mesh geometry={geo.panes} material={m.darkGlass} />
 
-      {/* ------------------------------------------ leatherette front ----- */}
-      <mesh geometry={geo.panel} material={m.leather} position={[0, 0, panelFace]} />
+      {/* --------------------------------------------------- hardware ----- */}
+      <mesh geometry={geo.hardware} material={m.metalMid} />
+      <mesh geometry={geo.darkDetail} material={m.metalDark} />
 
-      {/* machined seam where the leatherette meets the deck */}
-      <mesh
-        geometry={geo.seamBar}
-        material={m.seam}
-        position={[0, PANEL.topY + 0.006, FRONT_Z + PANEL.proud + 0.03]}
-      />
-
-      {/* ------------------------------------------------- viewfinder ----- */}
-      <group position={[VIEWFINDER.x, VIEWFINDER.y, FRONT_Z + 0.012]}>
-        <mesh geometry={geo.vfFrame} material={m.metalDark} />
-        <mesh
-          geometry={geo.flatPane}
-          material={m.darkGlass}
-          scale={[VIEWFINDER.w * 0.84, VIEWFINDER.h * 0.72, 1]}
-          position={[0, 0, 0.026]}
-        />
-      </group>
-
-      {/* ------------------------------------------------ tally lamp ------ */}
-      <group position={[TALLY.x, TALLY.y, FRONT_Z + 0.01]}>
-        <mesh geometry={geo.tallyRing} material={m.metalMid} />
-        <mesh geometry={geo.tally} material={m.tally} position={[0, 0, 0.012]} />
-      </group>
-
-      {/* ------------------------------------- abstract recessed windows -- */}
-      <group position={[READOUT.x, READOUT.y, panelFace + 0.012]}>
-        <mesh geometry={geo.readoutFrame} material={m.metalDark} />
-        <mesh
-          geometry={geo.flatPane}
-          material={m.darkGlass}
-          scale={[READOUT.w * 0.86, READOUT.h * 0.82, 1]}
-          position={[0, 0, 0.026]}
-        />
-        {/* two inert marker pips — the only accent on the panel */}
-        <mesh
-          geometry={geo.flatPane}
-          material={m.yellow}
-          scale={[0.045, 0.02, 1]}
-          position={[-READOUT.w * 0.28, -READOUT.h * 0.3, 0.03]}
-        />
-        <mesh
-          geometry={geo.flatPane}
-          material={m.pink}
-          scale={[0.045, 0.02, 1]}
-          position={[-READOUT.w * 0.16, -READOUT.h * 0.3, 0.03]}
-        />
-      </group>
-
-      <group position={[COUNTER.x, COUNTER.y, panelFace + 0.012]}>
-        <mesh geometry={geo.counterFrame} material={m.metalDark} />
-        <mesh
-          geometry={geo.flatPane}
-          material={m.darkGlass}
-          scale={[COUNTER.w * 0.86, COUNTER.h * 0.7, 1]}
-          position={[0, 0, 0.026]}
-        />
-      </group>
-
-      {/* --------------------------------------------- moulded grip ribs -- */}
-      {GRIP.xs.map((x) => (
-        <mesh key={x} geometry={geo.rib} material={m.metalDark} position={[x, GRIP.y, panelFace + 0.01]} />
-      ))}
-
-      {/* ------------------------------------------- two recessed screws -- */}
-      {SCREWS.xs.map((x, i) => (
-        <group key={x} position={[x, SCREWS.y, panelFace + 0.012]}>
-          <mesh geometry={geo.screw} material={m.metalMid} />
-          <mesh
-            geometry={geo.screwSlot}
-            material={m.metalDark}
-            position={[0, 0, 0.016]}
-            rotation={[0, 0, i === 0 ? 0 : Math.PI / 2]}
-          />
-        </group>
-      ))}
-
-      {/* -------------------------------------------------- strap lugs ---- */}
-      <mesh
-        geometry={geo.lug}
-        material={m.metalMid}
-        position={[-BODY.w / 2 - LUG.w * 0.25, LUG.y, 0]}
-        rotation={[0, Math.PI / 2, 0]}
-      />
-      <mesh
-        geometry={geo.lug}
-        material={m.metalMid}
-        position={[BODY.w / 2 + LUG.w * 0.25, LUG.y, 0]}
-        rotation={[0, Math.PI / 2, 0]}
-      />
+      {/* ---------------------------------------------------- accents ----- */}
+      <mesh geometry={geo.tally} material={m.tally} />
+      <mesh geometry={geo.pipY} material={m.yellow} />
+      <mesh geometry={geo.pipP} material={m.pink} />
     </group>
   );
 }
