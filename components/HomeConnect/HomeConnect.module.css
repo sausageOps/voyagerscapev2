@@ -71,35 +71,16 @@
 }
 
 /* ---------------- Centre object ---------------- */
-/*
-   The outer stage is the hero's presentation area, not the camera itself.
-   It is an absolute, full-height overlay on desktop so it does not change
-   hero flow. The anchor is sticky inside that bounded area: it can hold the
-   camera at the presentation centre while the hero scrolls, then releases it
-   when the hero ends. That keeps document position and camera presentation
-   position separate without a fixed element or a scroll compensation offset.
-*/
 .stage {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  /* Optical centring: nudged right of true centre to balance the statement,
+     and up to account for the strap hanging low. */
   left: 52%;
-  width: max-content;
-  transform: translateX(-50%);
+  top: 51%;
+  transform: translate(-50%, -50%);
   z-index: 2;
   display: flex;
   justify-content: center;
-  pointer-events: none;
-}
-
-.stageAnchor {
-  position: sticky;
-  top: 51svh;
-  width: 100%;
-  height: max-content;
-  align-self: flex-start;
-  transform: translateY(-50%);
-  pointer-events: auto;
 }
 
 .objectWrap {
@@ -136,23 +117,12 @@
   .head {
     max-width: 88%;
   }
-  /* The anchor becomes a normal-flow sticky flex item at this breakpoint.
-     `display: contents` keeps the existing stage slot and its dimensions,
-     while the anchor can stay centered until the hero's containing block ends. */
   .stage {
-    display: contents;
-  }
-  .stageAnchor {
-    position: sticky;
-    top: 50svh;
-    width: 100%;
-    height: max-content;
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
     margin: clamp(4px, 1.4svh, 18px) auto 0;
-    transform: translateY(-50%);
-    display: flex;
-    justify-content: center;
-    order: 2;
-    z-index: 2;
   }
   .controls {
     position: relative;
@@ -180,7 +150,7 @@
     max-width: 100%;
     gap: 14px;
   }
-  .stageAnchor {
+  .stage {
     order: 2;
     margin-top: 6px;
   }
@@ -208,7 +178,7 @@
   .inner {
     padding-top: calc(var(--header-h) + 18px);
   }
-  .stageAnchor {
-    top: 55svh;
+  .stage {
+    top: 55%;
   }
 }

@@ -141,15 +141,13 @@ export default function HomeConnect() {
 
         {/* ---- The object: optically centred in the composition ---- */}
         <div className={styles.stage}>
-          <div className={styles.stageAnchor}>
-            <div className={styles.objectWrap} data-hero-device>
-              <HeroObject
-                recordingState={recorder.recordingState}
-                playbackState={recorder.playbackState}
-                level={recorder.level}
-                onShutter={onShutter}
-              />
-            </div>
+          <div className={styles.objectWrap} data-hero-device>
+            <HeroObject
+              recordingState={recorder.recordingState}
+              playbackState={recorder.playbackState}
+              level={recorder.level}
+              onShutter={onShutter}
+            />
           </div>
         </div>
 
