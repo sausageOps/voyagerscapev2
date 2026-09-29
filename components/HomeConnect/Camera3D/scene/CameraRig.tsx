@@ -96,12 +96,15 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
   materials.tally.emissive.set(tallyColor);
   materials.tally.emissiveIntensity = status === "idle" ? 0.2 : 0.75;
 
-  /* Baseline for the glass specular, captured once so the proximity response
-     always modulates around the value Stage 1B was signed off with rather
-     than compounding on itself frame after frame. */
+  /* Baselines for the optical highlights, captured once so proximity always
+     modulates around the signed-off resting values rather than compounding on
+     itself frame after frame. The inner element gets its own restrained lift:
+     two highlights at two depths make the lens read as glass in a barrel. */
   const glassBase = useRef(materials.glass.envMapIntensity);
+  const glassInnerBase = useRef(materials.glassInner.envMapIntensity);
   useEffect(() => {
     glassBase.current = materials.glass.envMapIntensity;
+    glassInnerBase.current = materials.glassInner.envMapIntensity;
   }, [materials]);
 
   /* One spring per degree of freedom. Created once; never re-allocated. */
@@ -138,6 +141,15 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
       if (shadowGroupRef.current) shadowGroupRef.current.position.set(0, 0, 0);
       if (shadowMatRef.current) shadowMatRef.current.uniforms.uLift.value = 0;
       if (lensParallaxRef.current) lensParallaxRef.current.position.z = 0;
+      if (focusParallaxRef.current) focusParallaxRef.current.rotation.set(0, 0, 0);
+      if (controlsParallaxRef.current) controlsParallaxRef.current.rotation.set(0, 0, 0);
+      if (focusRingRef.current) {
+        focusRingRef.current.position.z = 0;
+        focusRingRef.current.rotation.z = 0;
+      }
+      if (buttonRef.current) buttonRef.current.position.y = 0;
+      materials.glass.envMapIntensity = glassBase.current;
+      materials.glassInner.envMapIntensity = glassInnerBase.current;
       if (flashRef.current) flashRef.current.intensity = 0;
       return;
     }
@@ -223,9 +235,12 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
         Math.sin(t * 0.117 + 2.3) * MOTION.idle.floatZ * 0.4 +
         Math.sin(t * 0.0613 + 1.1) * MOTION.idle.floatZ * 0.25) *
       motionScale;
-    const driftYaw = Math.sin(t * 0.33) * MOTION.idle.driftYaw + Math.sin(t * 0.127) * MOTION.idle.driftYaw * 0.4;
-    const driftPitch = Math.sin(t * 0.239 + 0.9) * MOTION.idle.driftPitch;
-    const driftRoll = Math.sin(t * 0.27) * MOTION.idle.driftRoll;
+    const driftYaw =
+      (Math.sin(t * 0.33) * MOTION.idle.driftYaw +
+        Math.sin(t * 0.127) * MOTION.idle.driftYaw * 0.4) *
+      motionScale;
+    const driftPitch = Math.sin(t * 0.239 + 0.9) * MOTION.idle.driftPitch * motionScale;
+    const driftRoll = Math.sin(t * 0.27) * MOTION.idle.driftRoll * motionScale;
 
     // FINAL COMPOSE. Every channel is additive and every one of them is
     // written here, once, from this single useFrame. Document scrolling is
@@ -297,7 +312,12 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     // from a linear offset gives a control that is turned, and then stops.
     sp.focus.target = -f.lx * MOTION.focusRing.max * prox * active;
     sp.focus.step(dt);
-    if (focusRingRef.current) focusRingRef.current.rotation.z = sp.focus.value;
+    if (focusRingRef.current) {
+      focusRingRef.current.rotation.z = sp.focus.value;
+      // A fractional forward separation gives the moving ring its own
+      // highlight while leaving the barrel mechanically seated.
+      focusRingRef.current.position.z = prox * MOTION.focusRingNear;
+    }
 
     /* ------------------------------------------------------------ iris --- */
     sp.iris.target = firing
@@ -318,6 +338,7 @@ export default function CameraRig({ status, idle, pointer, shutter, motionScale 
     // to "brighten" the glass fades the specular out with it.
     materials.glass.envMapIntensity =
       glassBase.current * (1 + prox * 0.22 + smooth.current.hover * 0.06);
+    materials.glassInner.envMapIntensity = glassInnerBase.current * (1 + prox * 0.1);
 
     /* --------------------------------------------------- shutter button -- */
     const btn = MOTION.shutterButton;

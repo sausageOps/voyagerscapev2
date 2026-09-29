@@ -506,6 +506,10 @@ export const MOTION = {
    * barrel starts to look unseated from the front panel.
    */
   lensNear: 0.01,
+  /** A smaller forward separation for the focus ring alone. It is just enough
+   * to catch a different highlight from the fixed barrel without unseating
+   * the ring. */
+  focusRingNear: 0.0025,
 
   /**
    * Cursor translation. Rotation alone reads as a turntable; a real object
