@@ -246,7 +246,13 @@ export default function IdentityWords() {
       <span className={styles.run} aria-hidden="true">
         {SLOTS.map((pool, s) => (
           <span
-            className={[styles.chip, s === 0 ? styles.lead : ""].filter(Boolean).join(" ")}
+            className={[
+              styles.chip,
+              s === 0 ? styles.lead : "",
+              s === 2 ? styles.pill : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             key={s}
           >
             <span className={styles.window} data-identity-window>

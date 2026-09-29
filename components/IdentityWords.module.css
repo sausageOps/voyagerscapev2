@@ -34,21 +34,35 @@
 
 /* One chip = the footer's statement block, unchanged: soft warm panel,
    consistent horizontal padding. The chip never sizes itself to the
-   longest word — its content window is tweened by GSAP. */
+   longest word — its content window is tweened by GSAP. The silhouette
+   is a property of the SLOT, giving the row a calm shape rhythm:
+   article = pill/circle, modifier = soft rectangle, field = capsule,
+   role = soft rectangle. */
 .chip {
   display: inline-flex;
   align-items: center;
   padding: 0.32em 0.5em 0.38em;
-  border-radius: 0.32em;
+  /* Soft rectangle (≈7–10px optical radius at any type scale) */
+  border-radius: clamp(7px, 0.34em, 10px);
   background: rgba(255, 253, 249, 0.85);
   border: 1px solid rgba(17, 17, 17, 0.05);
   white-space: nowrap;
 }
 
-/* The constant article: in the site's word-block language, a lone short
-   word reads as a capsule rather than a soft block. */
+/* Article slot: pill treatment — the lone "A" reads as a small circle;
+   "An" / "The" stretch it into a compact capsule. The inline padding is
+   tuned so chip width and chip height agree when the content is a
+   single glyph. */
 .lead {
   border-radius: 999px;
+  padding-inline: 0.64em;
+}
+
+/* Field slot: full capsule — rhythmically the same pill family as the
+   article, offset by the two soft rectangles around it. */
+.pill {
+  border-radius: 999px;
+  padding-inline: 0.56em;
 }
 
 /* The clip window — the GreetingPill's verified geometry: relative,
