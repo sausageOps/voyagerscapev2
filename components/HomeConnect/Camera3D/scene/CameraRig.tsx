@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { MutableRefObject } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { IRIS, MOTION, STAGING } from "../proportions";
+import { IRIS, LENS, MOTION, STAGING } from "../proportions";
 import { useCameraMaterials } from "../materials/materials";
 import { TALLY_COLOR, type TallyState } from "../materials/palette";
 import { Spring, damp, clamp } from "../motion/spring";
@@ -86,7 +86,7 @@ export default function CameraRig({ status, capture, idle, pointer, shutter, mot
   const focusRingRef = useRef<THREE.Group | null>(null);
   const irisRef = useRef<THREE.InstancedMesh | null>(null);
   const buttonRef = useRef<THREE.Group | null>(null);
-  const flashRef = useRef<THREE.DirectionalLight>(null);
+  const flashRef = useRef<THREE.PointLight>(null);
 
   const shadowMatRef = useRef<THREE.ShaderMaterial | null>(null);
   const shadowGroupRef = useRef<THREE.Group | null>(null);
@@ -379,10 +379,17 @@ export default function CameraRig({ status, capture, idle, pointer, shutter, mot
     <>
       <Lighting />
 
-      {/* Shutter flash. A dedicated light at zero intensity rather than a
-          modulation of the key light, so the base lighting rig stays exactly
-          as Stage 1B left it and the effect cannot drift the resting look. */}
-      <directionalLight ref={flashRef} intensity={0} position={[-3.2, 2.6, 5.2]} color="#fff6ee" />
+      {/* Shutter flash. A small point source just in front of the lens makes
+          the burst read as a photographic flash and gives the glass a brief
+          warm catchlight without changing the resting lighting rig. */}
+      <pointLight
+        ref={flashRef}
+        intensity={0}
+        position={[LENS.x, LENS.y, 1.55]}
+        distance={3.5}
+        decay={2}
+        color="#fff6ee"
+      />
 
       {/* Ground shadow lives outside the object's roll so it stays level. */}
       <group ref={shadowGroupRef}>

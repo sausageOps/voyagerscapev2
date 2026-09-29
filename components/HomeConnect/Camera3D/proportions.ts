@@ -579,9 +579,9 @@ export const MOTION = {
     push: { impulse: 0.55, stiffness: 95, damping: 11.5 },
   },
 
-  /** Shutter flash: a brief lift of a dedicated light, peak then decay.
-   *  0.34 against a 1.18 key — a catch of light, not a photographic flash. */
-  flash: { peak: 0.34, attack: 0.04, decay: 0.26 },
+  /** Shutter flash: a short warm burst from the small lens-side point light.
+   *  It peaks clearly, then is gone in roughly 160ms. */
+  flash: { peak: 1.8, attack: 0.02, decay: 0.14 },
 
   /** How long the iris is commanded shut after a click, in seconds.
    *
