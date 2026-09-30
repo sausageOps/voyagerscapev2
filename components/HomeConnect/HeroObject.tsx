@@ -4,26 +4,18 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { RecordingState, AudioPlaybackState } from "@/lib/ui-store";
 import { prefersReducedMotion } from "@/lib/motion";
-import Camera from "./Camera";
+import ConsoleFallback from "./Console3D/ConsoleFallback";
 
 /**
- * HERO OBJECT — renderer selector
- * ===============================
+ * CENTRAL HERO OBJECT — Voyagerscape Console experiment
  *
- * Decides between the WebGL camera and the original SVG camera, and is the
- * only place that decision is made.
- *
- * The gate runs BEFORE the dynamic import, so a device that fails it never
- * downloads three.js at all — the chunk is requested from inside the render
- * path, not at module scope.
- *
- * `components/HomeConnect/Camera.tsx` is untouched and remains the production
- * fallback. It is never removed: it covers no-WebGL, reduced motion, data
- * saver, very low-end hardware, the server render, and runtime context loss.
+ * This branch swaps only the center visual. The existing page composition,
+ * global cursor, motion preference detection and capability gate remain in
+ * place. A non-WebGL or reduced-motion browser receives the same console as a
+ * lightweight SVG rather than a blank canvas.
  */
-
-const Camera3D = dynamic(() => import("./Camera3D"), {
-  ssr: false, // R3F cannot server-render
+const Console3D = dynamic(() => import("./Console3D"), {
+  ssr: false,
   loading: () => null,
 });
 
@@ -34,13 +26,6 @@ export interface HeroObjectProps {
   onShutter: () => void;
 }
 
-/**
- * Raise to 1024 to restrict WebGL to desktop only.
- *
- * The audit recommended that for the first production release; Stage 1 keeps
- * it at 0 because the brief asks for the 3D object to be exercised down to
- * 320px. One constant, one edit.
- */
 const MIN_WIDTH_FOR_3D = 0;
 
 function hasWebGL(): boolean {
@@ -51,7 +36,6 @@ function hasWebGL(): boolean {
       canvas.getContext("webgl") ??
       canvas.getContext("experimental-webgl");
     if (!gl) return false;
-    // Release the probe context immediately; browsers cap concurrent contexts.
     const lose = (gl as WebGLRenderingContext).getExtension("WEBGL_lose_context");
     lose?.loseContext();
     return true;
@@ -64,37 +48,22 @@ function canRun3D(): boolean {
   if (typeof window === "undefined") return false;
   if (prefersReducedMotion()) return false;
   if (window.innerWidth < MIN_WIDTH_FOR_3D) return false;
-
   const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
   if (connection?.saveData) return false;
-
-  /* NB: deliberately NOT gating on navigator.hardwareConcurrency. It reads
-     like a sensible low-end check, but iOS Safari reports 2 on hardware that
-     renders this scene at a locked 60fps, so the threshold excludes capable
-     devices while catching almost no slow ones. WebGL support plus the data
-     saver and reduced-motion signals are the honest tests. */
-
   return hasWebGL();
 }
 
-export default function HeroObject(props: HeroObjectProps) {
-  /* Always false on the first client render so the markup matches the SVG the
-     server produced; the upgrade happens in an effect, after hydration. */
+export default function HeroObject(_props: HeroObjectProps) {
   const [use3D, setUse3D] = useState(false);
 
   useEffect(() => {
     setUse3D(canRun3D());
-
-    // Respect a live change of the motion preference.
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const onChange = () => setUse3D(canRun3D());
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const fallback = <Camera {...props} />;
-
-  if (!use3D) return fallback;
-
-  return <Camera3D {...props} fallback={fallback} />;
+  const fallback = <ConsoleFallback />;
+  return use3D ? <Console3D fallback={fallback} /> : fallback;
 }
