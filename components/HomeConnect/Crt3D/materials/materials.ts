@@ -41,59 +41,84 @@ export interface CrtMaterials {
   dispose: () => void;
 }
 
-export function useCrtMaterials(): CrtMaterials {
+/**
+ * ATMOSPHERIC PERSPECTIVE, DONE AS MATERIAL
+ * -----------------------------------------
+ * `dim` pulls every shell colour a fraction of the way toward the page
+ * cream and trims the environment response with it. It is how the second
+ * machine reads as further away rather than merely smaller.
+ *
+ * Tinting toward the BACKGROUND rather than toward grey or black is the
+ * whole trick. Distance does not darken an object in a lit room, it
+ * washes it toward whatever is behind it — here, a cream page — and
+ * lowers its contrast. Darkening would have made the secondary unit look
+ * like it was standing in a shadow, which raises the question of what is
+ * casting it.
+ */
+function toward(hex: string, target: string, k: number): THREE.Color {
+  const c = new THREE.Color(hex);
+  return k <= 0 ? c : c.lerp(new THREE.Color(target), k);
+}
+
+export function useCrtMaterials(dim = 0): CrtMaterials {
   const materials = useMemo<CrtMaterials>(() => {
     const rough = createPlasticRoughness();
+    /* Contrast falls faster than value with distance, so the dimming is
+       applied at 0.62 strength to the already-dark parts — otherwise the
+       buttons and vents wash out before the shell does and the unit goes
+       flat. */
+    const tint = (hex: string, soft = 1) => toward(hex, PALETTE.page, dim * soft);
+    const env = (v: number) => v * (1 - dim * 0.45);
 
     /* ------------------------------------------------------- shell ------ */
 
     const shell = new THREE.MeshStandardMaterial({
-      color: PALETTE.shell,
+      color: tint(PALETTE.shell),
       roughness: 0.78,
       metalness: 0.0,
       // Old plastic still picks up the room; it just does it very softly.
-      envMapIntensity: 0.34,
+      envMapIntensity: env(0.34),
       roughnessMap: rough ?? undefined,
     });
 
     const shellRear = new THREE.MeshStandardMaterial({
-      color: PALETTE.shellRear,
+      color: tint(PALETTE.shellRear),
       roughness: 0.84,
       metalness: 0.0,
-      envMapIntensity: 0.26,
+      envMapIntensity: env(0.26),
       roughnessMap: rough ?? undefined,
     });
 
     /* The front moulding. Slightly smoother than the body — it is the face
        that was wiped every week for a decade. */
     const bezel = new THREE.MeshStandardMaterial({
-      color: PALETTE.bezel,
+      color: tint(PALETTE.bezel),
       roughness: 0.7,
       metalness: 0.0,
-      envMapIntensity: 0.4,
+      envMapIntensity: env(0.4),
       roughnessMap: rough ?? undefined,
     });
 
     const bezelInner = new THREE.MeshStandardMaterial({
-      color: PALETTE.bezelInner,
+      color: tint(PALETTE.bezelInner, 0.62),
       roughness: 0.88,
       metalness: 0.0,
-      envMapIntensity: 0.16,
+      envMapIntensity: env(0.16),
       side: THREE.DoubleSide,
     });
 
     const seam = new THREE.MeshStandardMaterial({
-      color: PALETTE.seam,
+      color: tint(PALETTE.seam, 0.62),
       roughness: 0.95,
       metalness: 0.0,
-      envMapIntensity: 0.1,
+      envMapIntensity: env(0.1),
     });
 
     const vent = new THREE.MeshStandardMaterial({
-      color: PALETTE.vent,
+      color: tint(PALETTE.vent, 0.5),
       roughness: 0.97,
       metalness: 0.0,
-      envMapIntensity: 0.06,
+      envMapIntensity: env(0.06),
       side: THREE.DoubleSide,
     });
 
@@ -103,25 +128,25 @@ export function useCrtMaterials(): CrtMaterials {
     // cream face renders as a hole, and the chamfers that prove the button
     // has depth need a value to fall away from.
     const button = new THREE.MeshStandardMaterial({
-      color: PALETTE.button,
+      color: tint(PALETTE.button, 0.5),
       roughness: 0.62,
       metalness: 0.0,
-      envMapIntensity: 0.5,
+      envMapIntensity: env(0.5),
     });
 
     const buttonPower = new THREE.MeshStandardMaterial({
-      color: PALETTE.buttonPower,
+      color: tint(PALETTE.buttonPower, 0.5),
       roughness: 0.55,
       metalness: 0.0,
-      envMapIntensity: 0.6,
+      envMapIntensity: env(0.6),
     });
 
     // Inside of the moulded wells the buttons sit in — in shadow, matte.
     const buttonWell = new THREE.MeshStandardMaterial({
-      color: PALETTE.buttonWell,
+      color: tint(PALETTE.buttonWell, 0.5),
       roughness: 0.94,
       metalness: 0.0,
-      envMapIntensity: 0.12,
+      envMapIntensity: env(0.12),
       side: THREE.DoubleSide,
     });
 
@@ -129,10 +154,10 @@ export function useCrtMaterials(): CrtMaterials {
 
     // The unlit border inside the aperture, around the lit phosphor area.
     const tubeMask = new THREE.MeshStandardMaterial({
-      color: PALETTE.tubeMask,
+      color: tint(PALETTE.tubeMask, 0.4),
       roughness: 0.42,
       metalness: 0.0,
-      envMapIntensity: 0.55,
+      envMapIntensity: env(0.55),
       side: THREE.DoubleSide,
     });
 
@@ -151,14 +176,14 @@ export function useCrtMaterials(): CrtMaterials {
      * blending.
      */
     const glass = new THREE.MeshPhysicalMaterial({
-      color: PALETTE.glass,
+      color: tint(PALETTE.glass, 0.35),
       roughness: 0.055,
       metalness: 0.0,
       clearcoat: 1,
       clearcoatRoughness: 0.03,
       // Pushing the environment rather than the opacity: the reflection has
       // to read while the game behind it stays legible.
-      envMapIntensity: 2.7,
+      envMapIntensity: env(2.7),
       transparent: true,
       opacity: 0.17,
       depthWrite: false,
@@ -181,7 +206,7 @@ export function useCrtMaterials(): CrtMaterials {
       metalness: 0.0,
       clearcoat: 1,
       clearcoatRoughness: 0.08,
-      envMapIntensity: 1.4,
+      envMapIntensity: env(1.4),
       transparent: true,
       opacity: 0.35,
       depthWrite: false,
@@ -222,7 +247,7 @@ export function useCrtMaterials(): CrtMaterials {
         rough?.dispose();
       },
     };
-  }, []);
+  }, [dim]);
 
   useEffect(() => () => materials.dispose(), [materials]);
 

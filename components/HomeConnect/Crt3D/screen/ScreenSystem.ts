@@ -9,14 +9,30 @@ import { createProgrammes, type Programme } from "./programmes";
  * Owns the phosphor canvas, the texture the tube samples, and the one state
  * machine that decides what is on screen.
  *
- * ONE STATE MACHINE
- * -----------------
- * There is exactly one of these, and it has exactly one input: `bump()`.
- * Automatic cycling and a user click are the same event — "advance the
- * channel" — which is why clicking during an automatic change cannot leave
- * two transitions fighting over the same texture. The dwell timer is simply
- * reset by a manual bump, so a click also buys the new channel its full
- * viewing time rather than dumping you into whatever was half-finished.
+ * ONE STATE MACHINE PER TUBE
+ * --------------------------
+ * Each monitor owns exactly one of these, and it has exactly one input:
+ * `bump()`. Automatic cycling and a user click are the same event —
+ * "advance the channel" — which is why clicking during an automatic change
+ * cannot leave two transitions fighting over the same texture. The dwell
+ * timer is simply reset by a manual bump, so a click also buys the new
+ * channel its full viewing time rather than dumping you into whatever was
+ * half-finished.
+ *
+ * TWO TUBES, INDEPENDENTLY ALIVE
+ * ------------------------------
+ * The second machine is not a mirror of the first. It runs its own
+ * instance with its own programme objects, its own canvas, its own dwell
+ * length and its own phase, so the two drift against each other instead
+ * of cutting together — a pair of machines each working through the
+ * archive at its own pace, which is the entire reason for having two.
+ *
+ * Drift alone would eventually let both land on the same programme, and
+ * two identical pictures instantly collapse back into "one model twice".
+ * So a unit can be given a `peer`: when it advances, it skips any
+ * programme its peer is currently showing. That is the only coupling
+ * between the two systems, it is one integer wide, and it is read at the
+ * moment of the switch rather than held as shared state.
  *
  * PAINT RATE
  * ----------
@@ -41,6 +57,21 @@ const PERSISTENCE: Record<string, number> = {
   arcade: 0.075,
   signal: 0.04,
 };
+
+export interface ScreenOptions {
+  /** Repaint rate. The smaller tube can afford less. */
+  fps?: number;
+  /** Seconds each programme holds. */
+  dwell?: number;
+  /** Which programme to open on. */
+  startIndex?: number;
+  /** Seconds of dwell already elapsed at t=0, to offset the phase. */
+  phase?: number;
+  /** Master brightness for this tube's canvas. */
+  gain?: number;
+  /** Index this unit must not switch to — the other monitor's channel. */
+  peer?: () => number;
+}
 
 export interface ScreenFrame {
   /** 0 = settled, 1 = mid sync-disturbance. Drives the CRT shader. */
@@ -72,7 +103,16 @@ export class ScreenSystem {
   private mono = "monospace";
   private luma = 0.3;
 
-  constructor() {
+  private fps: number;
+  private dwellLen: number;
+  private gain: number;
+  private peer?: () => number;
+
+  constructor(opts: ScreenOptions = {}) {
+    this.fps = opts.fps ?? CHANNELS.fps;
+    this.dwellLen = opts.dwell ?? CHANNELS.dwell;
+    this.gain = opts.gain ?? 1;
+    this.peer = opts.peer;
     this.canvas = document.createElement("canvas");
     this.canvas.width = CHANNELS.texW;
     this.canvas.height = CHANNELS.texH;
@@ -91,6 +131,8 @@ export class ScreenSystem {
     this.prevCtx.fillRect(0, 0, CHANNELS.texW, CHANNELS.texH);
 
     this.programmes = createProgrammes();
+    this.index = (opts.startIndex ?? 0) % this.programmes.length;
+    this.dwell = opts.phase ?? 0;
 
     /* Typography lock: the readouts use JetBrains Mono, resolved from the
        variable next/font emits rather than naming a family this file is not
@@ -122,11 +164,23 @@ export class ScreenSystem {
     return this.programmes[this.index].label;
   }
 
+  /** The programme index currently held. Read by the other tube. */
+  get channel(): number {
+    return this.index;
+  }
+
   /** Advance the channel. The only input this machine has. */
   bump() {
     if (this.transT >= 0) return; // already changing; ignore the double-tap
+    const n = this.programmes.length;
+    let next = (this.index + 1) % n;
+    /* Never land on whatever the other machine is showing. One step is
+       always enough with four programmes and two tubes, but the loop is
+       bounded anyway rather than assuming that stays true. */
+    const avoid = this.peer?.();
+    for (let i = 0; i < n && next === avoid; i += 1) next = (next + 1) % n;
     this.transT = 0;
-    this.pending = (this.index + 1) % this.programmes.length;
+    this.pending = next;
     this.dwell = 0;
   }
 
@@ -158,13 +212,13 @@ export class ScreenSystem {
         this.programmes[this.index].reset();
       }
       if (this.transT >= CHANNELS.transition) this.transT = -1;
-    } else if (this.dwell >= CHANNELS.dwell) {
+    } else if (this.dwell >= this.dwellLen) {
       this.bump();
     }
 
     /* ---- throttled paint ---- */
     this.paintAcc += dt;
-    const interval = 1 / CHANNELS.fps;
+    const interval = 1 / this.fps;
     if (this.paintAcc >= interval) {
       this.paint(Math.min(this.paintAcc, 0.1), false);
       this.paintAcc = 0;
@@ -228,7 +282,7 @@ export class ScreenSystem {
            16×12 downscale of the frame rather than the full canvas: a
            getImageData over 320×240 every paint is a real cost, over 192
            pixels it is not. ---- */
-    this.luma = this.sampleLuma();
+    this.luma = this.sampleLuma() * this.gain;
 
     this.texture.needsUpdate = true;
   }

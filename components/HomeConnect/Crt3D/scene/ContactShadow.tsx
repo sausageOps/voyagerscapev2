@@ -18,11 +18,20 @@ import { PALETTE } from "../materials/palette";
  * -----
  * The footprint is the BASE's plan, not the monitor's. That distinction is
  * the whole job here: the body is 3.3 units wide but it touches the desk
- * through a 2.42-unit foot, so the dark contact core has to be the foot
+ * through a 2.86-unit foot, so the dark contact core has to be the foot
  * and the broad diffuse pool has to be the body occluding the room light
  * above it. Driving both from the body's silhouette — the obvious
  * shortcut — puts hard shadow under thin air at the left and right edges
  * and the monitor stops looking like it is standing on anything.
+ *
+ * ONE PER MACHINE
+ * ---------------
+ * Each unit gets its own instance, placed under its own feet and rotated
+ * with it, because a shadow that does not turn when the object turns is
+ * the fastest way to make a rendered object look pasted on. The second
+ * unit's is weaker and broader — further from the key light, smaller,
+ * and with more air between it and the viewer, so its contact reads
+ * softer. Two quads, no shadow map, still no depth pass.
  *
  * The quad's own boundary is masked to zero well before its edge, so there
  * is no rectangle to see however the scene is framed. That matters more
@@ -96,8 +105,20 @@ const FRAG = /* glsl */ `
 
 export default function ContactShadow({
   materialRef,
+  position = [0, 0, 0],
+  rotationY = 0,
+  scale = 1,
+  strength = 1,
+  softness = 1,
 }: {
   materialRef?: MutableRefObject<THREE.ShaderMaterial | null>;
+  position?: [number, number, number];
+  rotationY?: number;
+  scale?: number;
+  /** Multiplier on the pool's density. */
+  strength?: number;
+  /** Multiplier on the blur radii. >1 = further away, softer contact. */
+  softness?: number;
 }) {
   const geometry = useMemo(() => new THREE.PlaneGeometry(HALF_W * 2, HALF_D * 2), []);
 
@@ -112,14 +133,14 @@ export default function ContactShadow({
           uColor: { value: new THREE.Color(PALETTE.shadow) },
           uHalf: { value: new THREE.Vector2(HALF_W, HALF_D) },
           uFoot: { value: new THREE.Vector2(FOOT_W, FOOT_D) },
-          uCoreBlur: { value: 0.22 },
+          uCoreBlur: { value: 0.22 * softness },
           // A heavy object's pool is tighter and darker than a light one's.
-          uPoolBlur: { value: 0.66 },
-          uStrength: { value: 0.32 },
+          uPoolBlur: { value: 0.66 * softness },
+          uStrength: { value: 0.32 * strength },
           uLift: { value: 0 },
         },
       }),
-    [],
+    [strength, softness],
   );
 
   useEffect(() => {
@@ -132,12 +153,14 @@ export default function ContactShadow({
   }, [geometry, material, materialRef]);
 
   return (
-    <mesh
-      geometry={geometry}
-      material={material}
-      position={[OFFSET_X, GROUND_Y, OFFSET_Z]}
-      rotation={[-Math.PI / 2, 0, 0]}
-      renderOrder={-1}
-    />
+    <group position={position} rotation={[0, rotationY, 0]} scale={scale}>
+      <mesh
+        geometry={geometry}
+        material={material}
+        position={[OFFSET_X, GROUND_Y, OFFSET_Z]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        renderOrder={-1}
+      />
+    </group>
   );
 }

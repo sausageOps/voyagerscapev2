@@ -67,6 +67,11 @@ export const PALETTE = {
 
   /* ---- contact shadow ---- */
   shadow: "#4a4236",
+
+  /** The page behind the canvas. Not used as a fill — the canvas is
+   *  transparent — but as the target colour distant units are tinted
+   *  toward, which is what atmospheric perspective actually does. */
+  page: "#f5f0e8",
 } as const;
 
 export type TallyState = "idle" | "rec" | "wait" | "play" | "err";

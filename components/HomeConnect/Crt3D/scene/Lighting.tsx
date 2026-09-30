@@ -1,11 +1,10 @@
 "use client";
 
-import { forwardRef, useEffect } from "react";
+import { useEffect } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import { PALETTE } from "../materials/palette";
 import { createStudioEnvironment } from "../materials/env";
-import { FRONT_Z, SCREEN } from "../proportions";
 
 /**
  * STUDIO RIG
@@ -27,20 +26,25 @@ import { FRONT_Z, SCREEN } from "../proportions";
  * Shadow maps are off. The only shadow is the procedural contact plane,
  * which costs two triangles instead of a render target.
  *
- * THE SCREEN AS A LIGHT SOURCE
- * ----------------------------
- * `spill` is a point light sitting a little in front of the tube, driven
- * every frame from the mean luminance of the phosphor canvas. It is the
- * reason the inside of the bezel goes faintly cold blue when the maze is
- * on screen and warm when the driving sunset is. Without it the monitor is
- * an object with a bright picture stuck to it; with it, the picture is
- * lighting the room.
+ * THE SCREENS ARE NOT LIT FROM HERE
+ * ---------------------------------
+ * Each machine carries its own spill light, parented inside it — see
+ * CrtUnit. A screen glow that lives in the world rig stays put while the
+ * object it belongs to rotates, which reads instantly as a lamp in the
+ * room rather than as light coming off a picture.
  *
- * It is deliberately weak and has a short distance falloff — a CRT throws
- * very little light in a lit room, and overdriving this is the fastest way
- * to make the object look like it is on fire.
+ * TWO OBJECTS, ONE RIG
+ * --------------------
+ * The directional set below is deliberately shared and deliberately
+ * unchanged from the single-monitor version. Giving the second machine
+ * its own key would have been the obvious way to make it read as
+ * further away, and it would also have been the fastest way to destroy
+ * the illusion that both are standing in one room: two objects under one
+ * light have shadow terminators that agree, and that agreement is most
+ * of what the eye uses to place them on the same surface. The distance
+ * cue is carried by material tint and shadow density instead.
  */
-const Lighting = forwardRef<THREE.PointLight>(function Lighting(_props, spillRef) {
+export default function Lighting() {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
 
@@ -80,17 +84,6 @@ const Lighting = forwardRef<THREE.PointLight>(function Lighting(_props, spillRef
       {/* bounce */}
       <directionalLight color={PALETTE.lightGround} intensity={0.2} position={[-1.0, -3.5, 2.0]} />
 
-      {/* the tube, spilling onto its own bezel */}
-      <pointLight
-        ref={spillRef}
-        color={PALETTE.screenSpill}
-        intensity={0}
-        distance={3.2}
-        decay={2}
-        position={[0, SCREEN.cy, FRONT_Z + 0.42]}
-      />
     </>
   );
-});
-
-export default Lighting;
+}

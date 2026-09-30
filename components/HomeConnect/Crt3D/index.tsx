@@ -69,7 +69,7 @@ export default function Crt3D({
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [lost, setLost] = useState(false);
   const [pressed, setPressed] = useState(false);
-  const [label, setLabel] = useState("VOYAGE DRIVE");
+  const [labels, setLabels] = useState<[string, string]>(["VOYAGE DRIVE", "PIXEL ARCADE"]);
   const pressTimer = useRef<number | null>(null);
   const mobileInteracting = useRef(false);
 
@@ -92,6 +92,12 @@ export default function Crt3D({
   const channel = useRef(createChannelSignal());
 
   const onContextLost = useCallback(() => setLost(true), []);
+
+  /* The two machines report their channels together, so the live region
+     is announced once per change rather than twice. */
+  const onLabels = useCallback((primary: string, secondary: string) => {
+    setLabels((prev) => (prev[0] === primary && prev[1] === secondary ? prev : [primary, secondary]));
+  }, []);
 
   /* A tap stays on the existing button/click path. These pointer handlers
      only tell the rig to settle its touch-only drift, so a pointerdown
@@ -140,7 +146,7 @@ export default function Crt3D({
         onLostPointerCapture={onMobilePointerEnd}
         data-cursor="camera"
         data-cursor-label="Switch"
-        aria-label="Archive monitor — change channel"
+        aria-label="Archive monitors — change channel"
       >
         <div className={styles.canvas} ref={setContainer} aria-hidden="true">
           <div className={styles.gl}>
@@ -153,13 +159,14 @@ export default function Crt3D({
               pointer={pointer}
               channel={channel}
               mobileInteracting={mobileInteracting}
-              onLabel={setLabel}
+              onLabels={onLabels}
             />
           </div>
         </div>
       </button>
       <span className="vs-sr-only" aria-live="polite">
-        Archive monitor. Now showing: {label}. Device status: {STATUS_TEXT[status]}
+        Two archive monitors. Main screen: {labels[0]}. Second screen: {labels[1]}. Device
+        status: {STATUS_TEXT[status]}
       </span>
     </div>
   );

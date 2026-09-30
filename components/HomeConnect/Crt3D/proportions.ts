@@ -104,13 +104,30 @@ export const REAR_RINGS: readonly Ring[] = [
  * the badge and the power switch live. Getting this wrong is the fastest way
  * to make a CRT look like a television.
  */
+/**
+ * THE APERTURE
+ * ------------
+ * Opened up by 18% in area over the first pass — 2.46 x 1.86 became
+ * 2.672 x 2.020 — by taking the excess out of the bezel, not by scaling
+ * the picture past the moulding. Side bezel goes 0.42 -> 0.314, which on
+ * a 3.30-wide casting is 9.5% per side: still chunky, still period, and
+ * the number a real 17" monitor actually had. The screen grew; the
+ * monitor did not.
+ *
+ * The floor on this is the control strip. The aperture's bottom edge now
+ * sits 0.081 above the top of the control aperture at the strip's centre
+ * line, which is the tightest the two mouldings can be before the casting
+ * between them stops reading as structure.
+ *
+ * Still 4:3 (1.323), because it has to be.
+ */
 export const SCREEN = {
-  w: 2.46,
-  h: 1.86,
+  w: 2.672,
+  h: 2.02,
   /** Centre of the aperture, lifted above the casting centre. */
-  cy: 0.12,
+  cy: 0.102,
   /** Aperture corner radius. */
-  r: 0.3,
+  r: 0.325,
   /**
    * Superellipse exponent for the glass/aperture outline. 2 is an ellipse,
    * infinity is a rectangle; 5 lands on the softly-cornered "squircle" a
@@ -125,11 +142,13 @@ export const SCREEN = {
   wallDepth: 0.22,
   /**
    * Bulge of the tube face: how far the edge of the glass sits behind its
-   * apex. 0.19 on a 2.46-wide screen is about 1 part in 13 — matching the
-   * shallow spherical section of a late-90s tube. Flatter and the curvature
-   * stops reading; deeper and it becomes a fishbowl.
+   * apex. 0.205 on a 2.672-wide screen is about 1 part in 13 — matching
+   * the shallow spherical section of a late-90s tube, and scaled with the
+   * aperture so the curvature stays proportional rather than flattening
+   * out as the screen grew. Flatter and the curvature stops reading;
+   * deeper and it becomes a fishbowl.
    */
-  bulge: 0.19,
+  bulge: 0.205,
   /** Glass apex, measured from the front face. */
   glassZ: FRONT_Z - 0.075,
   /** Phosphor plane apex. Sits a real distance behind the glass so the two
@@ -267,20 +286,6 @@ const DEG = Math.PI / 180;
 
 export const STAGING = {
   /**
-   * Resting yaw. 22°.
-   *
-   * This number was set by rendering it, not by taste. At 13° the object
-   * read as a flat-fronted panel: the rear housing hid entirely inside the
-   * casting's silhouette and 2.8 units of carefully built depth were
-   * invisible. Solving the silhouette, the rear only clears the casting's
-   * back corner past about 17°, and it takes 22° for the margin to be
-   * worth anything — 0.2 world units, roughly 25px at hero size. Past
-   * about 26° the raster starts to key-stone badly enough to hurt the game
-   * content, which is the other half of the brief.
-   */
-  yaw: 22 * DEG,
-  roll: 0,
-  /**
    * Camera elevation, as a tangent. 0.36 is a 20° depression, and it was
    * arrived at by rendering the geometry, not by eye.
    *
@@ -291,23 +296,182 @@ export const STAGING = {
    * which is real cut geometry, could not be seen at all. The deck only
    * opens up past about 18°.
    *
-   * It also happens to be the honest angle: this is an object that sits
-   * on a desk, and you look down at it.
+   * It also happens to be the honest angle: this is a pair of objects
+   * that sit on a desk, and you look down at them.
    */
   lookDown: 0.36,
   targetY: -0.06,
   fov: 32,
   /**
-   * Fraction of the frame the object may occupy (NDC half-extent).
+   * Fraction of the frame the arrangement may occupy (NDC half-extent).
    *
    * Not 1.0, and not because of timidity: the fit is solved against the
    * resting pose swept through the motion range, and the bevels and the
    * glass rim antialias over a pixel or two beyond any vertex. 0.95 keeps
-   * the silhouette clear of the drawing surface's edge in every pose while
-   * still handing the monitor essentially the whole frame.
+   * the silhouette clear of the drawing surface's edge in every pose
+   * while still handing the monitors essentially the whole frame.
    */
-  fill: 0.95,
+  fill: 0.87,
 } as const;
+
+/* ---------------------------------------------------------- composition --- */
+
+export interface UnitSpec {
+  /** Uniform scale. Both units stand on the same desk — see `standY`. */
+  scale: number;
+  x: number;
+  z: number;
+  yaw: number;
+  roll: number;
+  /** Cursor response, as a fraction of the tuned MOTION values. */
+  motion: number;
+  /** Screen spill intensity multiplier. */
+  glow: number;
+  /** Contact shadow strength multiplier. */
+  shadow: number;
+  /** How far the shell is pulled toward the page cream, 0–1. */
+  dim: number;
+  /** Master brightness of this unit's raster. */
+  gain: number;
+}
+
+/**
+ * TWO MACHINES, NOT ONE MODEL TWICE
+ * =================================
+ *
+ * The composition is a desk with two monitors on it: a large one to the
+ * right, turned slightly inward, and a smaller one further back and left,
+ * turned inward harder. Everything that distinguishes them is here, in one
+ * place, so the difference can be tuned as a composition rather than
+ * hunted through the scene graph.
+ *
+ * WHY THE FACES TURN INWARD
+ * -------------------------
+ * Both units are rotated toward the centre of the frame, which means the
+ * viewer sees the OUTER flank of each. That is the arrangement two
+ * monitors actually end up in on a desk, and it does two things for free:
+ * it shows the deep tapered housing on both units without either of them
+ * being turned far, and it points the two screens at a shared vanishing
+ * area, which is what makes them read as one scene rather than two
+ * objects that happen to be in frame.
+ *
+ * THE YAW FIGURES ARE WORLD ANGLES, NOT APPARENT ONES
+ * ----------------------------------------------------
+ * Both units sit off the camera axis, so perspective is already rotating
+ * them before their own yaw is applied, and the two either add or cancel
+ * depending on the sign. What the eye reads is the angle between a
+ * screen's normal and the line back to the camera:
+ *
+ *   primary    −16° world, sits 6° right of axis  ->  10° apparent
+ *   secondary  +26° world, sits 9° left of axis   ->  17° apparent
+ *
+ * So the primary is restrained and the secondary is distinctly more
+ * side-on, which is the hierarchy the composition needs. Getting the
+ * SIGN wrong here is the expensive mistake: turning the primary the other
+ * way cancels the perspective, flattens it to 4° apparent, and — because
+ * the key light comes from the left — swings its face out of the key so
+ * the dominant object goes grey while the background one stays lit.
+ * Rendered side by side, that version reads as two grey boxes.
+ *
+ * DEPTH IS BUILT FROM FOUR CUES, NOT ONE
+ * --------------------------------------
+ * Scale (0.7), distance (2.1 units further back), brightness (dimmer
+ * shell, weaker glow) and shadow density. Any one of them alone reads as
+ * "the same object, smaller". Together they read as "further away".
+ *
+ * Both units stand on the ground plane. A uniformly scaled group shrinks
+ * toward its own origin, so a 0.7 unit would float 0.54 above the desk;
+ * `standY` puts its feet back down. The apparent vertical offset between
+ * the two then comes entirely from perspective — the further unit rides
+ * higher in frame because the camera is looking down — which is the
+ * honest way to get it.
+ */
+export interface Composition {
+  primary: UnitSpec;
+  secondary: UnitSpec;
+}
+
+const WIDE: Composition = {
+  primary: {
+    scale: 1,
+    x: 1.15,
+    z: 0.4,
+    yaw: -16 * DEG,
+    roll: 0,
+    motion: 1,
+    glow: 1,
+    shadow: 1,
+    dim: 0,
+    gain: 1,
+  },
+  secondary: {
+    scale: 0.7,
+    x: -1.82,
+    z: -2.4,
+    yaw: 26 * DEG,
+    /* A degree and a half of list. Nothing on a desk is ever quite
+       square, and at this size it is the difference between a second
+       machine and a second instance. */
+    roll: -1.5 * DEG,
+    motion: 0.46,
+    glow: 0.5,
+    shadow: 0.7,
+    dim: 0.11,
+    gain: 0.82,
+  },
+};
+
+/**
+ * NARROW — phones and small tablets.
+ *
+ * Not the wide composition scaled down. Side by side on a 360px screen,
+ * two monitors are each about 40% of the frame and the result is two
+ * small objects rather than one dominant one, which is the exact failure
+ * the brief warns about.
+ *
+ * So the arrangement is restacked rather than resized: the primary moves
+ * to the centre and keeps essentially all of the frame, and the secondary
+ * moves BEHIND it — further back, smaller, and pulled in toward the
+ * centre line so that only its left shoulder and a slice of its screen
+ * clear the primary's silhouette. It is still a whole machine, still
+ * running its own programme; you just see a corner of it, which is what a
+ * background object should do on a small screen.
+ *
+ * Keeping it inside the frame rather than letting it bleed off the edge
+ * is deliberate: a WebGL canvas cannot paint past its own element, so a
+ * bleeding object does not fade out, it gets sliced off with a hard
+ * vertical edge — which reads as a rendering bug, not as a crop.
+ */
+const NARROW: Composition = {
+  primary: {
+    ...WIDE.primary,
+    x: 0.42,
+    z: 0.3,
+    yaw: -13 * DEG,
+  },
+  secondary: {
+    ...WIDE.secondary,
+    scale: 0.6,
+    x: -1.78,
+    z: -2.7,
+    yaw: 22 * DEG,
+    /* `dim` is deliberately NOT overridden here even though less of the
+       unit is visible and more separation would help. It feeds the
+       material tint, materials are memoised on it, and changing it at the
+       breakpoint would rebuild both material sets — and with them the
+       units, their canvases and both channel schedules — in the middle of
+       a resize. A five percent colour difference is not worth resetting
+       the scene for. The narrow layout buys its separation from depth and
+       occlusion instead, which cost nothing. */
+    shadow: 0.6,
+  },
+};
+
+export const COMPOSITIONS = { wide: WIDE, narrow: NARROW } as const;
+export type LayoutName = keyof typeof COMPOSITIONS;
+
+/** Y offset that keeps a scaled unit's feet on the desk. */
+export const standY = (scale: number) => GROUND_Y * (1 - scale);
 
 /* The camera's fit envelope is NOT declared here. It is measured from the
    built meshes by `geometry/monitor.ts#hullPoints()` — declared boxes

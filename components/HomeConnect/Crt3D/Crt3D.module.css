@@ -1,21 +1,30 @@
 /* =========================================================
    CRT 3D — host layout
 
-   The width clamps below are DUPLICATED from CrtStatic.module.css rather
-   than shared. That is intentional: CrtStatic owns the fallback, and the
-   two must be able to change independently without either breaking the
-   other. Both boxes resolve to the same width and the same 360:330 aspect,
-   so swapping renderers causes no layout shift at any breakpoint.
+   The clamps below are DUPLICATED in CrtStatic.module.css rather than
+   shared. That is intentional: CrtStatic owns the fallback, and the two
+   must be able to change independently without either breaking the
+   other. Both boxes resolve to the same width and the same aspect at
+   every breakpoint, so swapping renderers causes no layout shift.
 
-   The monitor is a materially bigger object than the hero it replaces —
-   it has to be, because a CRT that does not command the composition just
-   reads as a small appliance. The layout box grew by roughly a third; the
-   surrounding grid, the statement and the cards are untouched.
+   SIZED BY HEIGHT, NOT WIDTH
+   --------------------------
+   The arrangement went from one monitor to two, so the box had to get
+   wider. It deliberately did NOT get taller.
+
+   The hero's statement sits at the top of the section with the object
+   box absolutely centred behind it, so the box's HEIGHT is what decides
+   how far up into the typography the monitors reach. Every clamp here is
+   therefore written as (aspect x the height the single-monitor version
+   resolved to) — 486px on a 1440x900 desktop, unchanged. The second
+   machine is bought entirely out of horizontal space, where the hero has
+   room, rather than out of the statement's, where it does not.
    ========================================================= */
 
 .stage {
   position: relative;
-  width: clamp(300px, min(36vw, 54svh), 540px);
+  /* 1.42 x the previous square box's height at every step. */
+  width: clamp(320px, min(52vw, 77svh), 770px);
 }
 
 .hit {
@@ -36,13 +45,10 @@
 .canvas {
   position: relative;
   width: 100%;
-  /* Square, and measured rather than guessed: the monitor's projected
-     silhouette at the staging yaw and elevation is 0.982 wide for every
-     1.0 tall, and the drawing surface below is inset equally on both
-     axes, so a 1:1 box is the one that leaves no dead margin on either
-     side. */
-  aspect-ratio: 1 / 1;
-  /* The object is lit from within the scene; the page canvas stays cream. */
+  /* Measured, not guessed: the two machines' combined silhouette at the
+     staging angles projects 1.42 wide for every 1.0 tall. */
+  aspect-ratio: 71 / 50;
+  /* The objects are lit from within the scene; the page stays cream. */
   background: transparent;
   overflow: visible;
 }
@@ -52,8 +58,8 @@
 
    A WebGL canvas cannot paint outside its own element, so `overflow:
    visible` on the parent buys nothing — extra drawing surface is the only
-   way to let the object approach the edges of its footprint. What is NOT
-   done here is growing `.stage`: that is the layout box, and it is
+   way to let the objects approach the edges of their footprint. What is
+   NOT done here is growing `.stage`: that is the layout box, and it is
    deliberately identical to the fallback's box at every breakpoint. Grow
    it and the hero jumps wider the moment the WebGL chunk finishes
    downloading and swaps out the fallback.
@@ -75,33 +81,38 @@
   touch-action: manipulation;
 }
 
-/* ---- responsive: mirrors the fallback exactly ---- */
-@media (max-width: 1023px) {
+/* ---- tablet: still the wide arrangement, relaxed ---- */
+@media (max-width: 1099px) {
   .stage {
-    width: clamp(288px, min(54vw, 46svh), 430px);
+    width: clamp(320px, min(86vw, 62svh), 640px);
   }
 }
 
-@media (max-width: 900px) and (orientation: portrait) {
+/* ---------------------------------------------------------------------
+   Narrow: the arrangement restacks rather than shrinking — the primary
+   moves to the centre and the secondary tucks in behind it. The box gets
+   correspondingly squarer. The 899px breakpoint MUST match the media
+   query in CrtCanvas that swaps the composition, or the box and its
+   contents disagree for one resize.
+   --------------------------------------------------------------------- */
+@media (max-width: 899px) {
+  .canvas {
+    aspect-ratio: 57 / 50;
+  }
+
   .stage {
-    width: min(76vw, 46svh, 440px);
+    width: min(96vw, 50svh, 470px);
   }
 }
 
 @media (max-width: 767px) {
   .stage {
-    width: min(90vw, 42svh, 400px);
+    width: min(96vw, 48svh, 440px);
   }
 }
 
 @media (max-width: 430px) {
   .stage {
-    width: min(92vw, 40svh, 372px);
-  }
-}
-
-@media (max-width: 380px) {
-  .stage {
-    width: min(94vw, 38svh, 344px);
+    width: min(97vw, 46svh, 410px);
   }
 }

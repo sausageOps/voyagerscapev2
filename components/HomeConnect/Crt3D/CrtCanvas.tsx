@@ -1,10 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MutableRefObject } from "react";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
-import { GROUND_Y, MOTION, SHADOW, STAGING } from "./proportions";
+import {
+  COMPOSITIONS,
+  GROUND_Y,
+  MOTION,
+  SHADOW,
+  STAGING,
+  standY,
+  type LayoutName,
+  type UnitSpec,
+} from "./proportions";
 import { hullPoints } from "./geometry/monitor";
 import type { TallyState } from "./materials/palette";
 import type { PointerField } from "./motion/usePointerField";
@@ -12,65 +21,82 @@ import type { ChannelSignal } from "./motion/channelSignal";
 import CrtRig from "./scene/CrtRig";
 
 /**
- * Points to fit: the object's measured silhouette envelope, swept across
- * its range of motion.
+ * Points to fit: both machines' measured silhouette envelopes, placed at
+ * their composition transforms and swept across their range of motion.
  *
- * Fitting only the resting pose is wrong the moment the object can turn: at
- * full yaw the silhouette is measurably wider than at rest, so a frame
- * packed to 98% clips a corner of the casting exactly when the cursor
+ * Fitting only the resting pose is wrong the moment the objects can turn:
+ * at full yaw a silhouette is measurably wider than at rest, so a frame
+ * packed to 95% clips a corner of the casting exactly when the cursor
  * reaches the edge of the screen. That is a bug no static screenshot can
  * catch, so the extremes of yaw, pitch and roll are swept alongside the
  * rest pose and the union is what the solver packs.
  *
- * Everything that TRANSLATES the object is folded in as slack; everything
+ * Everything that TRANSLATES a unit is folded in as slack; everything
  * that ROTATES it is swept. The envelope itself comes from
  * `hullPoints()` — measured from the built meshes, never declared. See
  * geometry/monitor.ts for why that distinction was worth the code.
+ *
+ * `framed` IS THE MOBILE COMPOSITION
+ * ----------------------------------
+ * On a narrow screen the two monitors side by side would each have to
+ * shrink to about 40% of the frame width, and the result is two small
+ * objects rather than one dominant one — precisely the failure mode the
+ * brief warns about. So on mobile the secondary is dropped from the fit.
+ * It is still fully rendered, still animating, still a real machine; it
+ * simply runs off the left edge of the drawing surface, which is exactly
+ * what a partially visible object behind the subject should do. The
+ * primary then gets the frame to itself and stays dominant.
  */
-function fitPoints(): THREE.Vector3[] {
+function fitPoints(specs: UnitSpec[]): THREE.Vector3[] {
   const slackY = MOTION.idle.floatY * 1.3 + MOTION.translate.y;
   const slackX = MOTION.translate.x;
-  const yawSweep = MOTION.maxYaw + MOTION.idle.driftYaw * 1.2;
-  const pitchSweep = MOTION.maxPitch + MOTION.idle.driftPitch * 1.2;
-  const rollSweep = MOTION.maxRoll + MOTION.idle.driftRoll * 1.2;
 
   const out: THREE.Vector3[] = [];
   const p = new THREE.Vector3();
 
-  /* The contact shadow does not rotate with the object — it lies on the
-     ground plane — but it does have to be inside the frame, so its inked
-     extent is added once, unswept. */
-  for (const sx of [-1, 1]) {
-    for (const sz of [-1, 1]) {
-      out.push(
-        new THREE.Vector3(sx * SHADOW.halfW * SHADOW.ink, GROUND_Y, sz * SHADOW.halfD * SHADOW.ink),
-      );
-    }
-  }
+  for (const spec of specs) {
+    const yawSweep = (MOTION.maxYaw + MOTION.idle.driftYaw * 1.2) * spec.motion;
+    const pitchSweep = (MOTION.maxPitch + MOTION.idle.driftPitch * 1.2) * spec.motion;
+    const rollSweep = (MOTION.maxRoll + MOTION.idle.driftRoll * 1.2) * spec.motion;
+    const baseY = standY(spec.scale);
 
-  for (const dy of [-yawSweep, 0, yawSweep]) {
-    for (const dp of [-pitchSweep, pitchSweep]) {
-      for (const dr of [-rollSweep, rollSweep]) {
-        const q = new THREE.Quaternion().setFromEuler(
-          new THREE.Euler(dp, STAGING.yaw + dy, STAGING.roll + dr),
-        );
-        for (const src of hullPoints()) {
-          p.copy(src).applyQuaternion(q);
-          out.push(
-            new THREE.Vector3(
-              p.x + Math.sign(p.x) * slackX,
-              p.y + Math.sign(p.y) * slackY,
-              p.z,
-            ),
+    for (const dy of [-yawSweep, 0, yawSweep]) {
+      for (const dp of [-pitchSweep, pitchSweep]) {
+        for (const dr of [-rollSweep, rollSweep]) {
+          const q = new THREE.Quaternion().setFromEuler(
+            new THREE.Euler(dp, spec.yaw + dy, spec.roll + dr),
           );
+          for (const src of hullPoints()) {
+            p.copy(src).multiplyScalar(spec.scale).applyQuaternion(q);
+            out.push(
+              new THREE.Vector3(
+                spec.x + p.x + Math.sign(p.x) * slackX * spec.motion,
+                baseY + p.y + Math.sign(p.y) * slackY * spec.motion,
+                spec.z + p.z,
+              ),
+            );
+          }
         }
+      }
+    }
+
+    /* The contact shadow does not rotate with the object — it lies on the
+       ground plane — but it does have to be inside the frame, so its
+       inked extent is added once, unswept. */
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        out.push(
+          new THREE.Vector3(
+            spec.x + sx * SHADOW.halfW * SHADOW.ink * spec.scale,
+            GROUND_Y,
+            spec.z + sz * SHADOW.halfD * SHADOW.ink * spec.scale,
+          ),
+        );
       }
     }
   }
   return out;
 }
-
-let CORNERS: THREE.Vector3[] | null = null;
 
 /**
  * FIT-TO-FRAME
@@ -107,7 +133,7 @@ let CORNERS: THREE.Vector3[] | null = null;
  * without changing the perspective that makes the object look the way it
  * does.
  */
-function FitCamera() {
+function FitCamera({ framed }: { framed: UnitSpec[] }) {
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
 
@@ -115,8 +141,7 @@ function FitCamera() {
     const cam = camera as THREE.PerspectiveCamera;
     if (!size.width || !size.height) return;
 
-    if (!CORNERS) CORNERS = fitPoints();
-    const corners = CORNERS;
+    const corners = fitPoints(framed);
 
     cam.aspect = size.width / size.height;
 
@@ -166,7 +191,7 @@ function FitCamera() {
     }
 
     place();
-  }, [camera, size]);
+  }, [camera, size, framed]);
 
   return null;
 }
@@ -215,7 +240,7 @@ interface CanvasProps {
   pointer: MutableRefObject<PointerField>;
   channel: MutableRefObject<ChannelSignal>;
   mobileInteracting: MutableRefObject<boolean>;
-  onLabel?: (label: string) => void;
+  onLabels?: (primary: string, secondary: string) => void;
 }
 
 export default function CrtCanvas({
@@ -227,12 +252,15 @@ export default function CrtCanvas({
   pointer,
   channel,
   mobileInteracting,
-  onLabel,
+  onLabels,
 }: CanvasProps) {
   const visible = useVisibility(container);
 
   /* Coarse pointers are the phones/tablets: hold the pixel ratio down. */
   const [maxDpr, setMaxDpr] = useState(1.75);
+  /* Narrow viewports restack the arrangement rather than shrinking it —
+     see COMPOSITIONS in proportions.ts. */
+  const [layout, setLayout] = useState<LayoutName>("wide");
   /* A touch-only primary pointer has no cursor path. Hybrid desktops keep
      their existing hover interaction even when they also have a screen. */
   const [touchIdle, setTouchIdle] = useState(false);
@@ -245,6 +273,20 @@ export default function CrtCanvas({
     setMaxDpr(coarse || small ? 1.5 : 1.75);
     setMotionScale(small ? 0.5 : coarse || tablet ? 0.7 : 1);
   }, []);
+
+  useEffect(() => {
+    const narrow = window.matchMedia("(max-width: 899px)");
+    const sync = () => setLayout(narrow.matches ? "narrow" : "wide");
+    sync();
+    narrow.addEventListener("change", sync);
+    return () => narrow.removeEventListener("change", sync);
+  }, []);
+
+  const composition = COMPOSITIONS[layout];
+  const framed = useMemo(
+    () => [composition.primary, composition.secondary],
+    [composition],
+  );
 
   useEffect(() => {
     const touchOnly = window.matchMedia("(hover: none) and (pointer: coarse)");
@@ -286,8 +328,9 @@ export default function CrtCanvas({
         );
       }}
     >
-      <FitCamera />
+      <FitCamera framed={framed} />
       <CrtRig
+        composition={composition}
         status={status}
         pressed={pressed}
         idle={!reducedMotion}
@@ -296,7 +339,7 @@ export default function CrtCanvas({
         motionScale={motionScale}
         mobileIdle={touchIdle && !reducedMotion}
         mobileInteracting={mobileInteracting}
-        onLabel={onLabel}
+        onLabels={onLabels}
       />
     </Canvas>
   );

@@ -646,3 +646,56 @@ export function hullPoints(): THREE.Vector3[] {
 
   return HULL;
 }
+
+/* ================================================================ monitor */
+
+export interface MonitorGeometry {
+  housing: HousingGeometry;
+  screen: ScreenGeometry;
+  controls: ControlsGeometry;
+  base: THREE.BufferGeometry;
+  /** Origin of the power switch group — the rig translates it when pressed. */
+  powerOrigin: [number, number, number];
+  /** Origin of the status lamp group. */
+  ledOrigin: [number, number, number];
+  dispose: () => void;
+}
+
+/**
+ * The whole machine's buffers, built once and SHARED BY BOTH UNITS.
+ *
+ * Two monitors on the page cost two sets of draw calls and one set of
+ * vertex buffers. Building per unit would have doubled about 35,000
+ * triangles of extrusion, lofting and boolean-ish shape work — roughly
+ * 25ms of main-thread time and a few megabytes of GPU memory — to produce
+ * two byte-identical copies. Everything that has to differ between the
+ * machines (materials, canvas, shader uniforms, shadow, lighting) is
+ * per-unit and cheap; the expensive thing is shared.
+ */
+export function buildMonitor(): MonitorGeometry {
+  const housing = buildHousing();
+  const screen = buildScreen();
+  const controls = buildControls();
+  const base = buildBase();
+
+  const all: THREE.BufferGeometry[] = [
+    ...Object.values(housing),
+    ...Object.values(screen),
+    ...Object.values(controls),
+    base,
+  ];
+
+  return {
+    housing,
+    screen,
+    controls,
+    base,
+    powerOrigin: [
+      CONTROLS.power.x,
+      CONTROLS.power.y,
+      FRONT_Z + CONTROLS.power.depth / 2 - 0.006,
+    ],
+    ledOrigin: [CONTROLS.led.x, CONTROLS.led.y, FRONT_Z - CONTROLS.led.depth],
+    dispose: () => all.forEach((g) => g.dispose()),
+  };
+}
