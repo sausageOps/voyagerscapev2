@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef } from "react";
 import type { MutableRefObject } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
+import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib.js";
 import { CONTROLS, MOTION, SCREEN, UNIT } from "../proportions";
 import { buildMonitor } from "../geometry/monitor";
 import { useCrtMaterials } from "../materials/materials";
 import { GLASS } from "../materials/glass";
-import { TALLY_COLOR, type TallyState } from "../materials/palette";
+import { PALETTE, TALLY_COLOR, type TallyState } from "../materials/palette";
 import { Spring, clamp, damp } from "../motion/spring";
 import type { PointerField } from "../motion/usePointerField";
 import type { ChannelSignal } from "../motion/channelSignal";
@@ -24,6 +25,84 @@ import Lighting from "./Lighting";
    that it reads as an object turning, not an object spinning. */
 const MOBILE_IDLE_YAW = (7 * Math.PI) / 180;
 const MOBILE_IDLE_SPEED = 0.16;
+
+/**
+ * MOVING STUDIO SOFTBOX
+ * =====================
+ *
+ * One large, soft RectAreaLight standing in the room in FRONT of the
+ * monitor — a broad key softbox, not a spotlight — that slides across the
+ * casing as the object turns under the cursor. It is what lets the cream
+ * shell "reveal its form" the way a premium 3D hero does: as the body
+ * yaws, a soft travelling highlight walks across the front, the bevels
+ * and the flanks, and as it pitches the highlight climbs the top deck or
+ * drops to the underside.
+ *
+ * WHY A RECTAREALIGHT, AND WHY IT DOES NOT GLOSS THE PLASTIC
+ * ---------------------------------------------------------
+ * An area source lights a matte dielectric as a broad, diffuse gradient
+ * rather than as a point highlight — the shell's roughness (0.58–0.78)
+ * smears any specular from it into a wide soft sheen, so the casing gains
+ * a moving light without ever gaining a chrome stripe. Its intensity is
+ * held low: it is a suggestion of a moving room light on top of the fixed
+ * studio rig, never the dominant key. It only affects the standard/physical
+ * shell materials — the tube face and glass are custom shaders, so the
+ * screen programmes are never touched by it.
+ *
+ * IT FOLLOWS, IT DOES NOT DRIVE
+ * -----------------------------
+ * The light carries NO motion state of its own. Its position and intensity
+ * are recomputed each frame from the SAME damped rotation springs that
+ * already move the body (`sp.yaw` / `sp.pitch`) plus the eased pointer
+ * proximity — see `driveStudioLight`. There is no second cursor listener
+ * and no second integrator, so the highlight is always exactly in step
+ * with the object's real orientation, at rest and in reduced-motion alike.
+ */
+const STUDIO = {
+  /** Resting position: broad, high and in front — a softbox over the desk. */
+  x: 0,
+  y: 3.1,
+  z: 5.6,
+  /** Point it looks at (slightly above centre, at the tube). */
+  aimY: 0.15,
+  /** How far the softbox travels with a full yaw / pitch of the body. The
+   *  body itself is also turning, so the APPARENT travel across the casing
+   *  is the sum of the two — enough to read the bevels, restrained enough
+   *  to stay a soft light rather than a sweep. */
+  travelX: 4.2,
+  travelY: 1.5,
+  /** Broad emitter — a large soft source, never a point. */
+  width: 7.2,
+  height: 5.0,
+  /** Resting intensity (always a little present) and the extra it gains as
+   *  the cursor approaches the object. Deliberately low so the broad soft
+   *  contribution never clips the cream to white under NoToneMapping —
+   *  matte and satin, never glossy. */
+  base: 1.15,
+  proxGain: 0.75,
+} as const;
+
+/**
+ * Slides the studio softbox to match the body's current orientation and
+ * the cursor's proximity. Reads only values that already exist — it adds
+ * no state and no second motion system.
+ */
+function driveStudioLight(
+  light: THREE.RectAreaLight,
+  yaw: number,
+  pitch: number,
+  prox: number,
+) {
+  const yawN = clamp(yaw / MOTION.maxYaw, -1, 1);
+  const pitchN = clamp(pitch / MOTION.maxPitch, -1, 1);
+  light.position.set(
+    STUDIO.x + yawN * STUDIO.travelX,
+    STUDIO.y - pitchN * STUDIO.travelY,
+    STUDIO.z,
+  );
+  light.lookAt(0, STUDIO.aimY, 0);
+  light.intensity = STUDIO.base + prox * STUDIO.proxGain;
+}
 
 interface RigProps {
   status: TallyState;
@@ -128,6 +207,13 @@ export default function CrtRig({
   const powerRef = useRef<THREE.Group | null>(null);
   const spillRef = useRef<THREE.PointLight | null>(null);
   const shadowMatRef = useRef<THREE.ShaderMaterial | null>(null);
+  const studioRef = useRef<THREE.RectAreaLight | null>(null);
+
+  /* RectAreaLight needs its BRDF lookup tables uploaded once before it can
+     light anything. Cheap, idempotent, no render target. */
+  useEffect(() => {
+    RectAreaLightUniformsLib.init();
+  }, []);
 
   const size = useThree((s) => s.size);
   const dpr = useThree((s) => s.viewport.dpr);
@@ -308,6 +394,9 @@ export default function CrtRig({
         shadowMatRef.current.uniforms.uLift.value = 0;
         shadowMatRef.current.uniforms.uYaw.value = sp.yaw.value;
       }
+      /* The softbox still follows the (reduced) cursor turn — it answers a
+         deliberate gesture rather than animating at the user. */
+      if (studioRef.current) driveStudioLight(studioRef.current, sp.yaw.value, sp.pitch.value, prox);
       if (powerRef.current) powerRef.current.position.z = CONTROLS.power.depth / 2 - 0.006;
       return;
     }
@@ -356,11 +445,30 @@ export default function CrtRig({
        catching a highlight. Modulated around the authored resting value
        so it cannot compound frame after frame. */
     materials.glass.uniforms.uReflect.value = GLASS.reflect + prox * GLASS.reflectHover;
+
+    /* The moving studio softbox: slid across the casing from the body's
+       actual damped orientation, so the highlight is always in step with
+       the turn rather than running its own clock. */
+    if (studioRef.current) {
+      driveStudioLight(studioRef.current, sp.yaw.value, sp.pitch.value, prox);
+    }
   });
 
   return (
     <>
       <Lighting />
+      {/* The moving studio softbox. World-space sibling of the object, so it
+          reads as a room light the monitor turns under; position/intensity
+          are driven every frame in useFrame from the existing springs.
+          Casts no shadow — the contact-shadow system is untouched. */}
+      <rectAreaLight
+        ref={studioRef}
+        color={PALETTE.lightKey}
+        intensity={STUDIO.base}
+        width={STUDIO.width}
+        height={STUDIO.height}
+        position={[STUDIO.x, STUDIO.y, STUDIO.z]}
+      />
       <ContactShadow materialRef={shadowMatRef} />
       <group ref={objectRef}>
         <CrtUnit
