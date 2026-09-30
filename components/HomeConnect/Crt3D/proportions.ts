@@ -49,7 +49,7 @@ export const FRONT_Z = BODY.d / 2 + 0.9;
 /** Where the front casting parts from the rear housing. */
 export const CASTING_BACK_Z = FRONT_Z - BODY.d;
 /** Rear-most point of the housing. */
-export const REAR_Z = CASTING_BACK_Z - 1.9;
+export const REAR_Z = CASTING_BACK_Z - 2.25;
 
 export const TOP_Y = BODY.h / 2;
 export const BOTTOM_Y = -BODY.h / 2;
@@ -79,21 +79,66 @@ export interface Ring {
 }
 
 /**
- * The first two rings are very nearly full section — 0.995 and 0.985 —
- * and that is load-bearing, not a detail. At 0.988/0.955 the top of the
- * rear shell sat 50mm below the top of the casting, and at the staging
- * camera's 12.7° downward view the casting's own top edge then occluded
- * the entire top deck: the ventilation was modelled, correct, and
- * completely invisible. Real sets are flush at the join for exactly the
- * same reason they look flush — the tube is still at full width there.
- * The taper belongs behind the funnel, which is where it now starts.
+ * THE REAR HOUSING
+ * ================
+ *
+ * WHY THE OLD PROFILE MADE A 2.4-DEEP OBJECT LOOK FLAT
+ * ----------------------------------------------------
+ * It tapered at almost exactly the rate the cursor rotation swings it
+ * outward, so it cancelled itself out of the silhouette.
+ *
+ *   shell taper, front to back   dx/dz = 0.365
+ *   exposure at 20 deg of yaw    tan(20 deg) = 0.364
+ *
+ * Those two numbers being equal is the whole bug. Rotating the monitor
+ * to look down its side moved every point on the rear shell outward by
+ * the same amount the shell itself had already moved inward, so the
+ * back of the object stayed permanently hidden behind the front
+ * casting's own outline. The most the rear ever cleared the casting was
+ * 0.14 units — about 29 pixels — and it did so as a flat sliver rather
+ * than a curved flank. The object had 2.4 units of depth that the
+ * viewer could never see, at precisely the angle the interaction exists
+ * to reach.
+ *
+ * It was also wrong as a shape. This taper belongs to a television
+ * funnel; a desktop monitor's shell is a big rounded box that narrows
+ * modestly and keeps its sharp draw for the last few centimetres around
+ * the tube neck. A real 17" set is about 400mm wide and 420mm deep —
+ * ours was 3.37 by 2.37, a depth-to-width ratio of 0.70 against a real
+ * 1.05.
+ *
+ * THE NEW PROFILE
+ * ---------------
+ * Seven rings instead of five, and the taper over the main body is now
+ * 0.117 — a third of tan(20 deg), so the shell stays clear of the
+ * casting's outline through the entire rotation range and reads as a
+ * curved flank that grows as you turn it. The hard draw is confined to
+ * the last three rings, where a real tube's funnel is. Depth goes to
+ * 2.72, a ratio of 0.81.
+ *
+ * Ring 0 is 0.995 rather than 1.0, which is a deliberate 8mm shoulder:
+ * the front casting stands very slightly proud of the rear shell all
+ * the way round, which is how the two mouldings actually met and is
+ * what gives the join a shadow line instead of a seam drawn on a
+ * continuous surface.
+ *
+ * Corner radii grow toward the back. A moulding this size could not
+ * hold a tight radius as the section shrank, and the growing radius is
+ * most of what stops the tail reading as a cardboard box.
+ *
+ * None of this moves the front silhouette, and none of it changes the
+ * camera fit: the widest projected point in every pose is still the
+ * front casting's own corner, which is untouched. Verified by solving
+ * the camera before and after.
  */
 export const REAR_RINGS: readonly Ring[] = [
-  { z: CASTING_BACK_Z + 0.001, sx: 1.0, sy: 1.0, y: 0, r: 0.19 },
-  { z: CASTING_BACK_Z - 0.55, sx: 0.99, sy: 0.99, y: 0.004, r: 0.23 },
-  { z: CASTING_BACK_Z - 1.15, sx: 0.87, sy: 0.83, y: 0.03, r: 0.3 },
-  { z: CASTING_BACK_Z - 1.62, sx: 0.68, sy: 0.6, y: 0.055, r: 0.28 },
-  { z: REAR_Z, sx: 0.58, sy: 0.5, y: 0.06, r: 0.22 },
+  { z: CASTING_BACK_Z + 0.001, sx: 0.995, sy: 0.995, y: 0, r: 0.19 },
+  { z: CASTING_BACK_Z - 0.45, sx: 0.975, sy: 0.962, y: 0.004, r: 0.22 },
+  { z: CASTING_BACK_Z - 0.95, sx: 0.94, sy: 0.915, y: 0.012, r: 0.26 },
+  { z: CASTING_BACK_Z - 1.45, sx: 0.885, sy: 0.845, y: 0.026, r: 0.29 },
+  { z: CASTING_BACK_Z - 1.85, sx: 0.805, sy: 0.745, y: 0.042, r: 0.31 },
+  { z: CASTING_BACK_Z - 2.1, sx: 0.7, sy: 0.625, y: 0.055, r: 0.28 },
+  { z: REAR_Z, sx: 0.59, sy: 0.5, y: 0.062, r: 0.24 },
 ] as const;
 
 /* -------------------------------------------------------------- screen ---- */
@@ -249,7 +294,11 @@ export const VENTS = {
  * look like it can be tilted; without it the body appears glued to a tray.
  */
 export const BASE = {
-  neck: { w: 1.34, d: 1.24, h: 0.13, r: 0.28 },
+  /* The neck runs deeper than it used to — 1.24 to 1.82 — because the
+     housing behind it got longer and a short collar under a long body
+     reads as a monitor balanced on a peg. It stays inside the foot's
+     plan, so the contact shadow and the camera fit are untouched. */
+  neck: { w: 1.34, d: 1.82, h: 0.13, r: 0.28 },
   /* Wider and deeper than the first pass. At 2.42 x 2.06 the foot
      measured 2.50 across against a 3.37-wide body, and the monitor read
      as balancing on a coaster; the overhang has to be an overhang, not a
