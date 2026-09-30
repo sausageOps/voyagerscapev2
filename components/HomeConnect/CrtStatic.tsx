@@ -60,7 +60,7 @@ function Monitor({ channel, status }: { channel: number; status: CrtStatus }) {
   /* The programme artwork keeps its own authored 196 x 148 field and is
      mapped into the aperture by a nested <svg> viewBox. Re-tuning forty
      hand-placed coordinates to fit a bezel change is exactly the kind of
-     edit that silently breaks one scene out of four; letting SVG do the
+     edit that silently breaks one scene out of five; letting SVG do the
      mapping cannot. The two boxes are 1.324 and 1.325 to one, so nothing
      stretches. */
   const sx = 82;
@@ -168,23 +168,72 @@ function Monitor({ channel, status }: { channel: number; status: CrtStatus }) {
             </g>
           )}
 
+          {/* VOYAGE ARCADE — the geometric shooter, held on one frame.
+              Same palette and the same shapes the canvas programme draws,
+              so the fallback is the same broadcast at lower fidelity. */}
           {channel === 2 && (
             <g shapeRendering="crispEdges">
-              <rect x={sx} y={sy} width={sw} height={sh} fill="#2c2450" />
-              <rect x={sx} y={sy + 96} width={sw} height={sh - 96} fill="#4a3a2c" />
-              <rect x={sx} y={sy + 96} width={sw} height="5" fill="#6b5540" />
-              <rect x={sx + 26} y={sy + 66} width="52" height="9" fill="#7a6248" />
-              <rect x={sx + 120} y={sy + 50} width="46" height="9" fill="#7a6248" />
-              <rect x={sx + 42} y={sy + 44} width="18" height="18" fill="#f2c48a" />
-              <rect x={sx + 46} y={sy + 62} width="10" height="14" fill="#4f7fd8" />
-              <rect x={sx + 132} y={sy + 34} width="14" height="14" fill="#f2d76a" />
-              <rect x={sx + 100} y={sy + 82} width="20" height="14" fill="#6fbf7f" />
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <rect key={i} x={sx + 10 + i * 16} y={sy + 14} width="5" height="5" fill="#cfc6f0" />
+              <rect x={sx} y={sy} width={sw} height="54" fill="#120b2e" />
+              <rect x={sx} y={sy + 54} width={sw} height="40" fill="#1b0f3c" />
+              <rect x={sx} y={sy + 94} width={sw} height={sh - 94} fill="#241247" />
+              {/* the banded planet, half off the left edge */}
+              {[0, 1, 2, 3].map((i) => (
+                <rect
+                  key={i}
+                  x={sx}
+                  y={sy + 8 + i * 13}
+                  width={26 - Math.abs(i - 1.5) * 6}
+                  height="13"
+                  fill={["#3c2f6e", "#4a3a86", "#5d4aa0", "#7a5fb8"][i]}
+                />
+              ))}
+              {/* stars, on a fixed lattice */}
+              {[
+                [22, 16], [54, 8], [86, 30], [140, 12], [168, 44],
+                [40, 74], [112, 66], [180, 92], [64, 108], [150, 120],
+              ].map(([x, y]) => (
+                <rect key={`${x}-${y}`} x={sx + x} y={sy + y} width="3" height="3" fill="#8f86c8" />
+              ))}
+              {/* enemies: a diamond and an orb */}
+              <path
+                d={`M${sx + 66} ${sy + 24} L${sx + 80} ${sy + 38} L${sx + 66} ${sy + 52} L${sx + 52} ${sy + 38} Z`}
+                fill="#ff6ad5"
+              />
+              <rect x={sx + 60} y={sy + 32} width="12" height="12" fill="#ffd6f2" />
+              <rect x={sx + 128} y={sy + 22} width="26" height="20" fill="#ffc14d" />
+              <rect x={sx + 134} y={sy + 16} width="14" height="6" fill="#ffc14d" />
+              <rect x={sx + 136} y={sy + 28} width="10" height="8" fill="#fff0c0" />
+              {/* shots */}
+              <rect x={sx + 96} y={sy + 64} width="4" height="12" fill="#fff6a0" />
+              <rect x={sx + 96} y={sy + 90} width="4" height="12" fill="#fff6a0" />
+              {/* the player */}
+              <path
+                d={`M${sx + 98} ${sy + 104} L${sx + 116} ${sy + 126} L${sx + 80} ${sy + 126} Z`}
+                fill="#2f7fd0"
+              />
+              <rect x={sx + 92} y={sy + 112} width="12" height="10" fill="#8fd4ff" />
+              <rect x={sx + 96} y={sy + 114} width="4" height="6" fill="#ffe36a" />
+              <rect x={sx + 94} y={sy + 126} width="8" height="6" fill="#ff9f4a" />
+              {/* HUD strips */}
+              <rect x={sx} y={sy} width={sw} height="12" fill="#0b0820" />
+              <rect x={sx} y={sy + 12} width={sw} height="2" fill="#4b4380" />
+              <rect x={sx + 8} y={sy + 3} width="46" height="6" fill="#8f86c8" />
+              <rect x={sx + 140} y={sy + 3} width="48" height="6" fill="#57e0ff" />
+              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <rect
+                  key={i}
+                  x={sx + 60 + i * 10}
+                  y={sy + 134}
+                  width="7"
+                  height="7"
+                  fill={i < 5 ? "#57e0ff" : "#241247"}
+                />
               ))}
             </g>
           )}
 
+          {/* SIGNAL LOST — the engineering page: bars, a flatlined
+              timebase, the geometry under test and a dead carrier. */}
           {channel === 3 && (
             <g>
               {["#c0c0c0", "#c0c000", "#00c0c0", "#00c000", "#c000c0", "#c00000", "#0000c0"].map(
@@ -194,35 +243,165 @@ function Monitor({ channel, status }: { channel: number; status: CrtStatus }) {
                     x={sx + (i * sw) / 7}
                     y={sy}
                     width={sw / 7 + 1}
-                    height="30"
+                    height="22"
                     fill={c}
                   />
                 ),
               )}
-              <g stroke="#96ebff" strokeWidth="1.2" fill="none" opacity="0.85">
-                <path
-                  d={`M${sx + 98} ${sy + 52} L${sx + 134} ${sy + 82} L${sx + 98} ${sy + 112} L${sx + 62} ${sy + 82} Z`}
+              {Array.from({ length: 10 }, (_, i) => (
+                <rect
+                  key={i}
+                  x={sx + (i * sw) / 10}
+                  y={sy + 22}
+                  width={sw / 10 + 1}
+                  height="6"
+                  fill={`rgb(${Math.round((i / 9) * 210)},${Math.round((i / 9) * 210)},${Math.round((i / 9) * 210)})`}
                 />
-                <path d={`M${sx + 98} ${sy + 52} L${sx + 98} ${sy + 112}`} />
-                <path d={`M${sx + 62} ${sy + 82} L${sx + 134} ${sy + 82}`} />
+              ))}
+
+              {/* timebase panel, holding a dead trace */}
+              <rect x={sx + 4} y={sy + 34} width="92" height="52" fill="#070c10" />
+              <rect
+                x={sx + 4.5}
+                y={sy + 34.5}
+                width="91"
+                height="51"
+                fill="none"
+                stroke="#1e3a44"
+                strokeWidth="1"
+              />
+              <rect x={sx + 5} y={sy + 35} width="90" height="7" fill="#0e1c22" />
+              <rect x={sx + 8} y={sy + 37} width="34" height="3" fill="#5f97a8" />
+              <path
+                d={`M${sx + 8} ${sy + 62} l8 0 l3 -5 l4 10 l3 -5 l10 0 l4 -3 l3 6 l5 -3 l12 0 l4 4 l3 -4 l16 0`}
+                fill="none"
+                stroke="#3f6a78"
+                strokeWidth="1.2"
+              />
+
+              {/* geometry under test */}
+              <rect x={sx + 100} y={sy + 34} width="92" height="52" fill="#070c10" />
+              <rect
+                x={sx + 100.5}
+                y={sy + 34.5}
+                width="91"
+                height="51"
+                fill="none"
+                stroke="#1e3a44"
+                strokeWidth="1"
+              />
+              <rect x={sx + 101} y={sy + 35} width="90" height="7" fill="#0e1c22" />
+              <rect x={sx + 104} y={sy + 37} width="38" height="3" fill="#5f97a8" />
+              <g stroke="#96ebff" strokeWidth="1.1" fill="none" opacity="0.85">
                 <path
-                  d={`M${sx + 78} ${sy + 66} L${sx + 118} ${sy + 66} L${sx + 118} ${sy + 98} L${sx + 78} ${sy + 98} Z`}
+                  d={`M${sx + 146} ${sy + 46} L${sx + 168} ${sy + 64} L${sx + 146} ${sy + 82} L${sx + 124} ${sy + 64} Z`}
+                />
+                <path d={`M${sx + 146} ${sy + 46} L${sx + 146} ${sy + 82}`} />
+                <path d={`M${sx + 124} ${sy + 64} L${sx + 168} ${sy + 64}`} />
+                <path
+                  d={`M${sx + 134} ${sy + 55} L${sx + 158} ${sy + 55} L${sx + 158} ${sy + 74} L${sx + 134} ${sy + 74} Z`}
                 />
               </g>
-              <g fill="#16242c">
-                <rect x={sx + 14} y={sy + 122} width={sw - 28} height="7" />
-              </g>
+
+              {/* readout rows, as rules rather than type */}
+              {[0, 1, 2].map((i) => (
+                <g key={i}>
+                  <rect x={sx + 6} y={sy + 94 + i * 8} width="20" height="3" fill="#2f5b68" />
+                  <rect x={sx + 32} y={sy + 94 + i * 8} width="46" height="3" fill="#7fb8cc" />
+                  <rect x={sx + 104} y={sy + 94 + i * 8} width="22" height="3" fill="#2f5b68" />
+                  <rect x={sx + 132} y={sy + 94 + i * 8} width="52" height="3" fill="#7fb8cc" />
+                </g>
+              ))}
+
+              {/* the verdict banner */}
+              <rect x={sx + 6} y={sy + 118} width={sw - 12} height="16" fill="#0d1418" />
+              <rect
+                x={sx + 6.5}
+                y={sy + 118.5}
+                width={sw - 13}
+                height="15"
+                fill="none"
+                stroke="#ff8a6a"
+                strokeWidth="1"
+              />
+              <rect x={sx + 12} y={sy + 123} width="62" height="7" fill="#ff9f7a" />
+              <rect x={sx + 138} y={sy + 124} width="44" height="4" fill="#4b6a76" />
+
+              {/* carrier meter, pinned at almost nothing */}
+              <rect x={sx + 6} y={sy + 138} width={sw - 12} height="6" fill="#16242c" />
               {Array.from({ length: 14 }, (_, i) => (
                 <rect
                   key={i}
-                  x={sx + 16 + i * 12}
-                  y={sy + 123}
-                  width="9"
-                  height="5"
-                  fill={i > 10 ? "#ffd06a" : "#6fe0a4"}
-                  opacity={i < 9 ? 1 : 0.25}
+                  x={sx + 8 + i * 13}
+                  y={sy + 139}
+                  width="10"
+                  height="4"
+                  fill={i < 2 ? "#6fe0a4" : "#1b2c33"}
                 />
               ))}
+            </g>
+          )}
+
+          {/* PIXEL ARCHIVE — the quiet one: one held frame of the
+              tile-grid adventure, on its own limited palette. */}
+          {channel === 4 && (
+            <g shapeRendering="crispEdges">
+              <rect x={sx} y={sy} width={sw} height="30" fill="#1d1b3a" />
+              <rect x={sx} y={sy + 30} width={sw} height="20" fill="#43305c" />
+              <rect x={sx} y={sy + 50} width={sw} height="10" fill="#8a4f6a" />
+              {/* moon and stars */}
+              <rect x={sx + 148} y={sy + 8} width="14" height="14" fill="#f2e2b0" />
+              <rect x={sx + 145} y={sy + 11} width="20" height="8" fill="#f2e2b0" />
+              {[[18, 10], [42, 20], [70, 6], [96, 24], [120, 14], [174, 26]].map(([x, y]) => (
+                <rect key={`${x}-${y}`} x={sx + x} y={sy + y} width="3" height="3" fill="#f2e2b0" />
+              ))}
+              {/* ridge, water, bank */}
+              <rect x={sx} y={sy + 48} width={sw} height="14" fill="#2b2350" />
+              <rect x={sx} y={sy + 62} width={sw} height="20" fill="#2f4a7a" />
+              <rect x={sx} y={sy + 62} width={sw} height="3" fill="#6fa8d8" />
+              {[10, 38, 66, 104, 132, 170].map((x) => (
+                <rect key={x} x={sx + x} y={sy + 70} width="6" height="3" fill="#6fa8d8" />
+              ))}
+              <rect x={sx} y={sy + 82} width={sw} height={sh - 82} fill="#3f6b4a" />
+              <rect x={sx} y={sy + 82} width={sw} height="3" fill="#2a4a35" />
+              {/* the stone marker */}
+              <rect x={sx + 18} y={sy + 50} width="20" height="36" fill="#9a9a8a" />
+              <rect x={sx + 15} y={sy + 46} width="26" height="5" fill="#9a9a8a" />
+              <rect x={sx + 22} y={sy + 58} width="5" height="8" fill="#171326" />
+              <rect x={sx + 31} y={sy + 58} width="5" height="8" fill="#ffd15c" />
+              <rect x={sx + 23} y={sy + 72} width="10" height="14" fill="#171326" />
+              {/* two pines */}
+              {[62, 112].map((x) => (
+                <g key={x}>
+                  <rect x={sx + x} y={sy + 58} width="16" height="6" fill="#2f6b3f" />
+                  <rect x={sx + x + 3} y={sy + 52} width="10" height="6" fill="#2f6b3f" />
+                  <rect x={sx + x + 5} y={sy + 46} width="6" height="6" fill="#4a8f52" />
+                  <rect x={sx + x + 6} y={sy + 64} width="4" height="8" fill="#4a3524" />
+                </g>
+              ))}
+              {/* the road and the walker */}
+              <rect x={sx} y={sy + 100} width={sw} height="16" fill="#8a7a5a" />
+              <rect x={sx} y={sy + 100} width={sw} height="3" fill="#5f533a" />
+              <rect x={sx} y={sy + 113} width={sw} height="3" fill="#5f533a" />
+              <rect x={sx + 86} y={sy + 96} width="12" height="6" fill="#f0c090" />
+              <rect x={sx + 84} y={sy + 102} width="16" height="14" fill="#c85a4a" />
+              <rect x={sx + 102} y={sy + 104} width="4" height="8" fill="#ffd15c" />
+              {/* the text box */}
+              <rect x={sx + 8} y={sy + 120} width={sw - 16} height="24" fill="#171326" />
+              <rect
+                x={sx + 8.5}
+                y={sy + 120.5}
+                width={sw - 17}
+                height="23"
+                fill="none"
+                stroke="#9a9a8a"
+                strokeWidth="1"
+              />
+              <rect x={sx + 13} y={sy + 124} width="16" height="16" fill="#c85a4a" />
+              <rect x={sx + 13} y={sy + 124} width="16" height="5" fill="#f0c090" />
+              <rect x={sx + 36} y={sy + 126} width="118" height="4" fill="#e8e2d0" />
+              <rect x={sx + 36} y={sy + 135} width="96" height="3" fill="#a8a292" />
+              <rect x={sx + 168} y={sy + 136} width="5" height="5" fill="#ffd15c" />
             </g>
           )}
 
@@ -309,7 +488,7 @@ function Monitor({ channel, status }: { channel: number; status: CrtStatus }) {
  * Reduced motion is not reduced function. The monitor is still a button,
  * still carries the cursor contract, and still changes channel when
  * clicked — the picture simply cuts to the next programme instead of
- * rolling through a sync disturbance to get there. Four frames, one piece
+ * rolling through a sync disturbance to get there. Five frames, one piece
  * of state, no timers.
  */
 export default function CrtStatic({
@@ -321,11 +500,17 @@ export default function CrtStatic({
   const [channel, setChannel] = useState(0);
 
   const onClick = useCallback(() => {
-    setChannel((c) => (c + 1) % 4);
+    setChannel((c) => (c + 1) % 5);
     onShutter();
   }, [onShutter]);
 
-  const label = ["VOYAGE DRIVE", "ARCHIVE MAZE", "PIXEL ARCADE", "VOYAGE ARCHIVE"][channel];
+  const label = [
+    "VOYAGE DRIVE",
+    "ARCHIVE MAZE",
+    "VOYAGE ARCADE",
+    "SIGNAL LOST",
+    "PIXEL ARCHIVE",
+  ][channel];
 
   return (
     <div className={styles.stage} data-status={status}>
