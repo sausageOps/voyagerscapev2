@@ -90,83 +90,126 @@ function apertureRing(a: number, b: number, seg = 88): THREE.Vector2[] {
 }
 
 /**
- * THE FASCIA GAP
- * ==============
+ * THE CONTROL PANEL
+ * =================
  *
- * Most of what a late-90s set needs was already moulded in: the power
- * switch with its raised surround, four recessed adjustment buttons in
- * their own aperture, the status lamp behind a lens, top-deck and flank
- * ventilation cut as real slots over real cavities, and the groove where
- * the front casting meets the rear housing.
+ * One moulded fascia, solved rather than placed.
  *
- * What was missing is a speaker grille and an analogue trim control, and
- * there is exactly one place on the face they can honestly go: the gap
- * between the badge plinths and the control strip, which measures 0.600
- * wide. Everything below is dimensioned to fit inside it with clear air
- * on both sides — nothing moves, nothing is removed, and the face does
- * not get busier than a real one was.
+ * WHAT WAS WRONG
+ * --------------
+ * The controls had accumulated as four unrelated treatments sitting on
+ * the same bezel: a recessed strip holding four buttons, a separate
+ * aperture holding a speaker grille, a raised collar holding a trim
+ * wheel, and a raised surround holding the power switch. Each was
+ * individually plausible and together they read as parts bought from
+ * four different suppliers and glued on. A real set has ONE fascia —
+ * one aperture, one insert, one tool.
  *
- *   plinths        .. -0.439
- *   [ grille ]     -0.414 .. -0.128
- *   [ wheel  ]     -0.104 .. +0.096
- *   control strip  +0.121 ..
+ * So there is now a single recessed panel with a single cavity behind
+ * it, and everything lives in it: the speaker slots are cut through the
+ * insert itself rather than through a neighbouring plate, and the power
+ * switch stands proud of the same insert as the adjustment buttons
+ * instead of having its own raised surround.
  *
- * The three gaps come out at 0.025 / 0.024 / 0.025 — even, and measured
- * from the built bounding boxes rather than from these constants, since
- * the bevels add about 0.008 a side that the nominal widths do not show.
+ * SOLVED, NOT EYEBALLED
+ * ---------------------
+ * `solvePanel()` computes every x from one right-hand datum, one
+ * padding and one gutter. Nothing below is a literal position. That is
+ * the difference between a layout that is aligned and a layout that
+ * merely looks aligned in the one pose it was tuned in: with four
+ * independent hand-placed constants, any later change to a button width
+ * silently breaks the spacing, and the failure is a couple of pixels —
+ * invisible in review and obvious in the composition.
+ *
+ * The right-hand datum is where the old strip already ended, so the
+ * panel's outer edge does not move.
+ *
+ * NO TRIM WHEEL
+ * -------------
+ * The wheel added in the previous step is gone. This brief defers
+ * brightness/contrast knobs to a later step and gives a layout without
+ * one, and it was also the single least coherent thing on the fascia: a
+ * cylinder in a raised collar between two rectangular recessed groups.
+ * Its material went with it.
  */
-const FASCIA = {
-  grille: {
-    x: -0.271,
-    y: -1.175,
-    w: 0.27,
-    h: 0.2,
-    r: 0.035,
-    recess: 0.03,
-    /** Seven slots. Vertical, matching the language of the deck vents —
-     *  the same tool cut both, so they should not look like two ideas. */
-    count: 7,
-    slotW: 0.022,
-    slotH: 0.125,
-    pitch: 0.032,
-    depth: 0.022,
-  },
-  /**
-   * A single trim wheel, not a pair.
-   *
-   * Two would have fitted only by shrinking both below the size at which
-   * a knob reads as a knob — at hero scale this one is about 20px across
-   * and a pair would be 13px each, which is a dark dot. The brief's own
-   * rule applies: physical realism over completeness.
-   *
-   * It is built as a raised collar with the wheel inside it rather than
-   * as a hole through the casting, deliberately. Every hole in this
-   * profile is bevelled by the same 0.035 as the outer silhouette, and
-   * on an aperture this small that chamfer is wider than the gap between
-   * the wheel and its edge — the knob ends up lost in a countersink. A
-   * raised collar is also how the power switch next to it is built, so
-   * the two read as parts from the same mould.
-   */
-  knob: {
-    x: -0.004,
-    y: -1.175,
-    /** Outer collar. */
-    collarR: 0.1,
-    collarDepth: 0.05,
-    /** The wheel itself. */
-    r: 0.068,
-    depth: 0.055,
-    /** Faceted rather than smooth: at 20px a knurled rim cannot resolve
-     *  as ridges, but a slightly polygonal silhouette reads as grip. */
-    facets: 14,
-  },
+const PANEL = {
+  /** Shared baseline. Every control centres on this line. */
+  y: -1.175,
+  h: 0.215,
+  r: 0.05,
+  /** How far the insert sits below the casting face. */
+  recess: 0.035,
+  /* The insert is a PANEL, not a block. At 0.11 the speaker slots
+     became 0.11-deep tunnels through a 0.010 opening — you saw only
+     their lit side walls, so they read as bright scratches rather than
+     as openings. The depth of the feature comes from the cavity behind
+     it, not from the thickness of the part in front. */
+  depth: 0.05,
+  /** Inner margin, and the space between control groups. */
+  pad: 0.07,
+  gutter: 0.07,
+  /** Right-hand datum — unchanged from the strip it replaces. */
+  right: 1.459,
+
+  /* Six wider slots rather than seven narrow ones. A slot has to stay
+     wider than twice the bevel that rounds it or the chamfer closes it
+     up, and at hero scale it also has to clear about three device
+     pixels to read as an opening at all. */
+  grille: { w: 0.26, count: 6, slotW: 0.03, slotH: 0.125, pitch: 0.042 },
+  /** Four identical secondary buttons: CH-, CH+, VOL-, VOL+. */
+  button: { count: 4, w: 0.125, h: 0.072, depth: 0.036, pitch: 0.165, proud: 0.019 },
+  led: { r: 0.03, depth: 0.02 },
+  /** Larger than the secondaries, and standing further out of the
+   *  panel — but still below the casting face, so it reads as recessed
+   *  hardware rather than a button stuck on the front. */
+  power: { w: 0.185, h: 0.105, depth: 0.044, proud: 0.029 },
 } as const;
 
-/** A circular hole, for cutting into an extruded profile. */
-function circleHole(cx: number, cy: number, r: number): THREE.Path {
-  const p = new THREE.Path();
-  p.absarc(cx, cy, r, 0, Math.PI * 2, true);
-  return p;
+export interface PanelLayout {
+  left: number;
+  width: number;
+  centre: number;
+  grilleX: number;
+  buttonX: number[];
+  ledX: number;
+  powerX: number;
+}
+
+/**
+ * Lays the fascia out from the right-hand datum leftwards, in one pass.
+ *
+ * Group order, left to right: speaker slots, the four adjustment
+ * buttons, the status lamp, the power switch. The switch is at the
+ * outboard end and the lamp immediately inboard of it, which is where
+ * almost every monitor of the period put them — you find the power
+ * button by running a thumb in from the corner of the bezel.
+ */
+export function solvePanel(): PanelLayout {
+  const g = PANEL.gutter;
+  const buttonsW = (PANEL.button.count - 1) * PANEL.button.pitch + PANEL.button.w;
+  const ledW = PANEL.led.r * 2;
+
+  const content =
+    PANEL.grille.w + g + buttonsW + g + ledW + g * 0.6 + PANEL.power.w;
+  const width = content + PANEL.pad * 2;
+  const left = PANEL.right - width;
+
+  let x = left + PANEL.pad;
+  const grilleX = x + PANEL.grille.w / 2;
+  x += PANEL.grille.w + g;
+
+  const buttonX: number[] = [];
+  for (let i = 0; i < PANEL.button.count; i += 1) {
+    buttonX.push(x + PANEL.button.w / 2 + i * PANEL.button.pitch);
+  }
+  x += buttonsW + g;
+
+  const ledX = x + PANEL.led.r;
+  x += ledW + g * 0.6;
+
+  const powerX = x + PANEL.power.w / 2;
+
+  return { left, width, centre: left + width / 2, grilleX, buttonX, ledX, powerX };
 }
 
 /** A rounded-rectangle hole, for cutting into an extruded profile. */
@@ -278,12 +321,11 @@ export function buildHousing(): HousingGeometry {
      silhouette through both apertures. */
   const face = roundedRectShape(BODY.w, BODY.h, BODY.rTop, BODY.rBot);
   face.holes.push(aperturePath(apertureHalfW + stepOut, apertureHalfH + stepOut));
-  face.holes.push(rectHole(CONTROLS.strip.x, CONTROLS.strip.y, CONTROLS.strip.w, CONTROLS.strip.h, CONTROLS.strip.r));
-  /* The speaker aperture, cut in the same operation as the screen and the
-     control strip so all three share one continuous moulding line. */
-  face.holes.push(
-    rectHole(FASCIA.grille.x, FASCIA.grille.y, FASCIA.grille.w, FASCIA.grille.h, FASCIA.grille.r),
-  );
+  /* ONE control aperture, not three. The screen opening and the fascia
+     are the only holes in the casting, and both are cut in the same
+     operation so they share a continuous moulding line. */
+  const pl = solvePanel();
+  face.holes.push(rectHole(pl.centre, PANEL.y, pl.width, PANEL.h, PANEL.r));
   const casting = extrudeCentred(face, BODY.d, BODY.bevel, 20);
   bake(casting, [0, 0, FRONT_Z - BODY.d / 2]);
 
@@ -487,17 +529,14 @@ export function buildScreen(): ScreenGeometry {
 /* =============================================================== controls */
 
 export interface ControlsGeometry {
-  wells: THREE.BufferGeometry;
-  /** Speaker grille: the slotted panel, and the cavity behind it. */
-  grille: THREE.BufferGeometry;
-  grilleFloor: THREE.BufferGeometry;
-  /** Trim wheel: its raised collar, the wheel, and the indicator notch. */
-  knobCollar: THREE.BufferGeometry;
-  knob: THREE.BufferGeometry;
-  knobMark: THREE.BufferGeometry;
+  /** The recessed fascia insert, with the speaker slots cut through it. */
+  panel: THREE.BufferGeometry;
+  /** The cavity behind the slots. */
+  panelFloor: THREE.BufferGeometry;
+  /** Four identical secondary buttons. */
   buttons: THREE.BufferGeometry;
+  /** Raised blank badge plinths, lower left. Not part of the panel. */
   badges: THREE.BufferGeometry;
-  surround: THREE.BufferGeometry;
   power: THREE.BufferGeometry;
   ledLens: THREE.BufferGeometry;
   led: THREE.BufferGeometry;
@@ -522,127 +561,91 @@ export interface ControlsGeometry {
  */
 export function buildControls(): ControlsGeometry {
   const c = CONTROLS;
+  const L = solvePanel();
+
+  /* ---------------------------------------------------- the insert ---
+     One moulding. The speaker slots are holes in THIS part, not in a
+     neighbouring plate dropped alongside it — that is the whole
+     difference between a fascia and a collection of fittings, and it
+     costs nothing because the extruder cuts holes anyway.
+
+     A small bevel: a slot is far narrower than the casting's own 0.035
+     edge bevel, which would close it up entirely. */
+  const panelShape = roundedRectShape(L.width, PANEL.h, PANEL.r, PANEL.r);
+  const gr = PANEL.grille;
+  const rowW = (gr.count - 1) * gr.pitch + gr.slotW;
+  for (let i = 0; i < gr.count; i += 1) {
+    const sx = L.grilleX - L.centre - rowW / 2 + gr.slotW / 2 + i * gr.pitch;
+    panelShape.holes.push(rectHole(sx, 0, gr.slotW, gr.slotH, gr.slotW * 0.45));
+  }
+  const panel = extrudeCentred(panelShape, PANEL.depth, 0.004, 8);
+  bake(panel, [L.centre, PANEL.y, FRONT_Z - PANEL.recess - PANEL.depth / 2]);
+
+  const panelFloor = slab(gr.w + 0.06, gr.slotH + 0.05, 0.02, 0.02, 0.006);
+  bake(panelFloor, [L.grilleX, PANEL.y, FRONT_Z - PANEL.recess - PANEL.depth - 0.006]);
+
+  /* ------------------------------------------------- the buttons -----
+     Four identical parts on one pitch. Identical is the point: the
+     previous set gave the middle two extra travel as a "most used"
+     detail, which at this size reads as two of them being slightly
+     broken. A moulded panel's buttons all come out of the same cavity. */
   const buttons: THREE.BufferGeometry[] = [];
-  const badges: THREE.BufferGeometry[] = [];
-
-  /* The moulded panel dropped into the casting's control aperture. Sized
-     to overlap the opening, so the join is a shadow line rather than a
-     gap you can see the tube through. */
-  const insert = slab(
-    c.strip.w + 0.045,
-    c.strip.h + 0.045,
-    0.12,
-    c.strip.r + 0.02,
-    0.012,
-  );
-  bake(insert, [c.strip.x, c.strip.y, FRONT_Z - c.strip.recess - 0.06]);
-
-  /* The button row, standing proud of the recessed panel but still below
-     the casting's own face — which is what "recessed button" means, and
-     what you feel for with a thumb without looking. */
-  const rowW = (c.count - 1) * c.pitch + c.btnW;
-  for (let i = 0; i < c.count; i += 1) {
-    const bx = c.x - rowW / 2 + c.btnW / 2 + i * c.pitch;
-    const btn = extrudeCentred(
-      roundedRectShape(c.btnW, c.btnH, 0.018, 0.018),
-      c.btnDepth,
-      0.009,
-      6,
-    );
-    /* The middle two sit a hair proud — they are the ones you press most,
-       and the moulding on real sets reflects that. */
-    const proud = i === 1 || i === 2 ? 0.007 : 0;
-    const capTop = FRONT_Z - 0.014 + proud;
-    bake(btn, [bx, c.y, capTop - c.btnDepth / 2]);
+  const b = PANEL.button;
+  for (const bx of L.buttonX) {
+    const btn = extrudeCentred(roundedRectShape(b.w, b.h, 0.018, 0.018), b.depth, 0.009, 6);
+    bake(btn, [bx, PANEL.y, FRONT_Z - PANEL.recess + b.proud - b.depth / 2]);
     buttons.push(btn);
   }
 
-  /* Badge plinths, lower left: raised blank panels, not debossed ones.
-     Raised is both more authentic — it is where the logo badge and the
-     model sticker were applied — and the only version that can be seen,
-     since a deboss on a solid casting would need its own aperture. */
+  /* --------------------------------------------------- power switch --
+     Larger than the secondaries and standing further out of the panel,
+     but still behind the casting face. No separate raised surround any
+     more: it belongs to the fascia now, not beside it. */
+  const p = PANEL.power;
+  const powerBtn = extrudeCentred(
+    roundedRectShape(p.w, p.h, 0.03, 0.03),
+    p.depth,
+    0.012,
+    8,
+  );
+
+  /* The one symbol on the object, and it is geometry rather than a
+     texture — a shallow raised ring with a gap, which is what it was on
+     the real mouldings. */
+  const ring = new THREE.TorusGeometry(0.03, 0.0065, 6, 18, Math.PI * 1.55);
+  ring.rotateZ(Math.PI * 0.72);
+  bake(ring, [0, 0, p.depth / 2 - 0.002]);
+  const bar = new THREE.BoxGeometry(0.0075, 0.03, 0.012);
+  bake(bar, [0, 0.013, p.depth / 2 - 0.002]);
+
+  /* ------------------------------------------------------- badges ----
+     Left of the fascia and deliberately not part of it: these are where
+     the logo and the model sticker went, and on a real set they are a
+     different feature of the moulding, not a control. */
+  const badges: THREE.BufferGeometry[] = [];
   const badge = slab(c.badge.w, c.badge.h, 0.03, 0.014, 0.008);
   bake(badge, [c.badge.x, c.badge.y, FRONT_Z - 0.004]);
   badges.push(badge);
-
   const plate = slab(0.19, 0.075, 0.026, 0.012, 0.006);
   bake(plate, [c.badge.x + c.badge.w / 2 + 0.17, c.badge.y, FRONT_Z - 0.006]);
   badges.push(plate);
 
-  /* Power switch: a raised surround standing out of the recessed panel,
-     with the switch cap inside it. */
-  const p = c.power;
-  const surround = slab(p.w + 0.08, p.h + 0.08, 0.075, 0.042, 0.016);
-  bake(surround, [p.x, p.y, FRONT_Z - 0.03]);
-
-  const powerBtn = extrudeCentred(roundedRectShape(p.w, p.h, 0.028, 0.028), p.depth, 0.012, 8);
-
-  /* A moulded power crescent on the cap: the one symbol on the object, and
-     it is geometry, not a texture — a shallow raised ring with a gap, which
-     is what it was on the real mouldings. */
-  const ring = new THREE.TorusGeometry(0.032, 0.007, 6, 18, Math.PI * 1.55);
-  ring.rotateZ(Math.PI * 0.72);
-  bake(ring, [0, 0, p.depth / 2 - 0.002]);
-  const bar = new THREE.BoxGeometry(0.008, 0.032, 0.012);
-  bake(bar, [0, 0.014, p.depth / 2 - 0.002]);
-
-  /* ------------------------------------------------- speaker grille --
-     Same construction as the control strip and the deck vents: a panel
-     with real slots cut through it, recessed into an aperture, over a
-     dark cavity. Painting dark stripes on the bezel would cost nothing
-     and read as a decal from the first degree of rotation. */
-  const gr = FASCIA.grille;
-  const grille = slottedPlate(
-    gr.count,
-    gr.slotW,
-    gr.slotH,
-    gr.pitch,
-    gr.depth,
-    (gr.w - ((gr.count - 1) * gr.pitch + gr.slotW)) / 2,
-  );
-  bake(grille, [gr.x, gr.y, FRONT_Z - gr.recess - gr.depth / 2]);
-
-  const grilleFloor = slab(gr.w - 0.02, gr.h - 0.02, 0.02, gr.r, 0.006);
-  bake(grilleFloor, [gr.x, gr.y, FRONT_Z - gr.recess - gr.depth - 0.03]);
-
-  /* ---------------------------------------------------- trim wheel --- */
-  const kb = FASCIA.knob;
-
-  /* Raised collar, tapering slightly, so the wheel sits down inside it
-     rather than on top of it. */
-  const collar = new THREE.CylinderGeometry(kb.collarR, kb.collarR * 0.97, kb.collarDepth, 28);
-  collar.rotateX(Math.PI / 2);
-  bake(collar, [kb.x, kb.y, FRONT_Z - kb.collarDepth / 2 + 0.014]);
-
-  /* The wheel. Faceted rim, and a chamfered cap so the top edge catches
-     the key light the way a moulded knob does. */
-  const knobBody = new THREE.CylinderGeometry(kb.r, kb.r * 0.94, kb.depth, kb.facets);
-  knobBody.rotateX(Math.PI / 2);
-  const knobCap = new THREE.CylinderGeometry(kb.r * 0.82, kb.r, 0.012, kb.facets);
-  knobCap.rotateX(Math.PI / 2);
-  bake(knobCap, [0, 0, -kb.depth / 2 - 0.006]);
-  const knob = merge([knobBody, knobCap]);
-  bake(knob, [kb.x, kb.y, FRONT_Z - kb.depth / 2 + 0.026]);
-
-  /* Indicator notch, off the vertical as if the control sits a little
-     below its midpoint — a knob at dead 12 o'clock looks like a render
-     default rather than a thing somebody set. */
-  const knobMark = slab(0.012, kb.r * 0.62, 0.014, 0.005, 0.003);
-  bake(knobMark, [kb.x - 0.019, kb.y + 0.026, FRONT_Z + 0.021], [0, 0, 0.42]);
-
   return {
-    wells: insert,
-    grille,
-    grilleFloor,
-    knobCollar: collar,
-    knob,
-    knobMark,
+    panel,
+    panelFloor,
     buttons: merge(buttons),
     badges: merge(badges),
-    surround,
     power: merge([powerBtn, ring, bar]),
-    ledLens: new THREE.SphereGeometry(c.led.r * 1.15, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55),
-    led: new THREE.CylinderGeometry(c.led.r, c.led.r, 0.02, 16),
+    ledLens: new THREE.SphereGeometry(
+      PANEL.led.r * 1.15,
+      16,
+      12,
+      0,
+      Math.PI * 2,
+      0,
+      Math.PI * 0.55,
+    ),
+    led: new THREE.CylinderGeometry(PANEL.led.r, PANEL.led.r, 0.02, 16),
   };
 }
 
@@ -729,7 +732,7 @@ export function hullPoints(): THREE.Vector3[] {
     [housing.seam, null],
     [housing.ventPlate, null],
     [controls.badges, null],
-    [controls.surround, null],
+    [controls.panel, null],
     [
       controls.power,
       new THREE.Vector3(
@@ -828,6 +831,7 @@ export interface MonitorGeometry {
  * per-unit and cheap; the expensive thing is shared.
  */
 export function buildMonitor(): MonitorGeometry {
+  const panelLayout = solvePanel();
   const housing = buildHousing();
   const screen = buildScreen();
   const controls = buildControls();
@@ -845,12 +849,15 @@ export function buildMonitor(): MonitorGeometry {
     screen,
     controls,
     base,
+    /* Both taken from the solved layout, so the rig's press animation
+       and the lamp follow the fascia automatically if it is ever
+       re-proportioned. The rig itself is untouched. */
     powerOrigin: [
-      CONTROLS.power.x,
-      CONTROLS.power.y,
-      FRONT_Z + CONTROLS.power.depth / 2 - 0.006,
+      panelLayout.powerX,
+      PANEL.y,
+      FRONT_Z - PANEL.recess + PANEL.power.proud - PANEL.power.depth / 2,
     ],
-    ledOrigin: [CONTROLS.led.x, CONTROLS.led.y, FRONT_Z - CONTROLS.led.depth],
+    ledOrigin: [panelLayout.ledX, PANEL.y, FRONT_Z - PANEL.recess - PANEL.led.depth + 0.028],
     dispose: () => all.forEach((g) => g.dispose()),
   };
 }

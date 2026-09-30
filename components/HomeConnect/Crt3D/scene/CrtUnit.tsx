@@ -81,22 +81,22 @@ const CrtUnit = forwardRef<THREE.Group, {
         />
       </group>
 
-      {/* -------------------------------------------------- controls --- */}
-      <mesh geometry={controls.wells} material={materials.buttonWell} />
-
-      {/* Speaker grille: slotted panel over a dark cavity, recessed into
-          its own aperture in the casting. */}
-      <mesh geometry={controls.grilleFloor} material={materials.vent} />
-      <mesh geometry={controls.grille} material={materials.bezel} />
-
-      {/* Analogue trim wheel, in a raised collar moulded from the same
-          plastic as the bezel. */}
-      <mesh geometry={controls.knobCollar} material={materials.bezel} />
-      <mesh geometry={controls.knob} material={materials.knob} />
-      <mesh geometry={controls.knobMark} material={materials.buttonWell} />
+      {/* --------------------------------------------- control panel ---
+          One recessed fascia insert with the speaker slots cut through
+          it, one dark cavity behind, and everything else standing proud
+          of the same part. The insert is moulded in the rear shell's
+          slightly deeper cream rather than a new tone — it is a
+          different shot of the same resin, which is what a recessed
+          fascia actually was. */}
+      <mesh geometry={controls.panelFloor} material={materials.vent} />
+      <mesh geometry={controls.panel} material={materials.shellRear} />
       <mesh geometry={controls.buttons} material={materials.button} />
-      <mesh geometry={controls.badges} material={materials.buttonWell} />
-      <mesh geometry={controls.surround} material={materials.bezel} />
+      {/* The badge plinths are RAISED, so they are moulded in the bezel's
+          own plastic. They had been painted in `buttonWell` — the colour
+          reserved for the inside of a recess — which made two blank tabs
+          stick out of the fascia in a tone that only makes sense in a
+          hole. Same geometry, correct material. */}
+      <mesh geometry={controls.badges} material={materials.bezel} />
 
       <group ref={powerRef} position={geometry.powerOrigin}>
         <mesh geometry={controls.power} material={materials.buttonPower} />

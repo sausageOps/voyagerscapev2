@@ -54,10 +54,6 @@ export const PALETTE = {
   button: "#3a3a40",
   buttonPower: "#2e2e34",
   buttonWell: "#9d917a",
-  /** The analogue trim wheel. Softer and browner than the charcoal
-   *  buttons: these were a different moulding in a different, slightly
-   *  rubbery resin, and on a real set the two never quite matched. */
-  knob: "#4a463f",
 
   /* ---- glass and tube ---- */
   glass: "#0c1014",
