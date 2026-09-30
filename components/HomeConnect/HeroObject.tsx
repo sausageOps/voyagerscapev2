@@ -4,25 +4,22 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { RecordingState, AudioPlaybackState } from "@/lib/ui-store";
 import { prefersReducedMotion } from "@/lib/motion";
-import Camera from "./Camera";
+import CreativeMachineFallback from "./CreativeMachineFallback";
 
 /**
  * HERO OBJECT — renderer selector
  * ===============================
  *
- * Decides between the WebGL camera and the original SVG camera, and is the
- * only place that decision is made.
- *
+ * Decides between the WebGL Creative Machine and its matching SVG fallback.
  * The gate runs BEFORE the dynamic import, so a device that fails it never
- * downloads three.js at all — the chunk is requested from inside the render
+ * downloads Three.js at all — the chunk is requested from inside the render
  * path, not at module scope.
  *
- * `components/HomeConnect/Camera.tsx` is untouched and remains the production
- * fallback. It is never removed: it covers no-WebGL, reduced motion, data
- * saver, very low-end hardware, the server render, and runtime context loss.
+ * The fallback carries the same invented machine silhouette for no-WebGL,
+ * reduced-motion, data-saver, server-render and runtime-context-loss paths.
  */
 
-const Camera3D = dynamic(() => import("./Camera3D"), {
+const CreativeMachine3D = dynamic(() => import("./CreativeMachine3D"), {
   ssr: false, // R3F cannot server-render
   loading: () => null,
 });
@@ -92,9 +89,9 @@ export default function HeroObject(props: HeroObjectProps) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const fallback = <Camera {...props} />;
+  const fallback = <CreativeMachineFallback {...props} />;
 
   if (!use3D) return fallback;
 
-  return <Camera3D {...props} fallback={fallback} />;
+  return <CreativeMachine3D {...props} fallback={fallback} />;
 }

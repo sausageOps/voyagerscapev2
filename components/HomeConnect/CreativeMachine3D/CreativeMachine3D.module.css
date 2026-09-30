@@ -1,0 +1,69 @@
+/* The drawing surface is intentionally larger than the layout box so the
+   machine can feel like the hero, while the surrounding page retains its
+   existing placement and transition architecture. */
+.stage {
+  position: relative;
+  width: clamp(292px, min(36vw, 55svh), 500px);
+}
+
+.canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 340 / 320;
+  overflow: visible;
+}
+
+.gl {
+  position: absolute;
+  inset: -5% -6%;
+}
+
+.gl canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+  pointer-events: none;
+}
+
+/* This is a real, generously-sized control target aligned with the lavender
+   dial in the scene. It keeps keyboard and touch activation native while the
+   canvas remains purely visual. */
+.control {
+  position: absolute;
+  z-index: 2;
+  top: 54%;
+  right: 6.5%;
+  width: 31%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.control:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 5px;
+}
+
+@media (max-width: 1099px) {
+  .stage {
+    width: clamp(280px, min(56vw, 49svh), 440px);
+  }
+}
+
+@media (max-width: 767px) {
+  .stage {
+    width: min(92vw, 43svh, 356px);
+  }
+  .control {
+    top: 54%;
+    right: 5.5%;
+    width: 33%;
+  }
+}
+
+@media (max-width: 380px) {
+  .stage {
+    width: min(92vw, 40svh, 332px);
+  }
+}

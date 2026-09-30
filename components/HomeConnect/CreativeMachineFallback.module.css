@@ -1,0 +1,142 @@
+.stage {
+  position: relative;
+  width: clamp(292px, min(36vw, 55svh), 500px);
+}
+
+.hit {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border-radius: 30px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hit:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 7px;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.machine {
+  transform-origin: 180px 174px;
+  animation: machineIdle 6.5s var(--e-inout) infinite;
+}
+
+.dial {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.3s var(--e-out);
+}
+
+.hit:hover .dial {
+  transform: translateY(-2px) rotate(9deg);
+}
+
+.pulse .dial {
+  animation: dialPulse 0.72s var(--e-out) both;
+}
+
+.arm {
+  transform-box: fill-box;
+  transform-origin: 230px 77px;
+}
+
+.pulse .arm {
+  animation: armPulse 0.72s var(--e-out) both;
+}
+
+.signal,
+.screenGlow {
+  transition: fill var(--t-fast) var(--e-out), opacity var(--t-fast) var(--e-out);
+}
+
+.stage[data-status="rec"] .signal,
+.stage[data-status="rec"] .screenGlow {
+  fill: #e2557f;
+}
+
+.stage[data-status="play"] .signal,
+.stage[data-status="play"] .screenGlow {
+  fill: #48c896;
+}
+
+.stage[data-status="wait"] .signal,
+.stage[data-status="wait"] .screenGlow {
+  fill: #e0b34a;
+}
+
+.stage[data-status="err"] .signal,
+.stage[data-status="err"] .screenGlow {
+  fill: #d2453f;
+}
+
+.stage[data-status="rec"] .signal,
+.stage[data-status="wait"] .signal {
+  animation: statusBlink 0.9s ease-in-out infinite;
+}
+
+.pulse .screenGlow {
+  animation: screenPulse 0.72s var(--e-out) both;
+}
+
+@keyframes machineIdle {
+  0%,
+  100% { transform: translateY(0) rotate(-0.25deg); }
+  50% { transform: translateY(-5px) rotate(0.35deg); }
+}
+
+@keyframes dialPulse {
+  0% { transform: translateY(0) rotate(0); }
+  16% { transform: translateY(4px) rotate(14deg); }
+  48% { transform: translateY(-1px) rotate(42deg); }
+  100% { transform: translateY(0) rotate(34deg); }
+}
+
+@keyframes armPulse {
+  0%, 100% { transform: rotate(0); }
+  35% { transform: rotate(-7deg); }
+}
+
+@keyframes screenPulse {
+  0%, 100% { opacity: 0.34; }
+  22% { opacity: 0.95; }
+}
+
+@keyframes statusBlink {
+  50% { opacity: 0.3; }
+}
+
+@media (max-width: 1099px) {
+  .stage { width: clamp(280px, min(56vw, 49svh), 440px); }
+}
+
+@media (max-width: 767px) {
+  .stage { width: min(92vw, 43svh, 356px); }
+}
+
+@media (max-width: 380px) {
+  .stage { width: min(92vw, 40svh, 332px); }
+}
+
+@media (hover: none) {
+  .hit:hover .dial { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .machine,
+  .pulse .dial,
+  .pulse .arm,
+  .pulse .screenGlow,
+  .stage[data-status="rec"] .signal,
+  .stage[data-status="wait"] .signal {
+    animation: none;
+  }
+  .dial,
+  .signal,
+  .screenGlow { transition: none; }
+}
