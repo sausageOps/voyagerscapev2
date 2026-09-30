@@ -3,7 +3,8 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { PALETTE } from "./palette";
-import { createPlasticRoughness } from "./env";
+import { createPlasticRoughness, createRoomReflection } from "./env";
+import { createGlassMaterial } from "./glass";
 
 /**
  * MATERIAL SET
@@ -35,7 +36,7 @@ export interface CrtMaterials {
   buttonPower: THREE.MeshStandardMaterial;
   buttonWell: THREE.MeshStandardMaterial;
   tubeMask: THREE.MeshStandardMaterial;
-  glass: THREE.MeshPhysicalMaterial;
+  glass: THREE.ShaderMaterial;
   led: THREE.MeshStandardMaterial;
   ledLens: THREE.MeshPhysicalMaterial;
   dispose: () => void;
@@ -260,40 +261,14 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
      * except the emissive screen, which is already being composited by
      * blending.
      */
-    /**
-     * THE TUBE FACE.
-     *
-     * Two reflective layers, not one: a slightly rough base for the bulk
-     * of the glass and a mirror-smooth clearcoat over it. Real CRT glass
-     * is thick, and its front surface returns a sharper reflection than
-     * its body does — a single roughness value gives you one or the
-     * other, and the two together are what stops the highlight looking
-     * either painted on (too sharp) or foggy (too soft).
-     *
-     * `ior` is raised above the 1.5 default: CRT faceplates were leaded
-     * glass, which really is nearer 1.6, and the higher index widens the
-     * Fresnel response so the rim goes properly reflective as the monitor
-     * turns away from you. That rim brightening as it rotates is the
-     * single clearest signal that the surface is curved rather than flat.
-     *
-     * Opacity stays low. The environment is pushed instead, because the
-     * reflection has to read while the game behind it stays legible — the
-     * one thing that must not be traded away.
-     */
-    const glass = new THREE.MeshPhysicalMaterial({
-      color: tint(PALETTE.glass, 0.35),
-      roughness: 0.075,
-      metalness: 0.0,
-      clearcoat: 1,
-      clearcoatRoughness: 0.02,
-      ior: 1.58,
-      reflectivity: 0.62,
-      envMapIntensity: env(2.9),
-      transparent: true,
-      opacity: 0.19,
-      depthWrite: false,
-      side: THREE.FrontSide,
-    });
+    /* The tube face. All of its reasoning lives in materials/glass.ts —
+       it is a custom shader now rather than a PBR material, because a
+       transparent PBR material welds the reflection's strength to the
+       picture's opacity and the brief's final rule is that the picture
+       wins. */
+    const glassEnv = createRoomReflection();
+    const glassPair = createGlassMaterial(glassEnv);
+    const glass = glassPair.material;
 
     const led = new THREE.MeshStandardMaterial({
       color: PALETTE.ledIdle,
@@ -356,6 +331,7 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
           (m.roughnessMap as THREE.Texture | null)?.dispose();
         });
         rough?.dispose();
+        glassEnv?.dispose();
       },
     };
   }, [dim]);

@@ -7,6 +7,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { CONTROLS, MOTION, SCREEN, UNIT } from "../proportions";
 import { buildMonitor } from "../geometry/monitor";
 import { useCrtMaterials } from "../materials/materials";
+import { GLASS } from "../materials/glass";
 import { TALLY_COLOR, type TallyState } from "../materials/palette";
 import { Spring, clamp, damp } from "../motion/spring";
 import type { PointerField } from "../motion/usePointerField";
@@ -355,7 +356,7 @@ export default function CrtRig({
        is the close-range cue for this object — the equivalent of a lens
        catching a highlight. Modulated around the authored resting value
        so it cannot compound frame after frame. */
-    materials.glass.envMapIntensity = 2.9 + prox * 0.6;
+    materials.glass.uniforms.uReflect.value = GLASS.reflect + prox * GLASS.reflectHover;
   });
 
   return (

@@ -251,3 +251,71 @@ export function createPlasticRoughness(opts: RoughnessOptions = {}): THREE.Textu
   tex.needsUpdate = true;
   return tex;
 }
+
+/**
+ * THE ROOM, AS A REFLECTION MAP
+ * =============================
+ *
+ * The same studio the plastic is lit by, painted at low resolution and
+ * blurred, for the tube face to reflect.
+ *
+ * WHY NOT JUST REUSE THE PMREM
+ * ----------------------------
+ * `scene.environment` is already this room, prefiltered — but it is
+ * stored in three's packed cubeUV layout, and sampling that from a raw
+ * ShaderMaterial means reproducing `textureCubeUV` and the half-dozen
+ * uniforms that feed it. That is a lot of borrowed machinery, coupled to
+ * three's internals, for one mesh. A 256x128 equirect costs 128KB of
+ * VRAM and one `texture2D`.
+ *
+ * It is the same painting function either way, so the plastic and the
+ * glass cannot disagree about where the window is.
+ *
+ * BLUR, AND THE SEAM
+ * ------------------
+ * The blur is the roughness: a CRT faceplate is polished but it is not a
+ * mirror, and pre-blurring is free where a per-pixel blur would not be.
+ *
+ * The map is drawn three times side by side before blurring and the
+ * middle copy is kept. A box blur on a single copy has nothing to fetch
+ * past the left and right edges, so it darkens toward them and leaves a
+ * visible vertical seam running down the reflection at the one azimuth
+ * the monitor passes through as it turns. Tiling first gives the filter
+ * real neighbours to read.
+ */
+export function createRoomReflection(): THREE.Texture | null {
+  const w = 256;
+  const h = 128;
+
+  const src = document.createElement("canvas");
+  src.width = w;
+  src.height = h;
+  const srcCtx = src.getContext("2d");
+  if (!srcCtx) return null;
+  paintStudioEquirect(srcCtx, w, h);
+
+  const out = document.createElement("canvas");
+  out.width = w;
+  out.height = h;
+  const ctx = out.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.filter = "blur(7px)";
+  // Tile horizontally so the blur has neighbours across the seam.
+  ctx.drawImage(src, -w, 0);
+  ctx.drawImage(src, 0, 0);
+  ctx.drawImage(src, w, 0);
+  ctx.filter = "none";
+
+  const tex = new THREE.CanvasTexture(out);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
+  /* Deliberately left in sRGB with no colour-space tag: the glass shader
+     works in encoded space from end to end, because that is the space
+     the framebuffer blends in. */
+  tex.needsUpdate = true;
+  return tex;
+}
