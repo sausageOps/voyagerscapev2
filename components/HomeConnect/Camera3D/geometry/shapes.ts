@@ -1,5 +1,8 @@
 import * as THREE from "three";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import {
+  mergeGeometries,
+  toCreasedNormals,
+} from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 /**
  * GEOMETRY HELPERS
@@ -8,39 +11,105 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
  * Everything the object is made of is generated here from primitives and
  * extruded profiles — no loaded model, no external asset.
  *
- * Two ideas carry most of the weight:
+ * Three ideas carry most of the weight:
  *
  *  1. `extrudeCentred` — a bevelled `ExtrudeGeometry`. Every large surface is
- *     an extruded rounded profile with a 4-segment bevel, so every silhouette
- *     edge catches a highlight instead of terminating in a hard corner.
+ *     an extruded rounded profile, so every silhouette edge catches a
+ *     highlight instead of terminating in a hard corner.
  *
- *  2. `bake` + `merge` — the object is completely static, so parts sharing a
+ *  2. `LathePath` — a turned profile with real fillets. Stage 3's lens and
+ *     controls are lathes rather than stacked primitives: the profile is a
+ *     machinist's drawing (line → fillet → line), and the revolution smooth-
+ *     shades around the axis, so highlights roll across the barrel instead
+ *     of stepping across radial facets.
+ *
+ *  3. `bake` + `merge` — the object is completely static, so parts sharing a
  *     material are welded into one buffer at build time. This is what pays
- *     for the extra detail in Stage 1B: the part count roughly doubled while
- *     the draw call count went *down*.
+ *     for the extra detail: the part count roughly doubled while the draw
+ *     call count stayed flat.
+ *
+ * Bevel direction note (verified against three r169, not assumed):
+ * ExtrudeGeometry places the AUTHORED shape at the two caps and EXPANDS it
+ * by `bevelSize` through the mid-band. For a shape with holes that means the
+ * hole is widest at the caps and narrows toward the middle — which is why
+ * the front pocket's mouth rolls inward like a drafted mould wall, and why
+ * parts seated in a hole are authored oversized so they embed rather than
+ * reveal a crack.
  */
 
 /* ------------------------------------------------------------ profiles ---- */
 
-/** Rounded rectangle with independent top/bottom corner radii. */
-export function roundedRectShape(w: number, h: number, rTop: number, rBot: number): THREE.Shape {
+/** Trace a rounded rectangle with independent top/bottom corner radii. */
+function traceRoundedRect(
+  s: THREE.Path,
+  w: number,
+  h: number,
+  rTop: number,
+  rBot: number,
+  cx: number,
+  cy: number,
+): THREE.Path {
   const x = w / 2;
   const y = h / 2;
   const rt = Math.min(rTop, x, y);
   const rb = Math.min(rBot, x, y);
 
-  const s = new THREE.Shape();
-  s.moveTo(-x + rb, -y);
-  s.lineTo(x - rb, -y);
-  s.quadraticCurveTo(x, -y, x, -y + rb);
-  s.lineTo(x, y - rt);
-  s.quadraticCurveTo(x, y, x - rt, y);
-  s.lineTo(-x + rt, y);
-  s.quadraticCurveTo(-x, y, -x, y - rt);
-  s.lineTo(-x, -y + rb);
-  s.quadraticCurveTo(-x, -y, -x + rb, -y);
+  s.moveTo(cx + (-x + rb), cy + -y);
+  s.lineTo(cx + (x - rb), cy + -y);
+  s.quadraticCurveTo(cx + x, cy + -y, cx + x, cy + (-y + rb));
+  s.lineTo(cx + x, cy + (y - rt));
+  s.quadraticCurveTo(cx + x, cy + y, cx + (x - rt), cy + y);
+  s.lineTo(cx + (-x + rt), cy + y);
+  s.quadraticCurveTo(cx + -x, cy + y, cx + -x, cy + (y - rt));
+  s.lineTo(cx + -x, cy + (-y + rb));
+  s.quadraticCurveTo(cx + -x, cy + -y, cx + (-x + rb), cy + -y);
   s.closePath();
   return s;
+}
+
+/** Rounded rectangle shape, centred on the origin. */
+export function roundedRectShape(w: number, h: number, rTop: number, rBot: number): THREE.Shape {
+  return traceRoundedRect(new THREE.Shape(), w, h, rTop, rBot, 0, 0) as THREE.Shape;
+}
+
+/**
+ * The same rounded rectangle traced onto a THREE.Path — for use as a hole.
+ * `cx`/`cy` offset the rectangle inside the parent shape.
+ *
+ * The winding is counter-clockwise; ExtrudeGeometry normalises hole winding
+ * itself, so the same tracer serves both contours and holes.
+ */
+export function roundedRectPath(
+  w: number,
+  h: number,
+  rTop: number,
+  rBot: number,
+  cx = 0,
+  cy = 0,
+): THREE.Path {
+  return traceRoundedRect(new THREE.Path(), w, h, rTop, rBot, cx, cy);
+}
+
+/**
+ * Ring shape: a rounded-rect contour with a rounded-rect hole, both centred
+ * on (cx, cy). This is the collar/gasket primitive — extruded with bevels it
+ * yields a frame whose outer rim AND bore mouth are both chamfered.
+ */
+export function roundedRectRing(
+  outerW: number,
+  outerH: number,
+  rTopOut: number,
+  rBotOut: number,
+  innerW: number,
+  innerH: number,
+  rTopIn: number,
+  rBotIn: number,
+  cx = 0,
+  cy = 0,
+): THREE.Shape {
+  const shape = roundedRectShape(outerW, outerH, rTopOut, rBotOut);
+  shape.holes.push(roundedRectPath(innerW, innerH, rTopIn, rBotIn, cx, cy));
+  return shape;
 }
 
 /**
@@ -83,6 +152,7 @@ export function extrudeCentred(
   depth: number,
   bevel = 0.05,
   curveSegments = 14,
+  bevelSegments = 4,
 ): THREE.ExtrudeGeometry {
   // Keep the bevel from eating the whole extrusion on thin parts.
   const b = Math.min(bevel, depth / 2.5);
@@ -94,7 +164,7 @@ export function extrudeCentred(
     bevelThickness: b,
     bevelSize: b,
     bevelOffset: 0,
-    bevelSegments: 4,
+    bevelSegments,
     curveSegments,
   });
 
@@ -102,6 +172,167 @@ export function extrudeCentred(
   geo.translate(0, 0, -core / 2);
   geo.computeVertexNormals();
   geo.computeBoundingSphere();
+  return geo;
+}
+
+/* --------------------------------------------------------- lathe paths ---- */
+
+/**
+ * A 2D machinist's profile in (r, z), revolved into a surface.
+ *
+ * Profiles are authored the way a turned part is drawn: start at the base,
+ * run up the outer wall, then in across the top face. That traversal gives
+ * outward-pointing normals on the wall and viewer-facing normals on the top
+ * (verified against LatheGeometry's winding) — and a profile that continues
+ * BACK DOWN an inner bore keeps correct inward-facing normals, so cups and
+ * collars are one continuous strip.
+ *
+ * `fillet` rounds the corner between the incoming leg and the outgoing leg.
+ * The maths is the standard two-line fillet: tangent points at
+ * t = radius / tan(θ/2) either side of the corner, arc centre on the
+ * bisector at radius / sin(θ/2). The same formula produces convex round-overs
+ * (material removed) and concave root fillets (material added) — which one
+ * you get depends only on which way the profile turns, which is exactly how
+ * a drawing behaves.
+ */
+export class LathePath {
+  private pts: THREE.Vector2[] = [];
+
+  constructor(r: number, z: number) {
+    this.pts.push(new THREE.Vector2(r, z));
+  }
+
+  /** Straight segment to (r, z). */
+  lineTo(r: number, z: number): this {
+    this.pts.push(new THREE.Vector2(r, z));
+    return this;
+  }
+
+  /**
+   * Round the corner at (cornerR, cornerZ) — the intersection of the line
+   * through the current point and the line toward (outR, outZ) — and leave
+   * the path at the tangent point on the outgoing leg. Follow with
+   * `lineTo(outR, outZ)` to complete the leg.
+   */
+  fillet(cornerR: number, cornerZ: number, radius: number, outR: number, outZ: number): this {
+    const c = new THREE.Vector2(cornerR, cornerZ);
+    const out = new THREE.Vector2(outR, outZ);
+    const prev = this.pts[this.pts.length - 1];
+
+    const d1 = prev.clone().sub(c);
+    const d2 = out.clone().sub(c);
+    const l1 = d1.length();
+    const l2 = d2.length();
+    if (l1 < 1e-6 || l2 < 1e-6) {
+      this.pts.push(c.clone());
+      return this;
+    }
+    d1.divideScalar(l1);
+    d2.divideScalar(l2);
+
+    // Interior angle between the legs at the corner.
+    const cosTheta = THREE.MathUtils.clamp(d1.dot(d2), -1, 1);
+    const theta = Math.acos(cosTheta);
+    const turn = Math.PI - theta;
+    if (turn < 0.035 || turn > Math.PI - 0.035) {
+      // Effectively straight (or a spike) — no fillet to cut.
+      this.pts.push(c.clone());
+      return this;
+    }
+
+    // Tangent distance, clamped so the arc never runs off either leg.
+    let t = radius / Math.tan(theta / 2);
+    t = Math.min(t, l1 * 0.9, l2 * 0.9);
+    if (t < 1e-4) {
+      this.pts.push(c.clone());
+      return this;
+    }
+
+    const bisector = d1.clone().add(d2).normalize();
+    const h = radius / Math.sin(theta / 2);
+    const center = c.clone().add(bisector.multiplyScalar(h));
+
+    const t1 = c.clone().add(d1.clone().multiplyScalar(t));
+    const t2 = c.clone().add(d2.clone().multiplyScalar(t));
+
+    const a1 = Math.atan2(t1.y - center.y, t1.x - center.x);
+    let a2 = Math.atan2(t2.y - center.y, t2.x - center.x);
+    // Sweep the short way around.
+    let delta = a2 - a1;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    while (delta < -Math.PI) delta += Math.PI * 2;
+
+    const steps = THREE.MathUtils.clamp(Math.ceil(Math.abs(delta) / (Math.PI / 18)), 2, 12);
+    for (let i = 1; i < steps; i += 1) {
+      const a = a1 + (delta * i) / steps;
+      this.pts.push(
+        new THREE.Vector2(
+          center.x + Math.cos(a) * radius,
+          center.y + Math.sin(a) * radius,
+        ),
+      );
+    }
+    this.pts.push(t2);
+    return this;
+  }
+
+  /** Append explicit points (r, z) — for arcs the fillet helper cannot express. */
+  arcPoints(points: readonly (readonly [number, number])[]): this {
+    for (const [r, z] of points) this.pts.push(new THREE.Vector2(r, z));
+    return this;
+  }
+
+  /** Revolve about the Z axis (the lens/barrel convention). */
+  latheZ(segments = 96): THREE.LatheGeometry {
+    const g = new THREE.LatheGeometry(this.pts, segments);
+    g.rotateX(Math.PI / 2); // +Y → +Z
+    g.computeBoundingSphere();
+    return g;
+  }
+
+  /** Revolve about the Y axis (the top-deck convention: dial, buttons). */
+  latheY(segments = 64): THREE.LatheGeometry {
+    const g = new THREE.LatheGeometry(this.pts, segments);
+    g.computeBoundingSphere();
+    return g;
+  }
+}
+
+/* ---------------------------------------------------- surface treatment ---- */
+
+/**
+ * Crease-angle normals: welds coincident vertices and smooths normals only
+ * where the faces meet at less than `angle`. Bevels (15°-ish steps) roll
+ * smoothly; parting lines (75°+) stay crisp. This is what turns the faceted
+ * extrusion bevel into a moulded round-over without softening the whole
+ * object into a blob.
+ */
+export function creased(geo: THREE.BufferGeometry, angle = Math.PI / 6): THREE.BufferGeometry {
+  const out = toCreasedNormals(geo, angle);
+  geo.dispose();
+  out.computeBoundingSphere();
+  return out;
+}
+
+/**
+ * Taper the cross-section (x and y) as a function of z: nominal at
+ * `frontZ`, smaller toward the back. Applied BEFORE `creased` so normals are
+ * computed on the final positions.
+ */
+export function draftGeometry(
+  geo: THREE.BufferGeometry,
+  amount: number,
+  frontZ: number,
+  depth: number,
+): THREE.BufferGeometry {
+  if (amount <= 0) return geo;
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  for (let i = 0; i < pos.count; i += 1) {
+    const z = pos.getZ(i);
+    const s = 1 - amount * ((frontZ - z) / depth);
+    pos.setXY(i, pos.getX(i) * s, pos.getY(i) * s);
+  }
+  pos.needsUpdate = true;
   return geo;
 }
 
@@ -183,8 +414,9 @@ export function bake(
  *
  * `mergeGeometries` refuses to mix indexed and non-indexed inputs and refuses
  * to mix attribute sets, so everything is normalised to non-indexed with
- * exactly position/normal/uv first. At these vertex counts (low thousands)
- * de-indexing costs nothing and removes a whole class of silent failures.
+ * exactly position/normal/uv first. At these vertex counts (low tens of
+ * thousands) de-indexing costs nothing and removes a whole class of silent
+ * failures.
  */
 export function merge(parts: THREE.BufferGeometry[]): THREE.BufferGeometry {
   const clean = parts.map((g) => {

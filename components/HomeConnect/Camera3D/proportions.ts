@@ -3,10 +3,11 @@
  * ==========================================
  *
  * Stage 1 used the existing SVG camera (`components/HomeConnect/Camera.tsx`)
- * as the single source of proportional truth, and Stage 1B keeps that: the
- * silhouette, the two-tone split and the lens placement are unchanged. What
- * changed is the *articulation* — the object is now built as a machined
- * assembly of stepped parts rather than a shell with things laid on it.
+ * as the single source of proportional truth, and that ancestry is still
+ * visible in the placement constants (toX/toY below). Stage 3 rebuilds the
+ * SURFACES — turned lathe profiles, a genuinely recessed front pocket,
+ * layered panels — but keeps every anchor point: the silhouette, the
+ * two-tone split and the lens placement are unchanged.
  *
  * SVG reference frame: viewBox "0 0 340 300".
  *   body shell   x 40 → 300   (260 wide)
@@ -54,109 +55,155 @@ export const BODY = {
   d: 1.02,
   /** Corner radii: tight at the top deck, generous at the base, matching the
    *  moulded silhouette of the SVG body path. */
-  rTop: 0.12,
-  rBot: 0.22,
-  /** Bevel that rounds every edge — this is what stops it reading as a box.
-   *  Kept tight: a large bevel tips the object from "designed instrument"
-   *  into "soft toy". */
-  bevel: 0.042,
+  rTop: 0.14,
+  rBot: 0.24,
+  /**
+   * Bevel that rounds every silhouette edge. Stage 3 raises the segment
+   * count and passes the result through `toCreasedNormals`, which turns the
+   * faceted 90°-in-6-steps bevel into a continuous rolled edge while keeping
+   * the parting lines crisp. This is the single biggest "moulded casting"
+   * upgrade on the shell.
+   */
+  bevel: 0.05,
+  bevelSegments: 6,
+  /**
+   * Draft: the cross-section tapers slightly toward the back (the front face
+   * is the nominal size, the back is `draft` fraction smaller). This is what
+   * a moulded shell does — and it tilts the top deck down toward the rear,
+   * which the 14° camera picks up as a soft shear across the plate. Kept
+   * small: 2.5% is felt, not seen. Parts that sit on the drafted surfaces
+   * must ask `draftScaleAt` / `wallXAt` where they are.
+   */
+  draft: 0.025,
 } as const;
 
-/** Front face plane (the flat area inside the bevel). */
+/** Front face plane (the flat lid area of the shell extrusion). */
 export const FRONT_Z = BODY.d / 2;
 export const TOP_Y = BODY.h / 2;
+
+/**
+ * Cross-section scale at a given z, per BODY.draft. 1 at the front face,
+ * (1 - BODY.draft) at the back. Pure geometry helper — no motion reads it.
+ */
+export const draftScaleAt = (z: number) =>
+  1 - BODY.draft * ((FRONT_Z - z) / BODY.d);
+/** Where the drafted right wall sits at a given z. */
+export const wallXAt = (z: number) => (BODY.w / 2) * draftScaleAt(z);
 
 /* ------------------------------------------------------------ top plate ---- */
 
 /**
- * The single most effective "designed object" cue available here: real
- * cameras are not one moulding, they are a body with a separate top plate
- * fixed to it. Giving the deck its own slab — marginally *proud* of the body
- * on every side, with a recessed shadow gap underneath — produces a
- * continuous seam line that wraps the front, both flanks and the back.
- *
- * Without shadow maps the overhang cannot cast its own shadow, so the gap is
- * modelled: a slightly undersized slab in a dark matte material sits in the
- * step, and reads as the groove between the two castings.
+ * The deck is its own slab, marginally PROUD of the body on every side, with
+ * a recessed shadow-gap band underneath — a continuous seam line that wraps
+ * the front, both flanks and the back. Stage 3 keeps the construction and
+ * increases the overhang a hair so the step survives the smoother bevels.
  */
 export const TOP_PLATE = {
-  /** Where the plate parts from the body. Held well clear of the leatherette
-   *  top edge (y 0.508) so the seam and the two-tone split do not crowd each
-   *  other into one busy band. */
   fromY: toY(110), // 0.646
-  /** Proud of the body on every side. Tiny — 12 thousandths of the width. */
-  overhang: 0.013,
-  /** Depth of the recessed seam groove band. */
+  overhang: 0.016,
   gapH: 0.05,
-  /** How far the groove sits back from the body surface. */
   gapInset: 0.012,
 } as const;
 
-/* ------------------------------------------------- front leatherette ---- */
-/** In the SVG the dark panel starts at y=122 and runs to the body base. */
+/* ------------------------------------------------- front pocket & panel ---- */
+
 /**
- * The leatherette is an APPLIED PANEL, not a painted band: it stops short of
- * the body edges on the left, right and bottom, so a cream border runs all
- * the way round it.
+ * THE RECESSED FRONT — the core Stage 3 body change.
  *
- * This is the single biggest "designed object" move on the front face. A
- * full-bleed dark band reads as a two-tone paint job; an inset panel with a
- * visible border and its own lit chamfer reads as a covering fitted to a
- * casting. It also breaks the object into three horizontal bands — cream
- * deck, dark wrap, cream base — instead of two.
+ * The dark faceplate no longer sits proud of the shell. The shell extrusion
+ * now carries a rounded-rect hole through its front lid; the dark panel lies
+ * at the bottom of that pocket, ~0.032 behind the front plane. The pocket
+ * mouth is chamfered by the shell's own bevel (the hole contour shrinks by
+ * `bevel` toward the mid-band, so the rim rolls inward — a drafted mould
+ * wall for free), and a rubber gasket ring frames the panel inside it.
+ *
+ * Result, front to back: cream lid → rolled pocket rim → rubber gasket →
+ * dark leatherette panel. Four layers deep, all of them real geometry.
+ */
+export const POCKET = {
+  /** Authored hole size — this is the mouth you see at the front lid. */
+  w: 2.72,
+  topY: toY(122), // 0.508 — held over from the SVG leatherette top edge
+  botY: -0.88,
+  rTop: 0.05,
+  rBot: 0.16,
+} as const;
+
+/**
+ * The dark panel slab. `proud` is now NEGATIVE (the face sits behind the
+ * front plane) — DisplayPanels derives its plane from exactly these two
+ * numbers, so the display glass, bezels and texture planes all ride down
+ * into the pocket with the panel without touching that file:
+ *
+ *   panelFace = FRONT_Z + proud + thickness / 2 = 0.478
  */
 export const PANEL = {
-  topY: toY(122), // 0.508
-  botY: -BODY.h / 2 + 0.072,
-  w: BODY_W - 0.12,
-  rTop: 0.05,
-  rBot: 0.15,
-  /** Proud of the front face so it catches its own edge highlight. */
-  proud: 0.02,
-  thickness: 0.055,
+  /** Slab is oversized vs the mouth so its edge embeds in the pocket wall. */
+  w: 2.78,
+  topY: 0.534,
+  botY: -0.908,
+  rTop: 0.07,
+  rBot: 0.19,
+  proud: -0.063,
+  thickness: 0.062,
+} as const;
+
+/** Convenience: the panel's front face — where everything on the front sits. */
+export const PANEL_FACE = FRONT_Z + PANEL.proud + PANEL.thickness / 2; // 0.478
+
+/**
+ * Rubber gasket ring between the pocket wall and the panel. Oversized so it
+ * embeds into the drafted pocket wall (no crack to see at any angle); its
+ * visible inner edge is what reads as the faceplate's boundary.
+ */
+export const GASKET = {
+  w: 2.8,
+  topY: 0.52,
+  botY: -0.894,
+  rTop: 0.06,
+  rBot: 0.17,
+  /** Ring band width. */
+  inset: 0.075,
+  /** Total depth; centred on (topZ - depth/2). */
+  topZ: 0.5,
+  depth: 0.034,
 } as const;
 
 /* --------------------------------------------------------- lens plinth ---- */
 
 /**
- * A raised boss the lens grows out of. Previously the barrel simply pierced a
- * flat wall, which is the main reason the assembly read as "a cylinder placed
- * near a box" — mounting hardware is what makes a lens look attached.
+ * The mounting flange the barrel grows out of — now a turned lathe profile
+ * with a rounded root and a chamfered top, instead of a cylinder with a
+ * chamfer ring stacked on it. `from`/`to` are ABSOLUTE z (see LENS_Z).
  */
 export const PLINTH = {
-  r: 0.76,
-  /** ABSOLUTE z, not relative. These read as offsets from the front face and
-   *  they are not — writing them raw buried the whole boss inside the body,
-   *  which is a silent failure: it compiles, it renders, you just never see
-   *  the part. Everything in LENS_Z is absolute for the same reason. */
-  from: FRONT_Z - 0.02,
-  to: FRONT_Z + 0.062,
-  /** Chamfered outer edge. */
-  chamfer: 0.03,
+  r: 0.79,
+  rFace: 0.736,
+  rInner: 0.64,
+  from: 0.462,
+  to: 0.574,
 } as const;
 
 /* ---------------------------------------------------------------- lens ---- */
 
 export const LENS = {
   x: toX(148), // -0.254
-  /** Lifted 3 SVG units off the traced centre so the mounting boss clears
-   *  the bottom edge of the inset leatherette panel. */
   y: toY(170), // -0.046
   /**
    * Radii, outer → inner. The stack is deliberately NOT monotonic: it steps
    * in to a waist at the aperture ring, back out to a proud focus ring, then
-   * down again to the bezel. A monotonic taper reads as a traffic cone; the
-   * waist-and-shoulder profile is what reads as a lens.
+   * down again to the bezel. Stage 3 keeps that silhouette and adds the
+   * fillets between the steps (see geometry/buildLens.ts) — the shoulder
+   * lines now roll instead of kinking, which is what reads as "turned on a
+   * lathe" rather than "stacked cylinders".
    */
   rMount: 0.706,
-  rApRing: 0.652,
-  rBarrel: 0.632,
-  /** The widest thing forward of the mount — deliberately proud so it throws
-   *  a shadow line on both sides and reads as a separate, grippable ring. */
+  rApRing: 0.656,
+  rBarrel: 0.638,
   rFocus: 0.690,
-  rStep: 0.612,
+  rStep: 0.618,
+  /** Must stay ≥ hypot(IRIS.halfWidth, IRIS.reach) ≈ 0.572 — blade budget. */
   rBezel: 0.582,
-  /** Bore. */
   rMouth: 0.522,
   rThroat: 0.500,
   rGlass: 0.505,
@@ -165,18 +212,20 @@ export const LENS = {
 /**
  * Lens z-stack, front face outward. Total protrusion is ~0.61 against a body
  * depth of 1.02 — a compact camera with a real lens, not a telephoto.
+ * irisPlane / irisBack / glassApex / innerApex are Stage-2 motion-coupled
+ * values and are UNCHANGED.
  */
 export const LENS_Z = {
-  mount: { from: FRONT_Z + 0.03, to: FRONT_Z + 0.142 },
-  apRing: { from: FRONT_Z + 0.138, to: FRONT_Z + 0.206 },
-  barrel: { from: FRONT_Z + 0.202, to: FRONT_Z + 0.288 },
-  focus: { from: FRONT_Z + 0.284, to: FRONT_Z + 0.464 },
-  step: { from: FRONT_Z + 0.46, to: FRONT_Z + 0.545 },
-  bezel: { from: FRONT_Z + 0.541, to: FRONT_Z + 0.606 },
+  mount: { from: 0.558, to: 0.64 },
+  apRing: { from: 0.64, to: 0.73 },
+  barrel: { from: 0.73, to: 0.812 },
+  focus: { from: 0.8, to: 0.975 },
+  step: { from: 0.962, to: 1.052 },
+  bezel: { from: 1.046, to: 1.118 },
 
   /** Bore interior. */
-  mouth: FRONT_Z + 0.545,
-  throat: { from: FRONT_Z + 0.1, to: FRONT_Z + 0.46 },
+  mouth: 1.098,
+  throat: { from: 0.61, to: 0.97 },
 
   /** Iris sits mid-bore, clearly behind the glass but well inside the mouth. */
   irisPlane: FRONT_Z + 0.3,
@@ -213,7 +262,7 @@ export const IRIS = {
    * Translation keeps the existing corner budget fixed.
    */
   /** Fully-open resting aperture. This is the single source of truth for the
-   * initial seed and the post-shutter return target. */
+   *  initial seed and the post-shutter return target. */
   open: 0.30,
   /** Shutter actuation. Not fully shut — a real leaf shutter at speed never
    *  reads as a hard black disc, and driving it to zero makes the blade
@@ -242,16 +291,19 @@ export const KNURL = {
 
 /**
  * Trapezoidal, not a rounded box: the sides draft inward toward the top and
- * the front face is canted. A straight rounded box on a lid is the single
- * most "primitive-looking" element a camera model can have.
+ * the front face is canted. `rise` is the profile's half-height (the
+ * trapezoid is authored 2·rise tall and half-buried in the casting, exactly
+ * as Stage 2 buried it); `crown` is the visible height above the deck line —
+ * held at the SVG's proportion so the top silhouette is unchanged.
  */
 export const HUMP = {
   x: toX(151),
-  /** Width at the base / width at the top. */
-  wBase: 0.9,
-  wTop: 0.68,
-  rise: 0.17,
-  d: 0.6,
+  wBase: 0.92,
+  wTop: 0.7,
+  rise: 0.19,
+  /** Visible height of the crown above the deck line. */
+  crown: 0.17,
+  d: 0.62,
   z: 0.08,
   r: 0.05,
 } as const;
@@ -259,9 +311,9 @@ export const HUMP = {
 /** Rangefinder window on the face of the hump. */
 export const HUMP_WINDOW = {
   x: toX(151),
-  y: toY(67),
-  w: toL(48),
-  h: toL(13),
+  y: 1.06,
+  w: 0.5,
+  h: 0.12,
 } as const;
 
 /* ------------------------------------------------------------ controls ---- */
@@ -277,6 +329,39 @@ export const TALLY = {
   x: toX(114),
   y: toY(103),
   r: toL(3.4),
+} as const;
+
+/**
+ * Machined collar around the tally LED (the physical flash). The sphere and
+ * its parented PointLight are Stage-2 fixtures — this collar only frames
+ * them, it does not replace any part of the flash system.
+ */
+export const TALLY_LED = {
+  r: 0.062,
+  bore: 0.044,
+  topZ: 0.545,
+  baseZ: 0.462,
+} as const;
+
+/**
+ * Bezel collars for the recessed windows (viewfinder, both info displays,
+ * hump window). Extruded rounded-rect rings standing proud of their surface,
+ * bevelled at both rims — the chamfered mouth comes free from the extrusion
+ * bevel, exactly as the pocket rim does.
+ */
+export const WINDOWS = {
+  /** Collar outer size = window + 2·margin. */
+  margin: 0.032,
+  /** Collar bore = window + 2·boreGap (a hair over, so the pane hides it). */
+  boreGap: 0.012,
+  /** Front lid of a collar standing on the panel face. */
+  topZ: 0.542,
+  /** Deep enough to bury the collar's back bevel inside the panel. */
+  baseZ: 0.452,
+  bevel: 0.012,
+  /** Dark pane sits this far in front of the panel face (texture is +0.041). */
+  paneLift: 0.038,
+  paneUnder: 0.004,
 } as const;
 
 export const DIAL = {
@@ -303,18 +388,21 @@ export const SHUTTER = {
 } as const;
 
 /**
- * Moulded rubber grip, right flank of the front panel. Stage 1 used two thin
- * ribs, which at hero size rendered as two stray scratches. A single inset
- * pad carrying fine ridges reads as a designed grip instead.
+ * Moulded rubber grip, right flank of the front. It runs from the recessed
+ * panel ACROSS the gasket and the pocket rim onto the front face, reaching
+ * just proud of the lid — the seams it crosses are hidden under the rubber,
+ * which is how a real grip is fitted. Stage 1 used two thin ribs, which at
+ * hero size rendered as two stray scratches.
  */
 export const GRIP = {
-  x: toX(278),
-  y: toY(186),
-  w: toL(20),
-  h: toL(100),
-  r: 0.035,
-  ridges: 6,
-  proud: 0.026,
+  x: 1.3,
+  y: -0.14,
+  w: 0.3,
+  h: 0.88,
+  r: 0.05,
+  ridges: 5,
+  baseZ: 0.47,
+  topZ: 0.532,
 } as const;
 
 /** Two recessed screws, bottom-left — deliberately the only "hardware". */
@@ -383,7 +471,7 @@ export const STAGING = {
 } as const;
 
 /**
- * Fit volume for the camera solver — a HULL of four boxes, not one box.
+ * Fit volume for the camera solver — a HULL of boxes, not one box.
  *
  * Stage 1 fitted a single axis-aligned box around everything. That box has to
  * be 1.16 deep (for the lens) AND 3.14 wide (for the body), so it claims a
@@ -393,8 +481,9 @@ export const STAGING = {
  * the object was rendering 15% smaller than it needed to.
  *
  * Splitting the volume into body / prism hump / deck controls / lens barrel
- * recovers all of it, which is where most of the Stage 2 scale increase comes
- * from. Only the last ~6% needed a bigger canvas.
+ * recovers all of it. The numbers below were re-measured against the Stage 3
+ * build (scripts measure the baked geometry, not a guess) and carry a small
+ * outward margin so the sweep at full yaw never clips.
  *
  * `p` is the parallax factor that part is driven at (see MOTION.parallax).
  * The fit sweep uses it per-part, so the lens — which swings furthest — gets
@@ -407,19 +496,28 @@ export interface HullBox {
 }
 
 export const OBJECT_HULL: readonly HullBox[] = [
-  /* casting + top plate overhang + strap lugs + proud grip pad */
-  { p: 1.0, min: [-1.57, -0.98, -0.56], max: [1.57, 0.98, 0.63] },
-  /* prism hump */
-  { p: 1.0, min: [-0.68, 0.95, -0.24], max: [0.25, 1.15, 0.4] },
+  /* casting + pocket assembly + top plate + strap lugs + grip.
+     Re-measured against the baked Stage 3 geometry: the deck's mid-band
+     (authored + bevel, ~±1.02 in y) is now covered, which Stage 2's box
+     quietly missed. */
+  { p: 1.0, min: [-1.57, -1.03, -0.53], max: [1.57, 1.02, 0.58] },
+  /* prism hump + its rangefinder window collar */
+  { p: 1.0, min: [-0.73, 0.95, -0.24], max: [0.29, 1.19, 0.45] },
   /* mode dial + shutter collar */
-  { p: 1.0, min: [0.46, 0.95, -0.3], max: [1.38, 1.12, 0.21] },
-  /* lens barrel out to the knurled focus ring; the wider plinth sits inside
-     the body box already. Driven at the focus ring's parallax factor. */
-  { p: 1.25, min: [-0.98, -0.77, 0.55], max: [0.48, 0.68, 1.13] },
+  { p: 1.0, min: [0.46, 0.92, -0.27], max: [1.31, 1.12, 0.16] },
+  /* lens barrel out to the knurled focus ring; the mounting flange sits
+     inside the body box already. Driven at the focus ring's parallax
+     factor. Extents unchanged from Stage 2 — the silhouette is signed off. */
+  { p: 1.25, min: [-0.98, -0.77, 0.52], max: [0.47, 0.67, 1.13] },
 ];
 
-/** Ground plane height for the contact shadow. */
-export const GROUND_Y = -BODY.h / 2 - 0.045;
+/**
+ * Ground plane height for the contact shadow. The resting edge of the shell
+ * is the mid-band bottom (authored + bevel, then drafted): ≈ −1.018. The
+ * plane sits a hair below it — adjusted from Stage 2's −0.045 offset
+ * because the deeper bevel lowered the resting edge past the old plane.
+ */
+export const GROUND_Y = -(BODY.h / 2 + BODY.bevel) - 0.007;
 
 const DEG = Math.PI / 180;
 
@@ -505,8 +603,8 @@ export const MOTION = {
    */
   lensNear: 0.01,
   /** A smaller forward separation for the focus ring alone. It is just enough
-   * to catch a different highlight from the fixed barrel without unseating
-   * the ring. */
+   *  to catch a different highlight from the fixed barrel without unseating
+   *  the ring. */
   focusRingNear: 0.0025,
 
   /**
@@ -522,8 +620,8 @@ export const MOTION = {
    * Focus ring. ζ ≈ 0.80: it arrives, nudges, and stops.
    *
    * 14° is the CAP, not the travel. The cap is only approached with the
-   * cursor at the edge of the object, where proximity has already started to
-   * fall, so the two terms never peak together. Measured in-browser against
+   * cursor at the edge of the object, where proximity has already started
+   * to fall, so the two terms never peak together. Measured in-browser against
    * a deliberately exaggerated build, the realised travel is 46% of the cap
    * — so 14° here produces about ±6.4° in practice, a little over one knurl
    * pitch (360/64 = 5.6°). Enough to watch the teeth step round by one, and
@@ -545,10 +643,10 @@ export const MOTION = {
    *   press 0.045 -> 1.6mm   actuation
    *
    * Both are bounded by geometry, not taste: the button's skirt and the
-   * collar's bore were lengthened (see Controls.tsx) so that even at full
-   * press the open bottom of the skirt stays inside the collar wall. Without
-   * that, a press deeper than 0.018 lifts the skirt's open end clear of the
-   * bore and you can see straight through the button.
+   * collar's bore were lengthened (see geometry/buildControls.ts) so that
+   * even at full press the open bottom of the skirt stays inside the collar
+   * wall. Without that, a press deeper than 0.018 lifts the skirt's open end
+   * clear of the bore and you can see straight through the button.
    *
    * ζ ≈ 0.66 gives the springy return the brief asks for.
    */
