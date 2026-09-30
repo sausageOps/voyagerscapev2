@@ -4,25 +4,28 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { RecordingState, AudioPlaybackState } from "@/lib/ui-store";
 import { prefersReducedMotion } from "@/lib/motion";
-import Camera from "./Camera";
+import CrtStatic from "./CrtStatic";
 
 /**
  * HERO OBJECT — renderer selector
  * ===============================
  *
- * Decides between the WebGL camera and the original SVG camera, and is the
+ * Decides between the WebGL monitor and the static SVG monitor, and is the
  * only place that decision is made.
  *
  * The gate runs BEFORE the dynamic import, so a device that fails it never
  * downloads three.js at all — the chunk is requested from inside the render
  * path, not at module scope.
  *
- * `components/HomeConnect/Camera.tsx` is untouched and remains the production
- * fallback. It is never removed: it covers no-WebGL, reduced motion, data
- * saver, very low-end hardware, the server render, and runtime context loss.
+ * `components/HomeConnect/CrtStatic.tsx` is the production fallback. It is
+ * never removed: it covers no-WebGL, reduced motion, data saver, very
+ * low-end hardware, the server render, and runtime context loss. It is
+ * built to the same proportions and the same box as the 3D object, so the
+ * upgrade is a change of fidelity rather than a change of object, and there
+ * is no layout shift when the chunk lands.
  */
 
-const Camera3D = dynamic(() => import("./Camera3D"), {
+const Crt3D = dynamic(() => import("./Crt3D"), {
   ssr: false, // R3F cannot server-render
   loading: () => null,
 });
@@ -37,9 +40,8 @@ export interface HeroObjectProps {
 /**
  * Raise to 1024 to restrict WebGL to desktop only.
  *
- * The audit recommended that for the first production release; Stage 1 keeps
- * it at 0 because the brief asks for the 3D object to be exercised down to
- * 320px. One constant, one edit.
+ * Kept at 0: the brief asks for the monitor to stay visually dominant down
+ * to 320px rather than degrading to a card. One constant, one edit.
  */
 const MIN_WIDTH_FOR_3D = 0;
 
@@ -92,9 +94,9 @@ export default function HeroObject(props: HeroObjectProps) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const fallback = <Camera {...props} />;
+  const fallback = <CrtStatic {...props} />;
 
   if (!use3D) return fallback;
 
-  return <Camera3D {...props} fallback={fallback} />;
+  return <Crt3D {...props} fallback={fallback} />;
 }

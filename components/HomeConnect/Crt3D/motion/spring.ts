@@ -2,8 +2,8 @@
  * SPRING INTEGRATOR
  * =================
  *
- * The single motion primitive for Stage 2. Everything that moves — yaw,
- * pitch, focus ring, aperture, shutter button, recoil — is one of these.
+ * The single motion primitive for the hero object. Everything that moves —
+ * yaw, pitch, drift, the power switch, the channel knock — is one of these.
  *
  * Why a spring rather than the usual `lerp(current, target, 0.1)`:
  *
@@ -12,16 +12,18 @@
  *    brief asks for overshoot and settle, and a lerp mathematically cannot
  *    overshoot.
  *  - A spring carries velocity, which means an impulse can be *added* to it.
- *    That is what lets the shutter recoil live inside the same system the
- *    cursor is driving, instead of a separate tween fighting it for control
- *    of the same transform.
+ *    That is what lets the channel-change knock live inside the same system
+ *    the cursor is driving, instead of a separate tween fighting it for
+ *    control of the same transform.
  *
  * Damping ratio ζ = damping / (2·√stiffness).
  *   ζ < 1  underdamped — overshoots, then settles. What we want.
  *   ζ = 1  critically damped — fastest approach with no overshoot.
  *   ζ > 1  overdamped — sluggish.
  *
- * The defaults sit near ζ ≈ 0.6: one small overshoot, no visible ringing.
+ * A 17" CRT weighs 18kg, so this object runs its springs much closer to
+ * critical (ζ ≈ 0.92) than a handheld prop would. See MOTION in
+ * proportions.ts.
  */
 export class Spring {
   value: number;
@@ -44,7 +46,7 @@ export class Spring {
    * once dt·√stiffness gets large, and dt spikes are not hypothetical here —
    * returning to a backgrounded tab, or a long GC pause, hands you a dt of
    * several hundred milliseconds. Without sub-stepping a stiff spring
-   * (aperture, shutter) explodes on the first frame back.
+   * explodes on the first frame back.
    */
   step(dt: number) {
     const h = 1 / 120;
@@ -59,7 +61,7 @@ export class Spring {
     }
   }
 
-  /** Add velocity directly — the recoil path. */
+  /** Add velocity directly — the knock path. */
   impulse(v: number) {
     this.velocity += v;
   }

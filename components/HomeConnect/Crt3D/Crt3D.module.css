@@ -1,0 +1,110 @@
+/* =========================================================
+   CRT 3D — host layout
+
+   One centred machine. The clamps below are DUPLICATED in
+   CrtStatic.module.css rather than shared: CrtStatic owns the fallback,
+   and the two must be able to change independently without either
+   breaking the other. Both boxes resolve to the same width and the same
+   aspect at every breakpoint, so swapping renderers causes no layout
+   shift.
+
+   THE BOX IS BIGGER THAN THE OBJECT, ON PURPOSE
+   ---------------------------------------------
+   The camera is fitted to the monitor's silhouette swept through its
+   whole ±20° / ±12° rotation range, so at rest the object occupies
+   about 77% of this box and grows toward 87% as the cursor turns it.
+
+   That is the negative space, and it is generated rather than padded:
+   the composition is most open when the monitor is square on and closes
+   up as you lean it over. Fitting the resting pose instead would clip
+   the casting's corners at exactly the moment the cursor reaches the
+   edge of the screen and the user is looking hardest at it.
+   ========================================================= */
+
+.stage {
+  position: relative;
+  width: clamp(320px, min(44vw, 65svh), 660px);
+}
+
+.hit {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border-radius: 28px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hit:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 10px;
+}
+
+/* Locks the box before WebGL paints, so nothing shifts on load and the
+   fallback and the canvas occupy an identical footprint. */
+.canvas {
+  position: relative;
+  width: 100%;
+  /* Measured, not guessed: the monitor's projected silhouette swept
+     through its full rotation range is 1.05 wide for every 1.0 tall. */
+  aspect-ratio: 21 / 20;
+  /* The object is lit from within the scene; the page stays cream. */
+  background: transparent;
+  overflow: visible;
+}
+
+/* ---------------------------------------------------------------------
+   Drawing surface, slightly larger than the layout box it sits in.
+
+   A WebGL canvas cannot paint outside its own element, so `overflow:
+   visible` on the parent buys nothing — extra drawing surface is the
+   only way to let the object approach the edges of its footprint. What
+   is NOT done here is growing `.stage`: that is the layout box, and it
+   is deliberately identical to the fallback's box at every breakpoint.
+   Grow it and the hero jumps wider the moment the WebGL chunk finishes
+   downloading and swaps out the fallback.
+   --------------------------------------------------------------------- */
+.gl {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 106%;
+  height: 106%;
+  transform: translate(-50%, -50%);
+}
+
+.gl canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+  touch-action: manipulation;
+}
+
+/* ---- responsive ----------------------------------------------------
+   Touch devices get a proportionally larger box for the same object,
+   because the camera there is fitted only to the idle sweep — there is
+   no cursor to make room for. See `sweep` in CrtCanvas.
+   -------------------------------------------------------------------- */
+@media (max-width: 1099px) {
+  .stage {
+    width: clamp(300px, min(66vw, 56svh), 520px);
+  }
+}
+
+@media (max-width: 899px) {
+  .stage {
+    width: min(88vw, 48svh, 460px);
+  }
+}
+
+@media (max-width: 767px) {
+  .stage {
+    width: min(92vw, 44svh, 420px);
+  }
+}
+
+@media (max-width: 430px) {
+  .stage {
+    width: min(95vw, 42svh, 392px);
+  }
+}

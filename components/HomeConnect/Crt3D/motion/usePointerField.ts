@@ -12,15 +12,14 @@ export interface PointerField {
   y: number;
   /**
    * Offset normalised against the OBJECT's own size, −1 … +1 at roughly its
-   * own edges. Drives the close-range cues.
+   * own edges. Drives the close-range cues — here, the glass highlight.
    *
    * Two normalisations rather than one because a single one cannot serve
-   * both. Using the viewport figure for the focus ring multiplies two
-   * anti-correlated quantities — `x` is only large when the cursor is far
-   * away, and `proximity` is only large when it is close — so their product
-   * stays near zero everywhere and the ring never visibly turns. Measured:
-   * it capped out at about a third of its permitted travel. The local figure
-   * reaches ±1 while the cursor is still well inside the proximity plateau.
+   * both. Using the viewport figure for a close-range cue multiplies two
+   * anti-correlated quantities: `x` is only large when the cursor is far
+   * away, and `proximity` is only large when it is close, so their product
+   * stays near zero everywhere. The local figure reaches ±1 while the
+   * cursor is still well inside the proximity plateau.
    */
   lx: number;
   ly: number;
@@ -40,22 +39,21 @@ export interface PointerField {
  *
  * Deliberately NOT R3F's `state.pointer`: that is only populated while the
  * cursor is over the canvas, so the object could only react once you were
- * already on top of it. The effect we want is peripheral — the camera should
- * be tracking you from across the page, and should be *most* expressive on
- * the approach. So the offset is measured against the viewport, not the
- * canvas.
+ * already on top of it. The effect we want is peripheral — the monitor
+ * should be turning toward you from across the page. So the offset is
+ * measured against the viewport, not the canvas.
  *
  * TOUCH
  * -----
  * Touch and pen never activate the field, and on a coarse pointer the hook
  * does not attach at all. A finger is not a cursor: there is no hover state
  * to track, and faking one by latching onto the last tap position produces a
- * camera that stares at wherever you last touched and then never moves
+ * monitor that stares at wherever you last touched and then never moves
  * again. Coarse-pointer devices get idle motion only.
  *
  * Device orientation is intentionally not used either. On iOS it needs
  * `DeviceOrientationEvent.requestPermission()`, which is a user-facing
- * permission prompt, and the brief rules out unnecessary permissions.
+ * permission prompt for a decorative effect.
  */
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
@@ -111,8 +109,8 @@ export function usePointerField(container: HTMLElement | null, enabled: boolean)
       // Proximity in units of the object's own size, so it means the same
       // thing at 482px and at 260px. Smoothstepped with a plateau across the
       // object itself: a linear ramp from the centre means the cues are
-      // already half faded while the cursor is still on the lens, which is
-      // precisely when they should be at full strength.
+      // already half faded while the cursor is still on the screen, which
+      // is precisely when they should be at full strength.
       const size = Math.max(rect.width, rect.height);
       const inner = size * 0.22;
       const outer = size * 0.8;
