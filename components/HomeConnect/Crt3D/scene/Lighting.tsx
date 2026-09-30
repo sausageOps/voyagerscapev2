@@ -15,13 +15,51 @@ import { createStudioEnvironment } from "../materials/env";
  * looking like a prop in a sci-fi film, which is explicitly not the brief.
  *
  *   key    upper left front, soft white — describes the form
- *   fill   lower right, pale pink at low intensity — keeps the shadow side
- *          warm and on-brand rather than letting it go grey
+ *   fill   upper RIGHT front, near-white — the counter-key; see below
+ *   bounce low right, full brand pink at 0.17 — warms the shadow side
+ *          without colouring the form
  *   rim    behind upper right, pale yellow — separation along the top and
  *          the right flank, so the cream shell lifts off the cream page
  *   skim   from directly above, picking out the vent slots
  *   bounce very low from below, so the underside never goes black
  *   hemi   cream sky over warm ground: ambient that still has direction
+ *
+ * LIT FOR AN OBJECT THAT TURNS ±20°
+ * ---------------------------------
+ * The fill is the light this iteration changed, and it was not a
+ * refinement — it was a bug fix found by rendering the nine cursor
+ * positions side by side.
+ *
+ * With a single strong key upper-left and only a weak low fill opposite,
+ * the monitor was beautifully lit for half its rotation range and went
+ * flat mauve-grey for the other half: swing the face toward +X and it
+ * turns out of the key and finds nothing on the other side. Half of the
+ * interaction made the hero look broken, and no single screenshot would
+ * ever have shown it.
+ *
+ * So the fill was raised from 0.3 to 0.6 and lifted from below the
+ * horizon to upper-right, making it a proper counter-key. It is still
+ * clearly subordinate — 57% of the key, and softer — so the form still
+ * reads and the object is not lit flat from both sides. What it
+ * guarantees is that there is no orientation in the reachable range
+ * where the front of the monitor has no light on it. Turning the object
+ * now changes WHICH light describes it rather than WHETHER one does.
+ *
+ * Its COLOUR had to change with its intensity. The old fill was full
+ * brand pink, which is unobjectionable at 0.3 from below and dyes the
+ * entire casting pink at 0.6 from the front. The brand temperature now
+ * comes from a separate weak bounce low on the right, where it warms the
+ * shadow side without tinting the form.
+ *
+ * TOTAL EXPOSURE IS HELD, NOT RAISED
+ * ----------------------------------
+ * Redistributing light is not the same as adding it. The counter-key
+ * brought 0.47 of new intensity to the front of the object, so the key
+ * came down from 1.05 to 0.92 and the rim from 0.72 to 0.62 to pay for
+ * most of it. The sum is within about 10% of the version before this
+ * change, which matters because the shell is a pale cream at #e8dec7 and
+ * has very little headroom before the highlights clip and the plastic
+ * starts reading as white.
  *
  * Shadow maps are off. The only shadow is the procedural contact plane,
  * which costs two triangles instead of a render target.
@@ -63,20 +101,27 @@ export default function Lighting() {
   return (
     <>
       <hemisphereLight
-        args={[new THREE.Color(PALETTE.lightSky), new THREE.Color(PALETTE.lightGround), 0.26]}
+        args={[new THREE.Color(PALETTE.lightSky), new THREE.Color(PALETTE.lightGround), 0.3]}
       />
-      <ambientLight color={PALETTE.lightKey} intensity={0.1} />
+      {/* Raised slightly with the wider rotation range: surfaces that
+          swing away from every directional source still need a floor, or
+          they read as holes in the object rather than as planes in
+          shadow. */}
+      <ambientLight color={PALETTE.lightKey} intensity={0.13} />
 
       {/* key — swung round to the side so it rakes across the bezel steps
           and the moulding seam instead of washing the face flat */}
-      <directionalLight color={PALETTE.lightKey} intensity={1.05} position={[-4.2, 3.6, 4.2]} />
+      <directionalLight color={PALETTE.lightKey} intensity={0.92} position={[-4.2, 3.6, 4.2]} />
 
-      {/* fill — pale pink, deliberately weak */}
-      <directionalLight color={PALETTE.lightFill} intensity={0.3} position={[4.8, -1.0, 3.2]} />
+      {/* counter-key — subordinate but real */}
+      <directionalLight color={PALETTE.lightCounter} intensity={0.6} position={[4.6, 2.3, 3.9]} />
+
+      {/* brand bounce — full pink, weak, from below right */}
+      <directionalLight color={PALETTE.lightFill} intensity={0.17} position={[4.4, -2.4, 2.6]} />
 
       {/* rim — the right flank sits against cream page and would otherwise
           dissolve into it */}
-      <directionalLight color={PALETTE.lightRim} intensity={0.72} position={[4.2, 2.0, -3.4]} />
+      <directionalLight color={PALETTE.lightRim} intensity={0.62} position={[4.2, 2.0, -3.4]} />
 
       {/* skim from overhead: this is the light that finds the vent slots */}
       <directionalLight color={PALETTE.lightKey} intensity={0.22} position={[0.3, 6.0, -0.6]} />

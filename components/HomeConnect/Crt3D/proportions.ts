@@ -296,10 +296,16 @@ export const STAGING = {
    * which is real cut geometry, could not be seen at all. The deck only
    * opens up past about 18°.
    *
-   * It also happens to be the honest angle: this is a pair of objects
-   * that sit on a desk, and you look down at them.
+   * It came DOWN from 20° for this iteration, though, because the camera
+   * is no longer the only thing that can look at the top. With ±12° of
+   * cursor pitch, the effective elevation now runs from about 4° to about
+   * 28°: at the top of the page the deck and its ventilation are fully
+   * open, and at the bottom of the page the view drops to nearly level
+   * and the underside of the bezel and the base come into view. Leaving
+   * it at 20° would have spent the whole downward half of that range
+   * still looking down at the thing.
    */
-  lookDown: 0.36,
+  lookDown: 0.28,
   targetY: -0.06,
   fov: 32,
   /**
@@ -386,89 +392,34 @@ export interface UnitSpec {
  * higher in frame because the camera is looking down — which is the
  * honest way to get it.
  */
-export interface Composition {
-  primary: UnitSpec;
-  secondary: UnitSpec;
-}
-
-const WIDE: Composition = {
-  primary: {
-    scale: 1,
-    x: 1.15,
-    z: 0.4,
-    yaw: -16 * DEG,
-    roll: 0,
-    motion: 1,
-    glow: 1,
-    shadow: 1,
-    dim: 0,
-    gain: 1,
-  },
-  secondary: {
-    scale: 0.7,
-    x: -1.82,
-    z: -2.4,
-    yaw: 26 * DEG,
-    /* A degree and a half of list. Nothing on a desk is ever quite
-       square, and at this size it is the difference between a second
-       machine and a second instance. */
-    roll: -1.5 * DEG,
-    motion: 0.46,
-    glow: 0.5,
-    shadow: 0.7,
-    dim: 0.11,
-    gain: 0.82,
-  },
-};
-
 /**
- * NARROW — phones and small tablets.
+ * THE HERO UNIT
+ * =============
  *
- * Not the wide composition scaled down. Side by side on a 360px screen,
- * two monitors are each about 40% of the frame and the result is two
- * small objects rather than one dominant one, which is the exact failure
- * the brief warns about.
+ * One machine, centred, facing forward at rest.
  *
- * So the arrangement is restacked rather than resized: the primary moves
- * to the centre and keeps essentially all of the frame, and the secondary
- * moves BEHIND it — further back, smaller, and pulled in toward the
- * centre line so that only its left shoulder and a slice of its screen
- * clear the primary's silhouette. It is still a whole machine, still
- * running its own programme; you just see a corner of it, which is what a
- * background object should do on a small screen.
+ * x, z and the resting yaw are all zero, and that is the composition: the
+ * monitor is the protagonist of the page and it sits in the middle of its
+ * frame. Everything that makes it interesting to look at is supplied by
+ * the cursor turning it, not by staging it at a flattering angle — which
+ * is the difference between a rendered still and an object you can look
+ * around.
  *
- * Keeping it inside the frame rather than letting it bleed off the edge
- * is deliberate: a WebGL canvas cannot paint past its own element, so a
- * bleeding object does not fade out, it gets sliced off with a hard
- * vertical edge — which reads as a rendering bug, not as a crop.
+ * At rest the camera's 16° depression still opens the top deck, so the
+ * object is never a flat front elevation even before you touch it.
  */
-const NARROW: Composition = {
-  primary: {
-    ...WIDE.primary,
-    x: 0.42,
-    z: 0.3,
-    yaw: -13 * DEG,
-  },
-  secondary: {
-    ...WIDE.secondary,
-    scale: 0.6,
-    x: -1.78,
-    z: -2.7,
-    yaw: 22 * DEG,
-    /* `dim` is deliberately NOT overridden here even though less of the
-       unit is visible and more separation would help. It feeds the
-       material tint, materials are memoised on it, and changing it at the
-       breakpoint would rebuild both material sets — and with them the
-       units, their canvases and both channel schedules — in the middle of
-       a resize. A five percent colour difference is not worth resetting
-       the scene for. The narrow layout buys its separation from depth and
-       occlusion instead, which cost nothing. */
-    shadow: 0.6,
-  },
+export const UNIT: UnitSpec = {
+  scale: 1,
+  x: 0,
+  z: 0,
+  yaw: 0,
+  roll: 0,
+  motion: 1,
+  glow: 1,
+  shadow: 1,
+  dim: 0,
+  gain: 1,
 };
-
-export const COMPOSITIONS = { wide: WIDE, narrow: NARROW } as const;
-export type LayoutName = keyof typeof COMPOSITIONS;
 
 /** Y offset that keeps a scaled unit's feet on the desk. */
 export const standY = (scale: number) => GROUND_Y * (1 - scale);
@@ -494,40 +445,80 @@ export const standY = (scale: number) => GROUND_Y * (1 - scale);
  *   this runs at   ζ ≈ 0.92 — it settles, it does not bounce
  */
 export const MOTION = {
-  /** Cursor → rotation caps. Half what a handheld object would take. */
-  maxYaw: 7.5 * DEG,
-  maxPitch: 4.2 * DEG,
-  maxRoll: 1.1 * DEG,
-
-  /** ω_n ≈ 5.3 rad/s, ζ ≈ 0.92. Slow, and it does not ring. */
-  rotation: { stiffness: 28, damping: 9.8 },
-
-  /** Positional parallax. ~0.062 u ≈ 8 px at hero size. */
-  translate: { x: 0.062, y: 0.03 },
+  /**
+   * CURSOR -> ROTATION
+   * ------------------
+   * The whole point of the hero. The cursor's position in the viewport is
+   * an orbit control: move right and the monitor turns left, bringing its
+   * right flank round; move to the top of the page and it pitches its top
+   * away from you and shows the deck.
+   *
+   * These are large — nearly three times the previous caps — and that is
+   * the brief. The object has 2.4 units of housing behind the bezel, real
+   * ventilation on the deck and flanks, and moulding seams down the
+   * sides, and at ±7.5° of yaw you could not see any of it. The range now
+   * sweeps far enough that the front, both flanks, the top deck and the
+   * bezel's underside are all reachable without the monitor ever reading
+   * as spinning.
+   *
+   * The ceiling is set by the raster, not by taste: past about 24° of
+   * apparent yaw the game content key-stones badly enough to stop being
+   * readable, and readability is the other half of the brief. 20° of
+   * cursor yaw plus 2° of drift leaves margin under that.
+   */
+  maxYaw: 20 * DEG,
+  maxPitch: 12 * DEG,
+  /** Roll is a weight cue, not a rotation. Felt, not seen. */
+  maxRoll: 3 * DEG,
 
   /**
-   * Idle float. A monitor on a desk does not bob, so this is an order of
-   * magnitude smaller than a suspended object would get — it exists only so
-   * the object is never perfectly frozen, which reads as a still image.
+   * ω_n ≈ 4.5 rad/s, ζ ≈ 0.88.
+   *
+   * Softer and slightly less damped than the first pass, and both changes
+   * are deliberate. Lower stiffness means the monitor LAGS the cursor —
+   * you are always dragging it, never pointing it — which is most of what
+   * makes 18kg of glass feel like 18kg of glass. ζ just under 0.9 means
+   * that when the cursor stops, the object carries on a little and then
+   * settles without a visible bounce.
+   *
+   * ζ is the number to be careful with. Below about 0.8 the settle turns
+   * into a wobble and the object reads as light and plastic; at 1.0 it
+   * stops dead the instant the cursor does, which reads as a servo.
+   */
+  rotation: { stiffness: 20, damping: 7.9 },
+
+  /**
+   * Positional parallax. ~0.03 u ≈ 4px at hero size.
+   *
+   * Deliberately almost nothing. The monitor is the centred protagonist
+   * of the page and it has to STAY centred; letting the cursor push it
+   * around turns a hero object into a floating sticker. It exists only so
+   * that the rotation has a trace of translation under it, which is what
+   * a real object pivoting about a point behind its face would do.
+   */
+  translate: { x: 0.03, y: 0.018 },
+
+  /**
+   * Idle. A monitor on a desk does not bob, so this is an order of
+   * magnitude smaller than a suspended object would get — it exists only
+   * so the object is never perfectly frozen, which reads as a still
+   * image, and so the scene is alive before the cursor arrives.
    */
   idle: {
-    floatY: 0.008,
-    floatZ: 0.009,
-    driftYaw: 0.006,
-    driftPitch: 0.0025,
-    driftRoll: 0.0018,
+    floatY: 0.007,
+    floatZ: 0.008,
+    driftYaw: 0.012,
+    driftPitch: 0.005,
+    driftRoll: 0.003,
   },
 
   /**
-   * Channel change. A physical nudge, injected as velocity into the springs
-   * the cursor is already driving, so clicking mid-gesture superimposes the
-   * knock on the turn rather than fighting it for the same transform.
-   *
-   * Solved backwards from the angle: the rotation spring converts an impulse
-   * v0 to a peak of about 0.055·v0 rad, so 0.34 rad/s lands at 1.07° — a
-   * knock on a heavy object, not a flinch.
+   * Channel change. A physical nudge, injected as velocity into the
+   * springs the cursor is already driving, so clicking mid-gesture
+   * superimposes the knock on the turn rather than fighting it for the
+   * same transform.
    */
-  knock: { pitch: -0.34, yaw: 0.2 },
+  knock: { pitch: -0.36, yaw: 0.22 },
 
   /** Power button travel, world units. 0.018 u ≈ 2.2mm of switch throw. */
   button: { press: 0.018, stiffness: 260, damping: 26 },

@@ -18,6 +18,22 @@ import * as THREE from "three";
  * curved dark glass reflecting a soft rectangle is the most recognisable
  * "CRT in a room" cue there is. A point-like source would give it a sci-fi
  * star highlight instead.
+ *
+ * BUILT FOR AN OBJECT THAT TURNS
+ * ------------------------------
+ * The cursor now swings the monitor through ±20° of yaw and ±12° of
+ * pitch, and that changes what this map has to be. A single light source,
+ * however beautifully shaped, gives a reflection that is present at one
+ * orientation and simply absent at the others — the glass "switches off"
+ * as you sweep past it, which reads as a bug rather than as a material.
+ *
+ * So the room is furnished all the way round the arc the tube face can
+ * sweep: a window upper-left, a long overhead softbox across the top, a
+ * second smaller window right of centre, and the horizon strip. At every
+ * reachable orientation the glass has something to catch, and turning the
+ * monitor slides the highlight continuously from one to the next instead
+ * of blinking between them. That continuity is the thing that tells the
+ * eye it is looking at a curved reflective surface.
  */
 export function createStudioEnvironment(renderer: THREE.WebGLRenderer): THREE.Texture | null {
   const w = 512;
@@ -52,7 +68,7 @@ export function createStudioEnvironment(renderer: THREE.WebGLRenderer): THREE.Te
     winY + winH / 2,
     winW * 1.5,
   );
-  halo.addColorStop(0, "rgba(255,255,255,0.75)");
+  halo.addColorStop(0, "rgba(255,255,255,0.85)");
   halo.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = halo;
   ctx.fillRect(0, 0, w, h);
@@ -66,6 +82,37 @@ export function createStudioEnvironment(renderer: THREE.WebGLRenderer): THREE.Te
   ctx.filter = "blur(4px)";
   ctx.fillStyle = "rgba(196,188,174,0.85)";
   ctx.fillRect(winX + winW * 0.47, winY, winW * 0.06, winH);
+  ctx.restore();
+
+  /* ---- overhead softbox: a long, low bar across the ceiling.
+         On a convex tube face a long horizontal source reflects as the
+         elongated, gently curved streak that says "this glass bulges".
+         It is the highlight that sweeps vertically as the monitor
+         pitches, which is the half of the motion a window high on the
+         left cannot describe. ---- */
+  ctx.save();
+  ctx.filter = "blur(9px)";
+  const bar = ctx.createLinearGradient(0, 0, w, 0);
+  bar.addColorStop(0.0, "rgba(255,255,255,0.12)");
+  bar.addColorStop(0.28, "rgba(255,255,255,0.78)");
+  bar.addColorStop(0.55, "rgba(255,255,255,0.86)");
+  bar.addColorStop(0.82, "rgba(255,255,255,0.5)");
+  bar.addColorStop(1.0, "rgba(255,255,255,0.12)");
+  ctx.fillStyle = bar;
+  ctx.fillRect(w * 0.04, h * 0.055, w * 0.92, h * 0.062);
+  ctx.restore();
+
+  /* ---- second window, right of centre. Smaller and dimmer than the
+         first: it exists so that yawing the monitor to the far end of its
+         range hands the reflection off to a new source rather than
+         running out of room. ---- */
+  ctx.save();
+  ctx.filter = "blur(7px)";
+  ctx.fillStyle = "rgba(255,255,255,0.62)";
+  ctx.fillRect(w * 0.6, h * 0.235, w * 0.13, h * 0.19);
+  ctx.filter = "blur(4px)";
+  ctx.fillStyle = "rgba(196,188,174,0.7)";
+  ctx.fillRect(w * 0.6 + w * 0.062, h * 0.235, w * 0.008, h * 0.19);
   ctx.restore();
 
   /* ---- fill card, right: dimmer, faintly pink so the shadow side keeps the

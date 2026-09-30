@@ -60,6 +60,13 @@ export const PALETTE = {
   lightKey: "#fffdf9",
   lightSky: "#fffdf9",
   lightGround: "#e7dfd2",
+  /** The counter-key. Only a whisper of the brand pink: at the intensity
+   *  a counter-key needs in order to stop the object going grey when it
+   *  turns away from the key, the full #f1b8e4 dyes the whole casting
+   *  pink. Saturation has to come down as intensity goes up. */
+  lightCounter: "#fbeef4",
+  /** The low bounce. Full brand pink, but weak and from below, where it
+   *  warms the shadow side without colouring the form. */
   lightFill: "#f1b8e4",
   lightRim: "#f3e5b5",
   /** Spill from the tube onto the bezel. Phosphor white is cold. */

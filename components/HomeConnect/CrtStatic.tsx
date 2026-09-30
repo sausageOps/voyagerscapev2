@@ -39,14 +39,14 @@ function resolveStatus(r: RecordingState, p: AudioPlaybackState): CrtStatus {
 }
 
 /**
- * ONE MACHINE, IN ITS OWN 360 x 330 FIELD
+ * THE MACHINE, IN ITS OWN 360 x 330 FIELD
  * =======================================
  *
- * Drawn once and placed twice by the caller — exactly as the WebGL path
- * builds one set of geometry buffers and stands two units on them. The
- * two instances differ in scale, position, and apparent distance, which
- * is the same set of cues the 3D version uses and the reason the
- * fallback reads as the same composition rather than a different idea.
+ * Kept as its own function with its own coordinate field so the
+ * artwork's forty-odd hand-placed coordinates never have to be re-tuned
+ * when the surrounding box changes — the caller places it with a
+ * transform instead. That is the same reason the programme artwork
+ * inside it gets a nested viewBox.
  */
 function Monitor({ channel, status }: { channel: number; status: CrtStatus }) {
   /* THE APERTURE, in the casting's coordinates. Tracks SCREEN in
@@ -325,9 +325,7 @@ export default function CrtStatic({
     onShutter();
   }, [onShutter]);
 
-  const NAMES = ["VOYAGE DRIVE", "ARCHIVE MAZE", "PIXEL ARCADE", "VOYAGE ARCHIVE"];
-  const label = NAMES[channel];
-  const secondLabel = NAMES[(channel + 2) % 4];
+  const label = ["VOYAGE DRIVE", "ARCHIVE MAZE", "PIXEL ARCADE", "VOYAGE ARCHIVE"][channel];
 
   return (
     <div className={styles.stage} data-status={status}>
@@ -337,11 +335,11 @@ export default function CrtStatic({
         onClick={onClick}
         data-cursor="camera"
         data-cursor-label="Switch"
-        aria-label="Archive monitors — change channel"
+        aria-label="Archive monitor — change channel"
       >
         <svg
           className={styles.svg}
-          viewBox="0 0 568 400"
+          viewBox="0 0 568 541"
           role="img"
           aria-hidden="true"
           focusable="false"
@@ -390,26 +388,18 @@ export default function CrtStatic({
             </clipPath>
           </defs>
 
-          {/* ---------------------------------------------------------
-              Two machines, same drawing, different transforms.
-
-              The secondary is drawn FIRST so the primary overlaps it, and
-              wrapped at 0.86 opacity over the cream page — which tints it
-              toward the background rather than darkening it. That is what
-              distance actually does to an object in a lit room, and it is
-              the same decision the 3D materials make with `dim`.
-              --------------------------------------------------------- */}
-          <g opacity="0.86" transform="translate(4 28) scale(0.7)">
-            <Monitor channel={(channel + 2) % 4} status={status} />
-          </g>
-          <g transform="translate(212 46)">
+          {/* One machine, centred in a 568 x 541 field — the same 1.05
+              aspect the WebGL box uses, so the two renderers occupy an
+              identical footprint and the upgrade causes no layout shift.
+              The artwork keeps its own 360-wide coordinate system and is
+              placed by a transform rather than being re-tuned. */}
+          <g transform="translate(40 24) scale(1.43)">
             <Monitor channel={channel} status={status} />
           </g>
         </svg>
       </button>
       <span className="vs-sr-only" aria-live="polite">
-        Two archive monitors. Main screen: {label}. Second screen: {secondLabel}. Device
-        status: {STATUS_TEXT[status]}
+        Archive monitor. Now showing: {label}. Device status: {STATUS_TEXT[status]}
       </span>
     </div>
   );

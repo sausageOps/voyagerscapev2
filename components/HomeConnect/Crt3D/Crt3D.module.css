@@ -1,30 +1,29 @@
 /* =========================================================
    CRT 3D — host layout
 
-   The clamps below are DUPLICATED in CrtStatic.module.css rather than
-   shared. That is intentional: CrtStatic owns the fallback, and the two
-   must be able to change independently without either breaking the
-   other. Both boxes resolve to the same width and the same aspect at
-   every breakpoint, so swapping renderers causes no layout shift.
+   One centred machine. The clamps below are DUPLICATED in
+   CrtStatic.module.css rather than shared: CrtStatic owns the fallback,
+   and the two must be able to change independently without either
+   breaking the other. Both boxes resolve to the same width and the same
+   aspect at every breakpoint, so swapping renderers causes no layout
+   shift.
 
-   SIZED BY HEIGHT, NOT WIDTH
-   --------------------------
-   The arrangement went from one monitor to two, so the box had to get
-   wider. It deliberately did NOT get taller.
+   THE BOX IS BIGGER THAN THE OBJECT, ON PURPOSE
+   ---------------------------------------------
+   The camera is fitted to the monitor's silhouette swept through its
+   whole ±20° / ±12° rotation range, so at rest the object occupies
+   about 77% of this box and grows toward 87% as the cursor turns it.
 
-   The hero's statement sits at the top of the section with the object
-   box absolutely centred behind it, so the box's HEIGHT is what decides
-   how far up into the typography the monitors reach. Every clamp here is
-   therefore written as (aspect x the height the single-monitor version
-   resolved to) — 486px on a 1440x900 desktop, unchanged. The second
-   machine is bought entirely out of horizontal space, where the hero has
-   room, rather than out of the statement's, where it does not.
+   That is the negative space, and it is generated rather than padded:
+   the composition is most open when the monitor is square on and closes
+   up as you lean it over. Fitting the resting pose instead would clip
+   the casting's corners at exactly the moment the cursor reaches the
+   edge of the screen and the user is looking hardest at it.
    ========================================================= */
 
 .stage {
   position: relative;
-  /* 1.42 x the previous square box's height at every step. */
-  width: clamp(320px, min(52vw, 77svh), 770px);
+  width: clamp(320px, min(44vw, 65svh), 660px);
 }
 
 .hit {
@@ -45,10 +44,10 @@
 .canvas {
   position: relative;
   width: 100%;
-  /* Measured, not guessed: the two machines' combined silhouette at the
-     staging angles projects 1.42 wide for every 1.0 tall. */
-  aspect-ratio: 71 / 50;
-  /* The objects are lit from within the scene; the page stays cream. */
+  /* Measured, not guessed: the monitor's projected silhouette swept
+     through its full rotation range is 1.05 wide for every 1.0 tall. */
+  aspect-ratio: 21 / 20;
+  /* The object is lit from within the scene; the page stays cream. */
   background: transparent;
   overflow: visible;
 }
@@ -57,11 +56,11 @@
    Drawing surface, slightly larger than the layout box it sits in.
 
    A WebGL canvas cannot paint outside its own element, so `overflow:
-   visible` on the parent buys nothing — extra drawing surface is the only
-   way to let the objects approach the edges of their footprint. What is
-   NOT done here is growing `.stage`: that is the layout box, and it is
-   deliberately identical to the fallback's box at every breakpoint. Grow
-   it and the hero jumps wider the moment the WebGL chunk finishes
+   visible` on the parent buys nothing — extra drawing surface is the
+   only way to let the object approach the edges of its footprint. What
+   is NOT done here is growing `.stage`: that is the layout box, and it
+   is deliberately identical to the fallback's box at every breakpoint.
+   Grow it and the hero jumps wider the moment the WebGL chunk finishes
    downloading and swaps out the fallback.
    --------------------------------------------------------------------- */
 .gl {
@@ -81,38 +80,31 @@
   touch-action: manipulation;
 }
 
-/* ---- tablet: still the wide arrangement, relaxed ---- */
+/* ---- responsive ----------------------------------------------------
+   Touch devices get a proportionally larger box for the same object,
+   because the camera there is fitted only to the idle sweep — there is
+   no cursor to make room for. See `sweep` in CrtCanvas.
+   -------------------------------------------------------------------- */
 @media (max-width: 1099px) {
   .stage {
-    width: clamp(320px, min(86vw, 62svh), 640px);
+    width: clamp(300px, min(66vw, 56svh), 520px);
   }
 }
 
-/* ---------------------------------------------------------------------
-   Narrow: the arrangement restacks rather than shrinking — the primary
-   moves to the centre and the secondary tucks in behind it. The box gets
-   correspondingly squarer. The 899px breakpoint MUST match the media
-   query in CrtCanvas that swaps the composition, or the box and its
-   contents disagree for one resize.
-   --------------------------------------------------------------------- */
 @media (max-width: 899px) {
-  .canvas {
-    aspect-ratio: 57 / 50;
-  }
-
   .stage {
-    width: min(96vw, 50svh, 470px);
+    width: min(88vw, 48svh, 460px);
   }
 }
 
 @media (max-width: 767px) {
   .stage {
-    width: min(96vw, 48svh, 440px);
+    width: min(92vw, 44svh, 420px);
   }
 }
 
 @media (max-width: 430px) {
   .stage {
-    width: min(97vw, 46svh, 410px);
+    width: min(95vw, 42svh, 392px);
   }
 }
