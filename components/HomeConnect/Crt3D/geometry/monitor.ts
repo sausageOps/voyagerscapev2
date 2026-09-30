@@ -212,6 +212,55 @@ export function solvePanel(): PanelLayout {
   return { left, width, centre: left + width / 2, grilleX, buttonX, ledX, powerX };
 }
 
+/**
+ * UPPER FLANK VENTILATION
+ * =======================
+ *
+ * Seven horizontal slots high on each side housing, above the existing
+ * mid-flank group.
+ *
+ * WHY HERE
+ * --------
+ * It has to be a surface that is hidden when the monitor faces you and
+ * arrives as you turn it, which is exactly what the flank is: head-on
+ * its normal points 90° away from the camera, and it only comes into
+ * view as the cursor yaws the body. Putting the group high on the
+ * flank rather than low also keeps it clear of the mid-flank slots, so
+ * the two read as two separate mouldings rather than one confused
+ * patch — and high is where a real set vented, because that is where
+ * the heat went.
+ *
+ * Forward of the existing group as well as above it: the shell's taper
+ * turns the flank away from the camera as it runs back, so the band
+ * nearest the casting join is the part the rotation actually reveals.
+ *
+ * A SHALLOW RECESS, NOT A DARK STRIPE
+ * -----------------------------------
+ * The slots are cut through a thin plate in the shell's own cream, and
+ * what sits behind them is a floor in the moulding-seam tone — a warm
+ * mid-grey, the same colour the casting join uses. The existing vents
+ * use the near-black `vent` colour because they are deep cavities you
+ * genuinely see into; these are shallow blind recesses about 0.022
+ * deep, and a near-black floor in a 0.022 recess does not read as
+ * depth, it reads as paint.
+ *
+ * It costs no new material and no new draw call: the plate merges into
+ * the vent-plate mesh and the floor into the seam mesh, both of which
+ * already exist.
+ */
+const UPPER_VENT = {
+  count: 7,
+  /** Narrow dimension of each slot, stacked up the flank. */
+  w: 0.036,
+  /** Long dimension, running front-to-back. */
+  len: 0.3,
+  gap: 0.085,
+  /** Shallow. The plate is thin and the floor sits just behind it. */
+  depth: 0.016,
+  y: 0.95,
+  z0: CASTING_BACK_Z - 0.49,
+} as const;
+
 /** A rounded-rectangle hole, for cutting into an extruded profile. */
 function rectHole(cx: number, cy: number, w: number, h: number, r: number): THREE.Path {
   const hw = w / 2;
@@ -450,6 +499,33 @@ export function buildHousing(): HousingGeometry {
     floors.push(floor);
   }
 
+  /* ---- upper flank ventilation, both sides ----------------------
+     Same construction as the group below it, but shallower and over a
+     warm mid-tone floor rather than a dark cavity. The floor is placed
+     0.022 behind the outer surface: enough for the slot walls to catch
+     a shadow, not enough to read as a hole. */
+  const upperFloors: THREE.BufferGeometry[] = [];
+  for (const sign of [-1, 1]) {
+    const u = UPPER_VENT;
+    const { x, slope } = sideAt(u.z0);
+    const tilt = Math.atan(slope);
+    const plate = slottedPlate(u.count, u.w, u.len, u.gap, u.depth, 0.05);
+    bake(
+      plate,
+      [sign * (x - u.depth / 2 + 0.005), u.y, u.z0],
+      [0, sign * (Math.PI / 2 - tilt), Math.PI / 2],
+    );
+    plates.push(plate);
+
+    const floor = slab(u.len + 0.06, (u.count - 1) * u.gap + u.w + 0.08, 0.018, 0.025, 0);
+    bake(
+      floor,
+      [sign * (x - 0.026), u.y, u.z0],
+      [0, sign * (Math.PI / 2 - tilt), 0],
+    );
+    upperFloors.push(floor);
+  }
+
   /* The second housing seam the brief asks for: the line where the
      swivel neck lands on the foot. A real base is two mouldings and the
      join is visible from the front, low in the frame. One inset ring,
@@ -468,7 +544,7 @@ export function buildHousing(): HousingGeometry {
     bezel: merge([casting, stepPlate]),
     wall,
     rear: merge([rear, boss]),
-    seam: merge([seam, baseJoin]),
+    seam: merge([seam, baseJoin, ...upperFloors]),
     ventPlate: merge(plates),
     ventFloor: merge([...floors, connector]),
   };
