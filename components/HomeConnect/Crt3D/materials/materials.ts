@@ -35,6 +35,7 @@ export interface CrtMaterials {
   button: THREE.MeshStandardMaterial;
   buttonPower: THREE.MeshStandardMaterial;
   buttonWell: THREE.MeshStandardMaterial;
+  knob: THREE.MeshStandardMaterial;
   tubeMask: THREE.MeshStandardMaterial;
   glass: THREE.ShaderMaterial;
   led: THREE.MeshStandardMaterial;
@@ -238,6 +239,19 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
 
     /* --------------------------------------------------------- tube ----- */
 
+    /* The trim wheel. Rougher than the push buttons and with a weaker
+       environment response — a matte, faintly rubbery moulding rather
+       than the hard polished ABS of the switches beside it. That
+       difference is the only reason the two read as separate parts at
+       this size, where neither is more than twenty pixels across. */
+    const knob = new THREE.MeshStandardMaterial({
+      color: tint(PALETTE.knob, 0.5),
+      roughness: 0.82,
+      metalness: 0.0,
+      envMapIntensity: env(0.22),
+      roughnessMap: tiled(11, 0.55, 0.28),
+    });
+
     // The unlit border inside the aperture, around the lit phosphor area.
     const tubeMask = new THREE.MeshStandardMaterial({
       color: tint(PALETTE.tubeMask, 0.4),
@@ -302,6 +316,7 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
       button,
       buttonPower,
       buttonWell,
+      knob,
       tubeMask,
       glass,
       led,
@@ -318,6 +333,7 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
       button,
       buttonPower,
       buttonWell,
+      knob,
       tubeMask,
       glass,
       led,

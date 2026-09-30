@@ -83,6 +83,17 @@ const CrtUnit = forwardRef<THREE.Group, {
 
       {/* -------------------------------------------------- controls --- */}
       <mesh geometry={controls.wells} material={materials.buttonWell} />
+
+      {/* Speaker grille: slotted panel over a dark cavity, recessed into
+          its own aperture in the casting. */}
+      <mesh geometry={controls.grilleFloor} material={materials.vent} />
+      <mesh geometry={controls.grille} material={materials.bezel} />
+
+      {/* Analogue trim wheel, in a raised collar moulded from the same
+          plastic as the bezel. */}
+      <mesh geometry={controls.knobCollar} material={materials.bezel} />
+      <mesh geometry={controls.knob} material={materials.knob} />
+      <mesh geometry={controls.knobMark} material={materials.buttonWell} />
       <mesh geometry={controls.buttons} material={materials.button} />
       <mesh geometry={controls.badges} material={materials.buttonWell} />
       <mesh geometry={controls.surround} material={materials.bezel} />

@@ -89,6 +89,86 @@ function apertureRing(a: number, b: number, seg = 88): THREE.Vector2[] {
   );
 }
 
+/**
+ * THE FASCIA GAP
+ * ==============
+ *
+ * Most of what a late-90s set needs was already moulded in: the power
+ * switch with its raised surround, four recessed adjustment buttons in
+ * their own aperture, the status lamp behind a lens, top-deck and flank
+ * ventilation cut as real slots over real cavities, and the groove where
+ * the front casting meets the rear housing.
+ *
+ * What was missing is a speaker grille and an analogue trim control, and
+ * there is exactly one place on the face they can honestly go: the gap
+ * between the badge plinths and the control strip, which measures 0.600
+ * wide. Everything below is dimensioned to fit inside it with clear air
+ * on both sides — nothing moves, nothing is removed, and the face does
+ * not get busier than a real one was.
+ *
+ *   plinths        .. -0.439
+ *   [ grille ]     -0.414 .. -0.128
+ *   [ wheel  ]     -0.104 .. +0.096
+ *   control strip  +0.121 ..
+ *
+ * The three gaps come out at 0.025 / 0.024 / 0.025 — even, and measured
+ * from the built bounding boxes rather than from these constants, since
+ * the bevels add about 0.008 a side that the nominal widths do not show.
+ */
+const FASCIA = {
+  grille: {
+    x: -0.271,
+    y: -1.175,
+    w: 0.27,
+    h: 0.2,
+    r: 0.035,
+    recess: 0.03,
+    /** Seven slots. Vertical, matching the language of the deck vents —
+     *  the same tool cut both, so they should not look like two ideas. */
+    count: 7,
+    slotW: 0.022,
+    slotH: 0.125,
+    pitch: 0.032,
+    depth: 0.022,
+  },
+  /**
+   * A single trim wheel, not a pair.
+   *
+   * Two would have fitted only by shrinking both below the size at which
+   * a knob reads as a knob — at hero scale this one is about 20px across
+   * and a pair would be 13px each, which is a dark dot. The brief's own
+   * rule applies: physical realism over completeness.
+   *
+   * It is built as a raised collar with the wheel inside it rather than
+   * as a hole through the casting, deliberately. Every hole in this
+   * profile is bevelled by the same 0.035 as the outer silhouette, and
+   * on an aperture this small that chamfer is wider than the gap between
+   * the wheel and its edge — the knob ends up lost in a countersink. A
+   * raised collar is also how the power switch next to it is built, so
+   * the two read as parts from the same mould.
+   */
+  knob: {
+    x: -0.004,
+    y: -1.175,
+    /** Outer collar. */
+    collarR: 0.1,
+    collarDepth: 0.05,
+    /** The wheel itself. */
+    r: 0.068,
+    depth: 0.055,
+    /** Faceted rather than smooth: at 20px a knurled rim cannot resolve
+     *  as ridges, but a slightly polygonal silhouette reads as grip. */
+    facets: 14,
+  },
+} as const;
+
+/** A circular hole, for cutting into an extruded profile. */
+function circleHole(cx: number, cy: number, r: number): THREE.Path {
+  const p = new THREE.Path();
+  p.absarc(cx, cy, r, 0, Math.PI * 2, true);
+  return p;
+}
+
 /** A rounded-rectangle hole, for cutting into an extruded profile. */
 function rectHole(cx: number, cy: number, w: number, h: number, r: number): THREE.Path {
   const hw = w / 2;
@@ -199,6 +279,11 @@ export function buildHousing(): HousingGeometry {
   const face = roundedRectShape(BODY.w, BODY.h, BODY.rTop, BODY.rBot);
   face.holes.push(aperturePath(apertureHalfW + stepOut, apertureHalfH + stepOut));
   face.holes.push(rectHole(CONTROLS.strip.x, CONTROLS.strip.y, CONTROLS.strip.w, CONTROLS.strip.h, CONTROLS.strip.r));
+  /* The speaker aperture, cut in the same operation as the screen and the
+     control strip so all three share one continuous moulding line. */
+  face.holes.push(
+    rectHole(FASCIA.grille.x, FASCIA.grille.y, FASCIA.grille.w, FASCIA.grille.h, FASCIA.grille.r),
+  );
   const casting = extrudeCentred(face, BODY.d, BODY.bevel, 20);
   bake(casting, [0, 0, FRONT_Z - BODY.d / 2]);
 
@@ -323,11 +408,25 @@ export function buildHousing(): HousingGeometry {
     floors.push(floor);
   }
 
+  /* The second housing seam the brief asks for: the line where the
+     swivel neck lands on the foot. A real base is two mouldings and the
+     join is visible from the front, low in the frame. One inset ring,
+     0.012 deep — enough to catch a shadow, not enough to read as a
+     drawn line. */
+  const baseJoin = slab(
+    BASE.neck.w - 0.05,
+    BASE.neck.d - 0.05,
+    0.022,
+    BASE.neck.r,
+    0.006,
+  );
+  bake(baseJoin, [0, BASE.topY - BASE.neck.h + 0.006, 0], [Math.PI / 2, 0, 0]);
+
   return {
     bezel: merge([casting, stepPlate]),
     wall,
     rear: merge([rear, boss]),
-    seam,
+    seam: merge([seam, baseJoin]),
     ventPlate: merge(plates),
     ventFloor: merge([...floors, connector]),
   };
@@ -389,6 +488,13 @@ export function buildScreen(): ScreenGeometry {
 
 export interface ControlsGeometry {
   wells: THREE.BufferGeometry;
+  /** Speaker grille: the slotted panel, and the cavity behind it. */
+  grille: THREE.BufferGeometry;
+  grilleFloor: THREE.BufferGeometry;
+  /** Trim wheel: its raised collar, the wheel, and the indicator notch. */
+  knobCollar: THREE.BufferGeometry;
+  knob: THREE.BufferGeometry;
+  knobMark: THREE.BufferGeometry;
   buttons: THREE.BufferGeometry;
   badges: THREE.BufferGeometry;
   surround: THREE.BufferGeometry;
@@ -480,8 +586,57 @@ export function buildControls(): ControlsGeometry {
   const bar = new THREE.BoxGeometry(0.008, 0.032, 0.012);
   bake(bar, [0, 0.014, p.depth / 2 - 0.002]);
 
+  /* ------------------------------------------------- speaker grille --
+     Same construction as the control strip and the deck vents: a panel
+     with real slots cut through it, recessed into an aperture, over a
+     dark cavity. Painting dark stripes on the bezel would cost nothing
+     and read as a decal from the first degree of rotation. */
+  const gr = FASCIA.grille;
+  const grille = slottedPlate(
+    gr.count,
+    gr.slotW,
+    gr.slotH,
+    gr.pitch,
+    gr.depth,
+    (gr.w - ((gr.count - 1) * gr.pitch + gr.slotW)) / 2,
+  );
+  bake(grille, [gr.x, gr.y, FRONT_Z - gr.recess - gr.depth / 2]);
+
+  const grilleFloor = slab(gr.w - 0.02, gr.h - 0.02, 0.02, gr.r, 0.006);
+  bake(grilleFloor, [gr.x, gr.y, FRONT_Z - gr.recess - gr.depth - 0.03]);
+
+  /* ---------------------------------------------------- trim wheel --- */
+  const kb = FASCIA.knob;
+
+  /* Raised collar, tapering slightly, so the wheel sits down inside it
+     rather than on top of it. */
+  const collar = new THREE.CylinderGeometry(kb.collarR, kb.collarR * 0.97, kb.collarDepth, 28);
+  collar.rotateX(Math.PI / 2);
+  bake(collar, [kb.x, kb.y, FRONT_Z - kb.collarDepth / 2 + 0.014]);
+
+  /* The wheel. Faceted rim, and a chamfered cap so the top edge catches
+     the key light the way a moulded knob does. */
+  const knobBody = new THREE.CylinderGeometry(kb.r, kb.r * 0.94, kb.depth, kb.facets);
+  knobBody.rotateX(Math.PI / 2);
+  const knobCap = new THREE.CylinderGeometry(kb.r * 0.82, kb.r, 0.012, kb.facets);
+  knobCap.rotateX(Math.PI / 2);
+  bake(knobCap, [0, 0, -kb.depth / 2 - 0.006]);
+  const knob = merge([knobBody, knobCap]);
+  bake(knob, [kb.x, kb.y, FRONT_Z - kb.depth / 2 + 0.026]);
+
+  /* Indicator notch, off the vertical as if the control sits a little
+     below its midpoint — a knob at dead 12 o'clock looks like a render
+     default rather than a thing somebody set. */
+  const knobMark = slab(0.012, kb.r * 0.62, 0.014, 0.005, 0.003);
+  bake(knobMark, [kb.x - 0.019, kb.y + 0.026, FRONT_Z + 0.021], [0, 0, 0.42]);
+
   return {
     wells: insert,
+    grille,
+    grilleFloor,
+    knobCollar: collar,
+    knob,
+    knobMark,
     buttons: merge(buttons),
     badges: merge(badges),
     surround,
