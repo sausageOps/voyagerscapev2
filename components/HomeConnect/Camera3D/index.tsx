@@ -144,6 +144,12 @@ export default function Camera3D({
               mobileInteracting={mobileInteracting}
             />
           </div>
+          <div className={styles.screenReadout} aria-hidden="true">
+            <span className={styles.readoutKicker}>VOYAGERSCAPE / VISUAL RESEARCH TERMINAL</span>
+            <strong>{capturing ? "CAPTURE" : status === "idle" ? "EXPLORE" : STATUS_TEXT[status].toUpperCase()}</strong>
+            <span className={styles.readoutRule} />
+            <span className={styles.readoutMeta}>FIELD 04 · SIGNAL STABLE</span>
+          </div>
         </div>
       </button>
       <span className="vs-sr-only" aria-live="polite">

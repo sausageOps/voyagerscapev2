@@ -77,6 +77,54 @@
   touch-action: manipulation;
 }
 
+/* A physical-looking phosphor readout layered over the glass. Keeping this in
+   the host makes the state crisp while the scene supplies the curved bezel,
+   reflection and restrained glow. */
+.screenReadout {
+  position: absolute;
+  z-index: 2;
+  left: 19%;
+  top: 31%;
+  width: 54%;
+  height: 38%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: #dce9d2;
+  text-align: left;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  text-shadow: 0 0 10px rgba(144, 205, 157, 0.64);
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+}
+
+.readoutKicker,
+.readoutMeta {
+  font-size: clamp(5px, 0.55vw, 8px);
+  opacity: 0.72;
+  white-space: nowrap;
+}
+
+.screenReadout strong {
+  font-family: var(--font-display);
+  font-size: clamp(23px, 3.2vw, 43px);
+  line-height: 0.9;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+
+.readoutRule {
+  width: 74%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.48;
+}
+
+.readoutMeta { opacity: 0.58; }
+
 /* ---- responsive: mirrors the SVG fallback exactly ---- */
 @media (max-width: 1023px) {
   .stage {

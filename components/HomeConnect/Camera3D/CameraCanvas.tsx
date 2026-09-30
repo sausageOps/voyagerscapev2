@@ -8,7 +8,7 @@ import { STAGING, OBJECT_HULL, MOTION } from "./proportions";
 import type { TallyState } from "./materials/palette";
 import type { PointerField } from "./motion/usePointerField";
 import type { ShutterSignal } from "./motion/shutterSignal";
-import CameraRig from "./scene/CameraRig";
+import CameraRig from "./scene/CRTRig";
 
 /**
  * Points to fit: the hull corners, swept across the object's range of motion.
