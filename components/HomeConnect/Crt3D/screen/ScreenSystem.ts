@@ -56,7 +56,16 @@ const PERSISTENCE: Record<string, number> = {
   maze: 0.1,
   arcade: 0.075,
   signal: 0.04,
+  /* The pixel scene is nearly static and its palette is flat, so any
+     trailing at all just fogs the dark half of it. */
+  pixel: 0.05,
 };
+
+/** Deterministic hash noise for the sync artefacts. No allocation. */
+function hash(n: number): number {
+  const s = Math.sin(n * 127.1) * 43758.5453;
+  return s - Math.floor(s);
+}
 
 export interface ScreenOptions {
   /** Repaint rate. The smaller tube can afford less. */
@@ -175,7 +184,7 @@ export class ScreenSystem {
     const n = this.programmes.length;
     let next = (this.index + 1) % n;
     /* Never land on whatever the other machine is showing. One step is
-       always enough with four programmes and two tubes, but the loop is
+       always enough with five programmes and two tubes, but the loop is
        bounded anyway rather than assuming that stays true. */
     const avoid = this.peer?.();
     for (let i = 0; i < n && next === avoid; i += 1) next = (next + 1) % n;
@@ -189,7 +198,20 @@ export class ScreenSystem {
    */
   update(dt: number, frozen: boolean): ScreenFrame {
     if (frozen) {
-      // One stable frame, painted once, then left alone.
+      /* Reduced motion: one stable frame, painted once, then left alone.
+         A channel change is honoured — reduced motion is not reduced
+         function — but it happens as a CUT. There is no disturbance to
+         ride through, so the pending swap is committed on the spot and
+         the machine is left idle rather than half-way through a
+         transition it will never finish. */
+      if (this.pending >= 0) {
+        this.index = this.pending;
+        this.pending = -1;
+        this.transT = -1;
+        this.progT = 0;
+        this.programmes[this.index].reset();
+        this.paintAcc = 0;
+      }
       if (this.paintAcc === 0) {
         this.paint(0, true);
         this.paintAcc = 1;
@@ -203,9 +225,14 @@ export class ScreenSystem {
     /* ---- transition state ---- */
     if (this.transT >= 0) {
       this.transT += dt;
-      const half = CHANNELS.transition * 0.5;
-      // Swap at the midpoint, under cover of the worst of the disturbance.
-      if (this.pending >= 0 && this.transT >= half) {
+      /* Swap just after the peak of the disturbance rather than at the
+         midpoint of the window. The picture is at its most broken around
+         a third of the way in, so that is where the cut hides — and it
+         leaves the whole of the long settle for the NEW programme to
+         walk back into place, which is the half of the effect the eye
+         actually reads. */
+      const swapAt = CHANNELS.transition * 0.34;
+      if (this.pending >= 0 && this.transT >= swapAt) {
         this.index = this.pending;
         this.pending = -1;
         this.progT = 0;
@@ -228,15 +255,30 @@ export class ScreenSystem {
   }
 
   /**
-   * Shaped 0→1→0 over the transition window. A raised cosine rather than a
-   * triangle: the disturbance has to arrive and leave smoothly or the
-   * channel change reads as a one-frame glitch rather than a tube
-   * re-syncing.
+   * THE SHAPE OF A CHANNEL CHANGE
+   * -----------------------------
+   * Deliberately NOT symmetrical. Sync is lost in an instant and regained
+   * slowly: the line oscillator has to find the incoming pulse train and
+   * then settle onto it, so the picture snaps apart and then walks back
+   * into place.
+   *
+   * A raised cosine — the obvious envelope, and what this was — spends as
+   * long breaking up as it does recovering, which reads as a deliberate
+   * effect being played at you. The asymmetric one reads as hardware: a
+   * fast attack over the first fifth of the window, then a long tail with
+   * a small secondary kick in it, because a tube that has just re-locked
+   * overshoots once before it holds.
    */
   private transitionAmount(): number {
     if (this.transT < 0) return 0;
     const p = Math.min(1, this.transT / CHANNELS.transition);
-    return Math.sin(p * Math.PI) ** 0.8;
+    const ATTACK = 0.18;
+    if (p < ATTACK) return (p / ATTACK) ** 0.5;
+    const k = (p - ATTACK) / (1 - ATTACK); // 0 → 1 across the settle
+    const decay = (1 - k) ** 1.6;
+    // one damped bounce as the line oscillator re-locks
+    const ring = 1 + 0.35 * Math.sin(k * Math.PI * 2.4) * (1 - k);
+    return Math.max(0, Math.min(1, decay * ring));
   }
 
   private paint(dt: number, force: boolean) {
@@ -278,6 +320,12 @@ export class ScreenSystem {
     this.prevCtx.globalAlpha = 1;
     this.prevCtx.drawImage(this.canvas, 0, 0);
 
+    /* ---- sync disturbance -------------------------------------------
+       Applied AFTER the persistence buffer has been updated, so the
+       torn frame is never fed back into the next one: the artefact is a
+       fault in the display, not something the phosphor remembers. */
+    if (!force && this.transT >= 0) this.tear(this.transitionAmount());
+
     /* ---- cheap mean luminance for the bezel spill light. Sampled from a
            16×12 downscale of the frame rather than the full canvas: a
            getImageData over 320×240 every paint is a real cost, over 192
@@ -285,6 +333,103 @@ export class ScreenSystem {
     this.luma = this.sampleLuma() * this.gain;
 
     this.texture.needsUpdate = true;
+  }
+
+  /**
+   * HORIZONTAL SYNC DISTURBANCE
+   * ===========================
+   *
+   * The picture itself coming apart, in the raster — not a filter over
+   * the top of it. The frame is copied aside, the canvas is re-laid from
+   * that copy in horizontal bands, and each band is displaced sideways by
+   * its own amount. That is literally what a line oscillator losing lock
+   * does: every scanline starts at the wrong time, so every line lands at
+   * the wrong x.
+   *
+   * WHY IT IS HERE AND NOT IN THE SHADER
+   * ------------------------------------
+   * The tube shader already rolls, tears and mixes static, and that is
+   * the right place for the ANALOGUE part of the fault — it works in the
+   * distorted, curved space of the glass. But a shader tear is a
+   * continuous uv displacement: it cannot break the picture into bands of
+   * DIFFERENT heights, each offset independently, because it has no
+   * memory of the frame. Doing the band structure on the source raster
+   * and the roll in the shader is how the two halves of the effect end up
+   * looking like one fault instead of two effects.
+   *
+   * It only runs during the ~0.6s window, so its cost is invisible in
+   * the average frame.
+   */
+  private tearCanvas: HTMLCanvasElement | null = null;
+  private tearCtx: CanvasRenderingContext2D | null = null;
+
+  private tear(amount: number) {
+    if (amount <= 0.02) return;
+    const w = CHANNELS.texW;
+    const h = CHANNELS.texH;
+
+    if (!this.tearCanvas) {
+      this.tearCanvas = document.createElement("canvas");
+      this.tearCanvas.width = w;
+      this.tearCanvas.height = h;
+      this.tearCtx = this.tearCanvas.getContext("2d", { alpha: false });
+    }
+    const src = this.tearCtx;
+    if (!src) return;
+
+    src.globalCompositeOperation = "source-over";
+    src.globalAlpha = 1;
+    src.drawImage(this.canvas, 0, 0);
+
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 1;
+    ctx.imageSmoothingEnabled = false;
+    // Whatever the bands do not cover is unlit tube, not black paint.
+    ctx.fillStyle = "#04060a";
+    ctx.fillRect(0, 0, w, h);
+
+    /* A quantised clock: the fault has to step, not slide. A smoothly
+       moving tear is a modern glitch effect; a real one changes on the
+       field rate and holds. */
+    const step = Math.floor(this.transT * 30);
+    // vertical roll, wrapped — the frame is still whole, just mistimed
+    const roll = Math.round((hash(step * 1.7) - 0.5) * 34 * amount);
+
+    for (let y = 0; y < h; ) {
+      const bh = 4 + Math.floor(hash(y * 0.31 + step * 2.3) * 22);
+      const off = Math.round((hash(y * 0.77 + step * 5.1) - 0.5) * 78 * amount);
+      let sy = (y + roll) % h;
+      if (sy < 0) sy += h;
+      const take = Math.min(bh, h - y);
+      // the band may straddle the wrap point, so it is drawn in two parts
+      const first = Math.min(take, h - sy);
+      if (first > 0) ctx.drawImage(src.canvas, 0, sy, w, first, off, y, w, first);
+      if (take - first > 0) {
+        ctx.drawImage(src.canvas, 0, 0, w, take - first, off, y + first, w, take - first);
+      }
+      y += bh;
+    }
+
+    /* A couple of dropped lines of pure noise, and the bright retrace
+       bar that sweeps the raster while the tube hunts for the pulse. */
+    for (let i = 0; i < 3; i += 1) {
+      const ny = Math.floor(hash(step * 3.7 + i * 9.1) * h);
+      const nh = 1 + Math.floor(hash(step * 6.1 + i) * 3);
+      ctx.globalAlpha = 0.5 * amount;
+      for (let x = 0; x < w; x += 4) {
+        const v = Math.round(hash(x * 0.13 + step * 1.9 + i) * 255);
+        ctx.fillStyle = `rgb(${v},${v},${v})`;
+        ctx.fillRect(x, ny, 4, nh);
+      }
+    }
+    const bar = (1 - amount) * h * 1.4 - 20;
+    ctx.globalAlpha = 0.16 * amount;
+    ctx.fillStyle = "#dff2ff";
+    ctx.fillRect(0, bar, w, 10);
+    ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
   /**
@@ -362,5 +507,13 @@ export class ScreenSystem {
     this.canvas.height = 0;
     this.prev.width = 0;
     this.prev.height = 0;
+    if (this.tearCanvas) {
+      this.tearCanvas.width = 0;
+      this.tearCanvas.height = 0;
+    }
+    if (this.lumaCanvas) {
+      this.lumaCanvas.width = 0;
+      this.lumaCanvas.height = 0;
+    }
   }
 }
