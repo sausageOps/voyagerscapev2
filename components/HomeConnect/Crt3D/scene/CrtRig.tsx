@@ -72,26 +72,25 @@ interface RigProps {
  * pixels of centre at every cursor position, while showing you a
  * different face at each one.
  *
- * The signs are an ORBIT, which is the mapping that feels like looking
- * rather than pointing:
+ * The signs FOLLOW the cursor — the object leans the way the cursor
+ * went, rather than away from it:
  *
- *   cursor right  ->  yaw negative   ->  the monitor's right flank swings
- *                                        into view, as if you had walked
- *                                        to the right of it
- *   cursor top    ->  pitch positive ->  its top face tilts toward the
- *                                        camera and the deck, with its
- *                                        ventilation, opens up
+ *   cursor left   ->  yaw negative   ->  the monitor turns toward the
+ *                                        left of the viewport, leaning
+ *                                        after the cursor
+ *   cursor right  ->  yaw positive   ->  the mirror of the above
+ *   cursor top    ->  pitch negative ->  its face tilts UP, toward the
+ *                                        cursor
+ *   cursor bottom ->  pitch positive ->  its face tilts DOWN, toward the
+ *                                        cursor
  *
- * Both signs are NEGATED from the cursor, and the pitch one is the easy
- * one to get backwards — it was, first time. Reasoning about it in the
- * abstract gives the wrong answer as often as not; rendering the nine
- * cursor positions as a contact sheet settles it in one look. Positive
- * `rotation.x` swings the top face TOWARD the camera, which shows more
- * of the deck, not less.
- *
- * The alternative — the object turning to FACE the cursor — is the other
- * common choice and it is wrong for this brief: it hides the flanks at
- * exactly the moment the user is trying to look at them.
+ * The pitch one is the easy one to get backwards. Positive `rotation.x`
+ * swings the top face TOWARD the camera and the face DOWN, so tracking a
+ * cursor whose y grows downward means pitch takes the cursor's y sign
+ * directly. Yaw likewise takes the cursor's x sign directly. Only the
+ * rotation mapping changed here: the few pixels of positional parallax
+ * (`tx`/`ty`) already tracked the cursor and are untouched, as is the
+ * small counter-`roll` weight cue.
  *
  * MOTION ARCHITECTURE
  * -------------------
@@ -278,9 +277,9 @@ export default function CrtRig({
       (Math.sin(t * 0.17) * 0.6 + Math.sin(t * 0.061) * 0.4) * MOTION.idle.driftPitch * ms;
     const driftRoll = Math.sin(t * 0.13) * MOTION.idle.driftRoll * ms;
 
-    /* THE ORBIT. Yaw against the cursor's x, pitch with its y. */
-    sp.yaw.target = -f.x * MOTION.maxYaw * active * cs + driftYaw + touchYaw;
-    sp.pitch.target = -f.y * MOTION.maxPitch * active * cs + driftPitch;
+    /* THE FOLLOW. Yaw with the cursor's x, pitch with its y. */
+    sp.yaw.target = f.x * MOTION.maxYaw * active * cs + driftYaw + touchYaw;
+    sp.pitch.target = f.y * MOTION.maxPitch * active * cs + driftPitch;
     /* Roll AWAY from the cursor: a heavy object pushed sideways leans into
        the push at its base, so its top goes the other way. Small — it is
        felt as weight rather than seen as a tilt. */
@@ -295,8 +294,8 @@ export default function CrtRig({
          "reduced motion" means do not animate AT the user, not remove
          the ability to look at the thing. The springs still run, so the
          response is smooth rather than stepped. */
-      sp.yaw.target = -f.x * MOTION.maxYaw * active * cs;
-      sp.pitch.target = -f.y * MOTION.maxPitch * active * cs;
+      sp.yaw.target = f.x * MOTION.maxYaw * active * cs;
+      sp.pitch.target = f.y * MOTION.maxPitch * active * cs;
       sp.roll.target = 0;
       sp.tx.target = 0;
       sp.ty.target = 0;
