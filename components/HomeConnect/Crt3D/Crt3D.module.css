@@ -1,0 +1,75 @@
+/* =========================================================
+   VOYAGERSCAPE CRT — host layout  (throwaway experiment)
+
+   The CRT is the visual hook: deliberately LARGE and dominant, much bigger
+   than the camera hero it temporarily replaces. A near-square drawing box
+   frames the whole machine (screen + stand + signal sphere). The fit solver
+   inside the canvas keeps the object filling a constant fraction of the box
+   at every breakpoint, so there is no reframe as it scales.
+   ========================================================= */
+
+.stage {
+  position: relative;
+  width: clamp(340px, min(50vw, 72svh), 780px);
+}
+
+.hit {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border-radius: 40px;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.hit:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 12px;
+}
+
+/* Locks the box before WebGL paints. */
+.canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: transparent;
+  overflow: visible;
+}
+
+/* Drawing surface a touch larger than the layout box, so the object can grow
+   without the footprint shifting on upgrade. */
+.gl {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 108%;
+  height: 108%;
+  transform: translate(-50%, -50%);
+}
+
+.gl canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+  touch-action: manipulation;
+}
+
+/* ---- responsive ---- */
+@media (max-width: 1099px) {
+  .stage {
+    width: clamp(320px, min(74vw, 58svh), 620px);
+  }
+}
+
+@media (max-width: 767px) {
+  .stage {
+    width: min(88vw, 52svh, 460px);
+  }
+}
+
+@media (max-width: 430px) {
+  .stage {
+    width: min(90vw, 48svh, 380px);
+  }
+}

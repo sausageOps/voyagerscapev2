@@ -4,25 +4,30 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { RecordingState, AudioPlaybackState } from "@/lib/ui-store";
 import { prefersReducedMotion } from "@/lib/motion";
-import Camera from "./Camera";
+import CrtFallback from "./Crt3D/CrtFallback";
 
 /**
  * HERO OBJECT — renderer selector
  * ===============================
  *
- * Decides between the WebGL camera and the original SVG camera, and is the
- * only place that decision is made.
+ * THROWAWAY VISUAL EXPERIMENT — "VOYAGERSCAPE CRT".
+ *
+ * For this branch the central hero object is temporarily the CRT terminal
+ * instead of the camera. This file is the only place that decision is made,
+ * so reverting the experiment is a one-file change: swap the CRT imports back
+ * to `./Camera` and `./Camera3D`.
  *
  * The gate runs BEFORE the dynamic import, so a device that fails it never
  * downloads three.js at all — the chunk is requested from inside the render
  * path, not at module scope.
  *
- * `components/HomeConnect/Camera.tsx` is untouched and remains the production
- * fallback. It is never removed: it covers no-WebGL, reduced motion, data
- * saver, very low-end hardware, the server render, and runtime context loss.
+ * `Crt3D/CrtFallback.tsx` is the motion-free fallback: it covers no-WebGL,
+ * reduced motion, data saver, the server render, and runtime context loss.
+ * The camera implementation (`Camera.tsx` / `Camera3D/`) is left fully intact
+ * and unused, so the experiment can be abandoned cleanly.
  */
 
-const Camera3D = dynamic(() => import("./Camera3D"), {
+const Crt3D = dynamic(() => import("./Crt3D"), {
   ssr: false, // R3F cannot server-render
   loading: () => null,
 });
@@ -92,9 +97,14 @@ export default function HeroObject(props: HeroObjectProps) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const fallback = <Camera {...props} />;
+  /* The CRT experiment is self-contained: it does not consume the recorder
+     props. They are accepted here only to preserve HeroObject's signature so
+     HomeConnect is untouched. */
+  void props;
+
+  const fallback = <CrtFallback />;
 
   if (!use3D) return fallback;
 
-  return <Camera3D {...props} fallback={fallback} />;
+  return <Crt3D fallback={fallback} />;
 }
