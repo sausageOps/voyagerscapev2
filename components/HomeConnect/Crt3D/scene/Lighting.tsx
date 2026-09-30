@@ -51,15 +51,47 @@ import { createStudioEnvironment } from "../materials/env";
  * comes from a separate weak bounce low on the right, where it warms the
  * shadow side without tinting the form.
  *
- * TOTAL EXPOSURE IS HELD, NOT RAISED
- * ----------------------------------
+ * THE SHELL WAS CLIPPING, AND THAT IS WHY IT LOOKED FLAT
+ * ------------------------------------------------------
+ * The renderer runs with NoToneMapping — `flat` on the Canvas — so
+ * anything above 1.0 is not compressed, it is clamped. Measuring the
+ * object's histogram found 54% OF ITS PIXELS PINNED AT WHITE: the whole
+ * front of the bezel, the top deck and the base were all sitting on the
+ * ceiling, so every plane that faced anywhere near the light resolved
+ * to exactly the same value.
+ *
+ * That is the real reason the plastic read as "too uniformly cream". It
+ * was not the material model and it was not the colour — the form
+ * information was being computed correctly and then thrown away by the
+ * clamp. No amount of roughness tuning can show through a clipped
+ * highlight.
+ *
+ * So every directional lamp came down by roughly 40%, the shell's base
+ * colours came down about 5%, and the environment — which had been a
+ * minor contributor at 0.34 — was raised to do most of the lifting
+ * instead. Clipping is now under 1% of the object and confined to the
+ * status LED, which is supposed to be blown out. The mean is about the
+ * same as before; the difference is that the top half of the range is
+ * now available to describe shape.
+ *
+ * EXPOSURE IS HELD, NOT RAISED
+ * ----------------------------
  * Redistributing light is not the same as adding it. The counter-key
  * brought 0.47 of new intensity to the front of the object, so the key
  * came down from 1.05 to 0.92 and the rim from 0.72 to 0.62 to pay for
- * most of it. The sum is within about 10% of the version before this
- * change, which matters because the shell is a pale cream at #e8dec7 and
- * has very little headroom before the highlights clip and the plastic
- * starts reading as white.
+ * most of it.
+ *
+ * The material pass then moved another chunk of it out of this file
+ * entirely: flat ambient 0.13 -> 0.05 and hemisphere 0.30 -> 0.16, with
+ * the shell's environment response raised from 0.34 to 0.53 to more
+ * than replace it. The mean brightness of the object is roughly
+ * unchanged; what changed is that almost all of the light now arrives
+ * with a DIRECTION attached, and that none of it clips.
+ *
+ * The hemisphere came down furthest because the environment map now
+ * duplicates most of what it was doing — both describe a bright sky
+ * over a warm ground — and stacking the two just re-flattened the
+ * top-to-bottom gradient at a higher level.
  *
  * Shadow maps are off. The only shadow is the procedural contact plane,
  * which costs two triangles instead of a render target.
@@ -101,33 +133,49 @@ export default function Lighting() {
   return (
     <>
       <hemisphereLight
-        args={[new THREE.Color(PALETTE.lightSky), new THREE.Color(PALETTE.lightGround), 0.3]}
+        args={[new THREE.Color(PALETTE.lightSky), new THREE.Color(PALETTE.lightGround), 0.16]}
       />
-      {/* Raised slightly with the wider rotation range: surfaces that
-          swing away from every directional source still need a floor, or
-          they read as holes in the object rather than as planes in
-          shadow. */}
-      <ambientLight color={PALETTE.lightKey} intensity={0.13} />
+      {/*
+        FLAT AMBIENT IS THE ENEMY OF FORM, so there is now very little of
+        it: 0.13 -> 0.05.
+
+        Ambient light adds the same value to every surface regardless of
+        which way it faces, which is precisely the thing that made the
+        shell read as one uniform cream. The floor it was providing —
+        stopping away-facing surfaces going to holes — is now provided by
+        the environment map instead, whose contribution the plastic
+        picks up at 0.85 rather than 0.34. That has the same
+        "nothing goes black" effect and, unlike ambient, it DOES vary
+        with orientation, because the room it is sampling has a bright
+        ceiling and a dark floor.
+
+        Swapping one for the other is the single change in this file that
+        does the most for the material.
+      */}
+      <ambientLight color={PALETTE.lightKey} intensity={0.05} />
 
       {/* key — swung round to the side so it rakes across the bezel steps
           and the moulding seam instead of washing the face flat */}
-      <directionalLight color={PALETTE.lightKey} intensity={0.92} position={[-4.2, 3.6, 4.2]} />
+      <directionalLight color={PALETTE.lightKey} intensity={0.55} position={[-4.2, 3.6, 4.2]} />
 
       {/* counter-key — subordinate but real */}
-      <directionalLight color={PALETTE.lightCounter} intensity={0.6} position={[4.6, 2.3, 3.9]} />
+      <directionalLight color={PALETTE.lightCounter} intensity={0.36} position={[4.6, 2.3, 3.9]} />
 
       {/* brand bounce — full pink, weak, from below right */}
-      <directionalLight color={PALETTE.lightFill} intensity={0.17} position={[4.4, -2.4, 2.6]} />
+      <directionalLight color={PALETTE.lightFill} intensity={0.1} position={[4.4, -2.4, 2.6]} />
 
       {/* rim — the right flank sits against cream page and would otherwise
           dissolve into it */}
-      <directionalLight color={PALETTE.lightRim} intensity={0.62} position={[4.2, 2.0, -3.4]} />
+      <directionalLight color={PALETTE.lightRim} intensity={0.36} position={[4.2, 2.0, -3.4]} />
 
-      {/* skim from overhead: this is the light that finds the vent slots */}
-      <directionalLight color={PALETTE.lightKey} intensity={0.22} position={[0.3, 6.0, -0.6]} />
+      {/* Skim from overhead — the light that finds the vent slots. Kept
+          low: up-facing surfaces are already the hottest on the object
+          once the environment is doing real work, and the top deck and
+          the base were the first things to clip. */}
+      <directionalLight color={PALETTE.lightKey} intensity={0.16} position={[0.3, 6.0, -0.6]} />
 
       {/* bounce */}
-      <directionalLight color={PALETTE.lightGround} intensity={0.2} position={[-1.0, -3.5, 2.0]} />
+      <directionalLight color={PALETTE.lightGround} intensity={0.12} position={[-1.0, -3.5, 2.0]} />
 
     </>
   );

@@ -19,14 +19,25 @@
  */
 
 export const PALETTE = {
-  /* ---- shell: the yellowed off-white every monitor of the era went ---- */
-  shell: "#e3d8bf",
+  /* ---- shell: the yellowed off-white every monitor of the era went ----
+     Each of the three values came down about 9% for this pass, and the
+     reason is measured rather than aesthetic: with the old values 54%
+     of the object's pixels were clamped at pure white, because the
+     renderer has no tone mapping and a near-white base under six lamps
+     has nowhere to put a highlight. Darkening the base is what buys the
+     highlight somewhere to go.
+
+     It is also the more honest colour. Aged ABS is a warm ivory, not an
+     off-white — and a cream object photographed in a cream room reads
+     as cream at a surprisingly low value, because the eye judges it
+     against the page around it rather than against absolute white. */
+  shell: "#cfc4aa",
   /** Rear housing. A shade deeper: it is a separate moulding, and on real
    *  sets the back shell was always a slightly different batch of plastic. */
-  shellRear: "#dbcfb4",
+  shellRear: "#c5b89c",
   /** Bezel face. Marginally lighter and smoother than the body, which is
    *  what the front moulding of these things actually looked like. */
-  bezel: "#e8dec7",
+  bezel: "#d5cab0",
   /** The recessed aperture wall, running back from the bezel step to the
    *  rim of the glass. Much darker than the bezel: on a real set this is
    *  the tube's own shroud, and rendering it as cream turns the screen

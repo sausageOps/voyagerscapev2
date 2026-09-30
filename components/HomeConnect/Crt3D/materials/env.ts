@@ -35,15 +35,20 @@ import * as THREE from "three";
  * of blinking between them. That continuity is the thing that tells the
  * eye it is looking at a curved reflective surface.
  */
-export function createStudioEnvironment(renderer: THREE.WebGLRenderer): THREE.Texture | null {
-  const w = 512;
-  const h = 256;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-
+/**
+ * Paints the room into an equirectangular 2D context.
+ *
+ * Split out from `createStudioEnvironment` so the same room can be
+ * rasterised without a WebGL context — the offline verification renderer
+ * projects it to spherical harmonics to preview how the plastic will
+ * actually respond, and that is only meaningful if it is looking at the
+ * real environment rather than an approximation of it.
+ */
+export function paintStudioEquirect(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+): void {
   /* ---- base: ceiling → horizon → floor ---- */
   const base = ctx.createLinearGradient(0, 0, 0, h);
   base.addColorStop(0.0, "#ffffff");
@@ -132,6 +137,19 @@ export function createStudioEnvironment(renderer: THREE.WebGLRenderer): THREE.Te
   ctx.fillStyle = strip;
   ctx.fillRect(0, h * 0.43, w, h * 0.1);
 
+}
+
+export function createStudioEnvironment(renderer: THREE.WebGLRenderer): THREE.Texture | null {
+  const w = 512;
+  const h = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  paintStudioEquirect(ctx, w, h);
+
   const equirect = new THREE.CanvasTexture(canvas);
   equirect.mapping = THREE.EquirectangularReflectionMapping;
   equirect.colorSpace = THREE.SRGBColorSpace;
@@ -160,7 +178,22 @@ export function createStudioEnvironment(renderer: THREE.WebGLRenderer): THREE.Te
  * One 256² greyscale canvas, reused by every shell material and tiled hard.
  * It modulates roughness only — never colour, which would tint the cream.
  */
-export function createPlasticRoughness(): THREE.Texture | null {
+export interface RoughnessOptions {
+  /**
+   * Mid-point of the map, 0–1. three MULTIPLIES `material.roughness` by
+   * this channel, so a map centred on 0.66 — as the first version was —
+   * silently turns an authored roughness of 0.78 into an effective 0.51.
+   * Centring near 1.0 instead means the authored number is the number,
+   * and the map is purely a modulation around it.
+   */
+  centre?: number;
+  /** Half-width of the band. Small: real contrast here reads as dirt. */
+  spread?: number;
+}
+
+export function createPlasticRoughness(opts: RoughnessOptions = {}): THREE.Texture | null {
+  const centre = (opts.centre ?? 0.93) * 255;
+  const spread = (opts.spread ?? 0.075) * 255;
   const size = 256;
   const canvas = document.createElement("canvas");
   canvas.width = size;
@@ -198,7 +231,12 @@ export function createPlasticRoughness(): THREE.Texture | null {
     for (let x = 0; x < size; x += 1) {
       const blotch = sample(x, y);
       const grain = Math.random();
-      const v = 168 + (blotch - 0.5) * 42 + (grain - 0.5) * 26;
+      /* Two scales: a coarse blotch for the flow lines a big moulding
+         leaves as it cools, and a fine grain for the pebble texture the
+         tool was etched with. The blotch carries two thirds of the
+         amplitude because it is the one you actually see at this size —
+         the grain is there to stop the blotch looking like a gradient. */
+      const v = centre + (blotch - 0.5) * spread * 2 * 0.68 + (grain - 0.5) * spread * 2 * 0.32;
       const p = (y * size + x) * 4;
       d[p] = d[p + 1] = d[p + 2] = Math.max(0, Math.min(255, v));
       d[p + 3] = 255;

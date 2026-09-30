@@ -25,9 +25,9 @@ import { createPlasticRoughness } from "./env";
  * uniformly-smooth one.
  */
 export interface CrtMaterials {
-  shell: THREE.MeshStandardMaterial;
-  shellRear: THREE.MeshStandardMaterial;
-  bezel: THREE.MeshStandardMaterial;
+  shell: THREE.MeshPhysicalMaterial;
+  shellRear: THREE.MeshPhysicalMaterial;
+  bezel: THREE.MeshPhysicalMaterial;
   bezelInner: THREE.MeshStandardMaterial;
   seam: THREE.MeshStandardMaterial;
   vent: THREE.MeshStandardMaterial;
@@ -62,7 +62,31 @@ function toward(hex: string, target: string, k: number): THREE.Color {
 
 export function useCrtMaterials(dim = 0): CrtMaterials {
   const materials = useMemo<CrtMaterials>(() => {
-    const rough = createPlasticRoughness();
+    /**
+     * ONE ROUGHNESS TEXTURE, THREE MOULDINGS.
+     *
+     * The three shell parts share a single 256px noise upload and differ
+     * only in how it is tiled. `clone()` shares the texture's `source`,
+     * so this is one GPU upload with three sets of sampler parameters —
+     * and because the tiling differs, the front bezel, the body and the
+     * back shell do not repeat the same blotch pattern at the same
+     * scale, which is the thing that makes a shared map read as one
+     * uniform surface wrapped around everything.
+     *
+     * Centred near 1.0 on purpose: three MULTIPLIES `roughness` by this
+     * channel. The previous map sat at 0.66, which quietly turned every
+     * authored roughness into two thirds of itself — the shell was
+     * running at an effective 0.51 while claiming 0.78.
+     */
+    const rough = createPlasticRoughness({ centre: 0.93, spread: 0.075 });
+    const tiled = (u: number, ox = 0, oy = 0) => {
+      if (!rough) return undefined;
+      const t = rough.clone();
+      t.repeat.set(u, u);
+      t.offset.set(ox, oy);
+      t.needsUpdate = true;
+      return t;
+    };
     /* Contrast falls faster than value with distance, so the dimming is
        applied at 0.62 strength to the already-dark parts — otherwise the
        buttons and vents wash out before the shell does and the unit goes
@@ -72,31 +96,92 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
 
     /* ------------------------------------------------------- shell ------ */
 
-    const shell = new THREE.MeshStandardMaterial({
+    /**
+     * MOULDED ABS
+     * ===========
+     *
+     * Three things make a matte cream object read as plastic rather than
+     * as a flat fill, and only one of them is the colour.
+     *
+     * 1. THE ROOM DOES THE MODELLING. `envMapIntensity` went from 0.34
+     *    to 0.53 — a 56% increase, landed by measuring the object's
+     *    histogram rather than by eye; past about 0.6 the top deck and
+     *    the base start clamping to white again and the gain is thrown
+     *    away. The studio environment is a vertical gradient — bright
+     *    ceiling, dark floor — with a window and an overhead softbox in
+     *    it, so a matte dielectric sampling it gets "up-facing surfaces
+     *    brighter, down-facing darker, sides in between" for free, and
+     *    gets it as a smooth gradient across a curved bevel rather than
+     *    as a Lambert step between two flat planes. This is by far the
+     *    biggest single contributor, and it is the one the first pass was
+     *    starving: at 0.34 the plastic was lit almost entirely by six
+     *    directional lamps, which is why it looked like six flat tones.
+     *
+     * 2. A BROAD SPECULAR LOBE. Old ABS is matte but it is not Lambert —
+     *    it has a wide, weak sheen that slides across the surface as the
+     *    object turns. `specularIntensity` is held well below the
+     *    dielectric default so it stays a suggestion, not a shine.
+     *
+     * 3. SHEEN, at a very low amount. This is the retroreflective
+     *    brightening at grazing angles that every piece of moulded
+     *    plastic has, and it is specifically what makes the ROUNDED
+     *    CORNERS catch light — the brief's bevel requirement. A corner
+     *    is grazing from almost every viewpoint, so sheen lights it from
+     *    whatever direction the object happens to be facing, which a
+     *    specular highlight cannot do on its own.
+     *
+     * The fourth thing it must NOT have is gloss. Effective roughness
+     * stays between 0.55 and 0.73 across the three mouldings — matte
+     * enough that no light source ever resolves into a hard reflection.
+     */
+    const shell = new THREE.MeshPhysicalMaterial({
       color: tint(PALETTE.shell),
-      roughness: 0.78,
+      roughness: 0.66,
       metalness: 0.0,
-      // Old plastic still picks up the room; it just does it very softly.
-      envMapIntensity: env(0.34),
-      roughnessMap: rough ?? undefined,
+      envMapIntensity: env(0.53),
+      roughnessMap: tiled(5),
+      specularIntensity: 0.62,
+      specularColor: new THREE.Color("#fffaf0"),
+      sheen: 0.16,
+      sheenRoughness: 0.85,
+      sheenColor: new THREE.Color("#fff6e6"),
     });
 
-    const shellRear = new THREE.MeshStandardMaterial({
+    /* The back shell is the roughest of the three and tiled coarsest.
+       On real sets it was the same resin in a more heavily textured tool,
+       because nobody looks at the back — and giving it a visibly
+       different finish is most of what stops the body reading as one
+       continuous moulding. */
+    const shellRear = new THREE.MeshPhysicalMaterial({
       color: tint(PALETTE.shellRear),
-      roughness: 0.84,
+      roughness: 0.78,
       metalness: 0.0,
-      envMapIntensity: env(0.26),
-      roughnessMap: rough ?? undefined,
+      envMapIntensity: env(0.45),
+      roughnessMap: tiled(3.1, 0.37, 0.11),
+      specularIntensity: 0.48,
+      specularColor: new THREE.Color("#fffaf0"),
+      sheen: 0.13,
+      sheenRoughness: 0.9,
+      sheenColor: new THREE.Color("#fff6e6"),
     });
 
     /* The front moulding. Slightly smoother than the body — it is the face
        that was wiped every week for a decade. */
-    const bezel = new THREE.MeshStandardMaterial({
+    /* The face that was wiped every week for a decade: smoothest of the
+       three, finest tiling, and the strongest environment response — it
+       is the surface the light actually travels across as the monitor
+       turns. */
+    const bezel = new THREE.MeshPhysicalMaterial({
       color: tint(PALETTE.bezel),
-      roughness: 0.7,
+      roughness: 0.58,
       metalness: 0.0,
-      envMapIntensity: env(0.4),
-      roughnessMap: rough ?? undefined,
+      envMapIntensity: env(0.55),
+      roughnessMap: tiled(7, 0.13, 0.62),
+      specularIntensity: 0.66,
+      specularColor: new THREE.Color("#fffaf0"),
+      sheen: 0.18,
+      sheenRoughness: 0.8,
+      sheenColor: new THREE.Color("#fff6e6"),
     });
 
     const bezelInner = new THREE.MeshStandardMaterial({
@@ -264,6 +349,12 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
       ledLens,
       dispose: () => {
         all.forEach((m) => m.dispose());
+        /* The clones share `source` with `rough`, so disposing the
+           original releases the single upload; the clones' own wrappers
+           are released with their materials. */
+        [shell, shellRear, bezel].forEach((m) => {
+          (m.roughnessMap as THREE.Texture | null)?.dispose();
+        });
         rough?.dispose();
       },
     };
