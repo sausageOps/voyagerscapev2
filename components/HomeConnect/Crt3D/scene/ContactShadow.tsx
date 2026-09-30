@@ -47,6 +47,20 @@ import { PALETTE } from "../materials/palette";
  * than it sounds: a WebGL canvas cannot paint outside its element, so a
  * gradient still at 40% opacity when it reaches the edge of the drawing
  * surface gets sliced off flat and reads as a translucent grey box.
+ *
+ * A THIRD, SOFTER LOBE FOR GROUNDING
+ * -----------------------------------
+ * `core` and `pool` above are the original contact shadow and are
+ * untouched — same shape, same weight, same darkness. `cast` is a third
+ * sample of the same distance field: much larger blur radius, a fraction
+ * of the density, recentred a little toward the body's own back (so it
+ * reads as the room's light being occluded broadly, not just at the
+ * foot). It is screen-blended on top (`a + cast * (1 - a)`), which is
+ * what keeps it from ever compounding into something darker than the
+ * existing contact shadow — it can only ever fill in the faint, wide halo
+ * around it. This is the whole "premium soft cast shadow" ask: not a new
+ * render pass, one more evaluation of a distance field this file already
+ * has open.
  */
 
 /** Plane half-extents in world units. Declared in proportions.ts because
@@ -84,6 +98,9 @@ const FRAG = /* glsl */ `
   uniform float uLift;
   uniform float uYaw;
   uniform float uPitch;
+  uniform float uCastBlur;
+  uniform float uCastStrength;
+  uniform vec2  uCastOffset;
   varying vec2 vUv;
 
   float sdRoundBox(vec2 p, vec2 b, float r) {
@@ -118,6 +135,26 @@ const FRAG = /* glsl */ `
     float pool = 1.0 - smoothstep(0.0, uPoolBlur * (1.0 + tilt * 0.5), d);
     float a = core * 0.62 + pool * pool * 0.38;
     a *= 1.0 - tilt * 0.16;
+
+    /* THIRD LOBE — the premium "cast" halo.
+       Everything above this line is the original tight contact shadow,
+       untouched. This lobe is a third, much larger and much softer
+       sample of the same rounded-box field, recentred slightly toward
+       −world-Z (the offset is applied in the body's own rotated frame,
+       so it turns and leans with the object exactly like the core and
+       pool do). It reads as the room's ambient occlusion pooling a
+       little further out and a little further back than the hard
+       contact, which is what grounds a physical object rather than a
+       sprite: real ambient occlusion is broad and low-contrast, and it
+       never lines up exactly with the contact patch beneath it.
+       Screen-blended (a + cast*(1-a)) rather than added, so it can never
+       double the contact shadow's own darkness — it only ever fills in
+       the faint halo around it. */
+    vec2 qCast = q + uCastOffset;
+    float dCast = sdRoundBox(qCast, uFoot * 1.08, 0.5);
+    float cast = 1.0 - smoothstep(0.0, uCastBlur * (1.0 + tilt * 0.5), dCast);
+    float aCast = cast * cast * uCastStrength * (1.0 - tilt * 0.16);
+    a = a + aCast * (1.0 - a);
 
     a *= 1.0 - smoothstep(0.74, 1.0, length(n));
     a *= uStrength * (1.0 - uLift * 0.09);
@@ -166,6 +203,22 @@ export default function ContactShadow({
           uLift: { value: 0 },
           uYaw: { value: 0 },
           uPitch: { value: 0 },
+          // The broad, low-contrast cast halo. Much larger blur radius
+          // and a fraction of the pool's own density — it is meant to be
+          // felt as grounding, not seen as a shape.
+          uCastBlur: { value: 1.35 * softness },
+          uCastStrength: { value: 0.16 * strength },
+          // Recentred a touch toward the body's own local +X/+Y, which
+          // (after the mesh's −90°-about-X rotation into the ground
+          // plane) lands the halo's centre slightly toward +world-X and
+          // −world-Z — the same "away from the key light at (−4.2, 3.6,
+          // 4.2)" direction as the core's OFFSET_X, continued on to its
+          // natural conclusion of trailing a little behind the unit.
+          // Expressed in q-space (sdRoundBox(q + uCastOffset, …) is
+          // centred at q = −uCastOffset), and applied AFTER the yaw
+          // rotation above, so the trail stays fixed to the body's own
+          // back rather than to the world as the unit turns.
+          uCastOffset: { value: new THREE.Vector2(-0.06, -0.32) },
         },
       }),
     [strength, softness],
