@@ -2,11 +2,13 @@ import type { RecordingState, AudioPlaybackState } from "@/lib/ui-store";
 import type { TallyState } from "./materials/palette";
 
 /**
- * Device status resolution, mirrored from `components/HomeConnect/Camera.tsx`.
+ * Device status resolution.
  *
- * Deliberately duplicated rather than imported: Camera.tsx is the production
- * fallback and Stage 1 must not modify it for any reason, including a harmless
- * export. Ten lines is a cheap price for leaving the fallback byte-identical.
+ * The hero object still reports the recorder's state — that contract is
+ * unchanged by the switch from the camera to the monitor. On the CRT it
+ * drives the power LED's colour and nothing else: the screen belongs to the
+ * archive programmes, and overloading it with app state would turn a
+ * playful object into a status widget.
  */
 
 /** Screen-reader wording only — never rendered onto the object. */

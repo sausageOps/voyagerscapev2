@@ -1,0 +1,66 @@
+/* =========================================================
+   CRT STATIC — the no-WebGL / reduced-motion fallback
+
+   Width clamps are duplicated from Crt3D.module.css on purpose: the two
+   renderers must be able to change independently. Both resolve to the same
+   width and the same 360:330 aspect at every breakpoint, so the upgrade
+   from this to the canvas causes no layout shift.
+   ========================================================= */
+
+.stage {
+  position: relative;
+  width: clamp(300px, min(36vw, 54svh), 540px);
+}
+
+.hit {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border-radius: 28px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hit:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 10px;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  /* Matches the 3D renderer's box exactly, so swapping renderers cannot
+     shift the layout. */
+  aspect-ratio: 1 / 1;
+  height: auto;
+  overflow: visible;
+}
+
+@media (max-width: 1023px) {
+  .stage {
+    width: clamp(288px, min(54vw, 46svh), 430px);
+  }
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+  .stage {
+    width: min(76vw, 46svh, 440px);
+  }
+}
+
+@media (max-width: 767px) {
+  .stage {
+    width: min(90vw, 42svh, 400px);
+  }
+}
+
+@media (max-width: 430px) {
+  .stage {
+    width: min(92vw, 40svh, 372px);
+  }
+}
+
+@media (max-width: 380px) {
+  .stage {
+    width: min(94vw, 38svh, 344px);
+  }
+}

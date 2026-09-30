@@ -73,8 +73,9 @@
 /* ---------------- Centre object ---------------- */
 .stage {
   position: absolute;
-  /* Optical centring: nudged right of true centre to balance the statement,
-     and up to account for the strap hanging low. */
+  /* Optical centring: nudged right of true centre to balance the
+     statement. The vertical nudge is small because the hero object's own
+     camera solver already centres its silhouette inside its box. */
   left: 52%;
   top: 51%;
   transform: translate(-50%, -50%);

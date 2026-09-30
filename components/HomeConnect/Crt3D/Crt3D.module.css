@@ -1,0 +1,107 @@
+/* =========================================================
+   CRT 3D — host layout
+
+   The width clamps below are DUPLICATED from CrtStatic.module.css rather
+   than shared. That is intentional: CrtStatic owns the fallback, and the
+   two must be able to change independently without either breaking the
+   other. Both boxes resolve to the same width and the same 360:330 aspect,
+   so swapping renderers causes no layout shift at any breakpoint.
+
+   The monitor is a materially bigger object than the hero it replaces —
+   it has to be, because a CRT that does not command the composition just
+   reads as a small appliance. The layout box grew by roughly a third; the
+   surrounding grid, the statement and the cards are untouched.
+   ========================================================= */
+
+.stage {
+  position: relative;
+  width: clamp(300px, min(36vw, 54svh), 540px);
+}
+
+.hit {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border-radius: 28px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hit:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 10px;
+}
+
+/* Locks the box before WebGL paints, so nothing shifts on load and the
+   fallback and the canvas occupy an identical footprint. */
+.canvas {
+  position: relative;
+  width: 100%;
+  /* Square, and measured rather than guessed: the monitor's projected
+     silhouette at the staging yaw and elevation is 0.982 wide for every
+     1.0 tall, and the drawing surface below is inset equally on both
+     axes, so a 1:1 box is the one that leaves no dead margin on either
+     side. */
+  aspect-ratio: 1 / 1;
+  /* The object is lit from within the scene; the page canvas stays cream. */
+  background: transparent;
+  overflow: visible;
+}
+
+/* ---------------------------------------------------------------------
+   Drawing surface, slightly larger than the layout box it sits in.
+
+   A WebGL canvas cannot paint outside its own element, so `overflow:
+   visible` on the parent buys nothing — extra drawing surface is the only
+   way to let the object approach the edges of its footprint. What is NOT
+   done here is growing `.stage`: that is the layout box, and it is
+   deliberately identical to the fallback's box at every breakpoint. Grow
+   it and the hero jumps wider the moment the WebGL chunk finishes
+   downloading and swaps out the fallback.
+   --------------------------------------------------------------------- */
+.gl {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 106%;
+  height: 106%;
+  transform: translate(-50%, -50%);
+}
+
+.gl canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+  touch-action: manipulation;
+}
+
+/* ---- responsive: mirrors the fallback exactly ---- */
+@media (max-width: 1023px) {
+  .stage {
+    width: clamp(288px, min(54vw, 46svh), 430px);
+  }
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+  .stage {
+    width: min(76vw, 46svh, 440px);
+  }
+}
+
+@media (max-width: 767px) {
+  .stage {
+    width: min(90vw, 42svh, 400px);
+  }
+}
+
+@media (max-width: 430px) {
+  .stage {
+    width: min(92vw, 40svh, 372px);
+  }
+}
+
+@media (max-width: 380px) {
+  .stage {
+    width: min(94vw, 38svh, 344px);
+  }
+}
