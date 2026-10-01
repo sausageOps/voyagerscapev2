@@ -23,7 +23,7 @@
 
 .stage {
   position: relative;
-  width: clamp(320px, min(44vw, 65svh), 660px);
+  width: clamp(250px, min(33.5vw, 49.5svh), 510px);
 }
 
 .hit {
@@ -87,24 +87,24 @@
    -------------------------------------------------------------------- */
 @media (max-width: 1099px) {
   .stage {
-    width: clamp(300px, min(66vw, 56svh), 520px);
+    width: clamp(240px, min(50vw, 44svh), 410px);
   }
 }
 
 @media (max-width: 899px) {
   .stage {
-    width: min(88vw, 48svh, 460px);
+    width: min(66vw, 38svh, 360px);
   }
 }
 
 @media (max-width: 767px) {
   .stage {
-    width: min(92vw, 44svh, 420px);
+    width: min(70vw, 34svh, 320px);
   }
 }
 
 @media (max-width: 430px) {
   .stage {
-    width: min(95vw, 42svh, 392px);
+    width: min(75vw, 32svh, 290px);
   }
 }
