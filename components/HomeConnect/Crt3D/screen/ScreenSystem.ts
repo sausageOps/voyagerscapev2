@@ -52,6 +52,12 @@ import { createProgrammes, type Programme } from "./programmes";
 
 /** Per-programme persistence. Keyed by programme id. */
 const PERSISTENCE: Record<string, number> = {
+  /* The video channel. Lower than the procedural drive it stands in for:
+     the footage already carries the source's own motion blur, so the full
+     0.13 smears the bright HUD into a permanent ghost. Enough to keep it
+     on the same tube as the other channels, not enough to double-expose
+     it. */
+  channel01: 0.06,
   drive: 0.13,
   maze: 0.1,
   arcade: 0.075,
@@ -212,7 +218,12 @@ export class ScreenSystem {
         this.programmes[this.index].reset();
         this.paintAcc = 0;
       }
-      if (this.paintAcc === 0) {
+      /* Painted once, then left alone — unless the programme says its
+         picture has arrived since. That is the asynchronous case only
+         (channel 01 decoding its first video frame); the procedural
+         programmes never report dirty, so this path is byte-for-byte the
+         behaviour it had. */
+      if (this.paintAcc === 0 || this.programmes[this.index].dirty?.()) {
         this.paint(0, true);
         this.paintAcc = 1;
       }
@@ -502,6 +513,9 @@ export class ScreenSystem {
   }
 
   dispose() {
+    /* Most programmes are pure canvas work and own nothing to release.
+       The video channel owns a media element, so the hook exists. */
+    for (const p of this.programmes) p.dispose?.();
     this.texture.dispose();
     this.canvas.width = 0;
     this.canvas.height = 0;
