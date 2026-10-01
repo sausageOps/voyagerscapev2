@@ -54,10 +54,6 @@ export const PALETTE = {
   button: "#3a3a40",
   buttonPower: "#2e2e34",
   buttonWell: "#9d917a",
-  /** Pad-printed fascia marking. Dark, but warm and not black: ink laid
-   *  on a cream casting takes some of the plastic with it, and true
-   *  black here reads as a sticker rather than as printing. */
-  marking: "#38322a",
 
   /* ---- glass and tube ---- */
   glass: "#0c1014",

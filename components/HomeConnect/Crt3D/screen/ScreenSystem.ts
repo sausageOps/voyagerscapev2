@@ -328,6 +328,7 @@ export class ScreenSystem {
     });
 
     this.drawChannelOsd(ctx, w, force);
+    this.drawIdent(ctx, h);
     ctx.restore();
 
     /* ---- phosphor persistence ---- */
@@ -505,6 +506,78 @@ export class ScreenSystem {
     ctx.fillText(`0${this.index + 1}`, 20, 24);
     ctx.fillStyle = "#e8f2f6";
     ctx.fillText(text, 40, 24);
+    ctx.restore();
+  }
+
+  /**
+   * THE SET'S IDENT
+   * ---------------
+   * The lower-left counterpart to the channel OSD, and deliberately the
+   * same object turned upside down: same box, same lit tab, same rule,
+   * same two-tone split of a dim prefix against a bright name, same
+   * type at the same size. The only thing mirrored is which edge the
+   * rule sits on — it underlines the channel name at the top and
+   * overlines the ident at the bottom, so in both cases the line is the
+   * one that separates the readout from the picture.
+   *
+   * WHY IT IS DRAWN HERE AND NOT ON THE PLASTIC
+   * -------------------------------------------
+   * Because it is the SET talking, not a sticker. Painted into the
+   * phosphor canvas it goes through the whole tube with everything else
+   * — persistence, scanlines, bloom, convergence, the curvature, and
+   * the sync disturbance on a channel change — so it is light coming
+   * off the same raster as the picture rather than artwork sitting in
+   * front of it. That is also why it needs no placement constants: it
+   * is positioned in raster pixels, like the OSD.
+   *
+   * IT BELONGS TO THE MONITOR, SO IT IS ON EVERY CHANNEL
+   * ----------------------------------------------------
+   * Unlike the channel OSD, nothing about it is per-programme. It
+   * identifies the hardware, which does not change when the channel
+   * does — and it was previously on the casing, where it was visible
+   * at all times, so keeping it on every channel is what makes this a
+   * move rather than a redesign.
+   *
+   * WHERE IT LANDS
+   * --------------
+   * Ten pixels off the bottom of the raster, mirroring the OSD's ten
+   * off the top. On channel 01 that puts it cleanly inside the
+   * letterbox bar under the 16:9 picture, so it covers no gameplay at
+   * all — the bar runs from 210 and the box occupies 210 to 230.
+   */
+  private static readonly IDENT_PREFIX = "V:/";
+  private static readonly IDENT_NAME = "VOYAGERSCAPE · CRT v8.9";
+
+  private drawIdent(ctx: CanvasRenderingContext2D, h: number) {
+    ctx.save();
+    ctx.globalAlpha = 1;
+    ctx.font = `600 11px ${this.mono}`;
+
+    /* The 6.8px gutter is not arbitrary: it is what reproduces the
+       channel OSD's own layout exactly when the prefix is two
+       characters wide, so the two readouts are set to one rule rather
+       than to two sets of eyeballed numbers. */
+    const nameX = 20 + ctx.measureText(ScreenSystem.IDENT_PREFIX).width + 6.8;
+    const tw = ctx.measureText(ScreenSystem.IDENT_NAME).width;
+    const bw = nameX + tw - 6;
+
+    const top = h - 30;
+
+    ctx.fillStyle = "rgba(6,10,14,0.78)";
+    ctx.fillRect(10, top, bw, 20);
+    // The lit tab stays on the left edge — the mirror is vertical only.
+    ctx.fillStyle = "#7fd8c0";
+    ctx.fillRect(10, top, 3, 20);
+    // The rule moves to the top: it still faces the picture.
+    ctx.fillStyle = "#4e6b78";
+    ctx.fillRect(10, top, bw, 1);
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#6f8b98";
+    ctx.fillText(ScreenSystem.IDENT_PREFIX, 20, top + 14);
+    ctx.fillStyle = "#e8f2f6";
+    ctx.fillText(ScreenSystem.IDENT_NAME, nameX, top + 14);
     ctx.restore();
   }
 
