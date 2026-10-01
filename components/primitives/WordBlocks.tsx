@@ -5,18 +5,20 @@ import { gsap, prefersReducedMotion } from "@/lib/motion";
 import styles from "./WordBlocks.module.css";
 
 export interface WordDef {
-  /** The word itself, or a custom node (e.g. the smiley disc). */
+  /** The word itself, or a custom node. */
   text?: string;
   node?: ReactNode;
   /** Blocked words sit in a soft capsule; unblocked words sit bare. */
   block?: boolean;
-  accent?: "pink" | "lavender" | "plain";
+  accent?: "pink" | "yellow" | "lavender" | "cream" | "plain";
   href?: string;
   /** Forces a line break after this word. */
   break?: boolean;
   wide?: boolean;
-  /** Opt out of the automatic capsule treatment for short words. */
+  /** Opt in or out of the full pill capsule treatment. */
   round?: boolean;
+  /** Explicit shape preference: pill capsule or rounded rectangle */
+  shape?: "pill" | "rounded";
 }
 
 interface WordBlocksProps {
@@ -33,14 +35,12 @@ interface WordBlocksProps {
 const PULL = 6;
 
 /**
- * The reference sets oversized type as a run of individually rounded word
- * capsules. This renders that rhythm from data so the hero and the footer
- * statement share one implementation — not every word is blocked, which is
- * what keeps it from looking mechanical.
+ * Editorial floating typography rendered as individual physical translucent
+ * label blocks and pill capsules inspired by the ToyFight aesthetic.
  *
- * Interaction: a single pointermove on the run drives per-word `quickTo`
- * instances. The word under the pointer moves most, its neighbours ripple by
- * a fraction, and everything else stays calm — no React state per frame.
+ * Each token sits inside a rounded pill or soft rounded rectangle with
+ * subtle glass-like surfaces, fine borders, soft shadows and restrained
+ * magnetic pointer ripple interactions.
  */
 export default function WordBlocks({
   words,
@@ -136,13 +136,16 @@ export default function WordBlocks({
     <span className={`${styles.run} ${styles[size]} ${className ?? ""}`} ref={runRef}>
       {words.map((w, i) => {
         const key = `${w.text ?? "node"}-${i}`;
-        // Two- and three-letter words read as capsules; longer words as soft
-        // rounded blocks. That mix is what gives the run its rhythm.
-        const short = (w.round ?? (w.text ? w.text.length <= 3 : false)) && !w.accent;
+        // Determine shape: explicit shape or automatic based on length / node
+        const isRound =
+          w.shape === "pill" ||
+          (w.round ?? (w.text ? w.text.length <= 3 : Boolean(w.node)));
+        const isRoundedRect = w.shape === "rounded" || (!isRound && Boolean(w.text));
+
         const cls = [
           styles.word,
           w.block === false ? styles.bare : styles.blocked,
-          short ? styles.round : "",
+          isRound ? styles.round : isRoundedRect ? styles.rounded : "",
           w.accent && w.accent !== "plain" ? styles[w.accent] : "",
           w.wide ? styles.wide : "",
         ]
@@ -151,11 +154,21 @@ export default function WordBlocks({
 
         const content = w.node ?? w.text;
         const el = w.href ? (
-          <a href={w.href} className={cls} data-cursor="link" data-word>
+          <a
+            href={w.href}
+            className={cls}
+            data-cursor="link"
+            data-word
+            {...(reveal ? { "data-word-reveal": true } : {})}
+          >
             {content}
           </a>
         ) : (
-          <span className={cls} data-word {...(reveal ? { "data-word-reveal": true } : {})}>
+          <span
+            className={cls}
+            data-word
+            {...(reveal ? { "data-word-reveal": true } : {})}
+          >
             {content}
           </span>
         );
