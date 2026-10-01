@@ -90,6 +90,14 @@ export interface Programme {
    * recognisable shape. See the RASTER LINEARITY note in crtMaterial.ts.
    */
   undistort?: number;
+  /**
+   * Optional. Hold the channel OSD for the whole programme instead of
+   * letting it fade after a few seconds. For a channel that is a piece
+   * of branding rather than an archive item, the label is a permanent
+   * broadcast identifier, not an intro caption. Off by default, so the
+   * procedural channels keep their existing timed behaviour.
+   */
+  persistentLabel?: boolean;
 }
 
 /* ----------------------------------------------------------- utilities ---- */
@@ -214,6 +222,10 @@ function createChannel01(): Programme {
        physical bulge, its glass and a third of the barrel term, so the
        screen is still curved; the picture on it is just no longer bent. */
     undistort: 1,
+    /* This channel is the project's own ident, so its label stays up for
+       as long as it is on air — same box, same type, same place, same
+       tube treatment, just never dismissed. */
+    persistentLabel: true,
     reset: () => video.rewind(),
     dirty: () => video.dirty(),
     dispose: () => video.dispose(),

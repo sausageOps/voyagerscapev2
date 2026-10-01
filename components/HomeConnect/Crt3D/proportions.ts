@@ -269,6 +269,61 @@ export const CONTROLS = {
   badge: { x: -1.02, y: -1.185, w: 0.62, h: 0.1, depth: 0.014 },
 } as const;
 
+/* -------------------------------------------------------- fascia mark --- */
+
+/**
+ * THE MANUFACTURER MARKING
+ * ========================
+ *
+ * The maker/model line, pad-printed on the bezel. Not a label, not a
+ * badge and not an overlay: it is artwork on the casting, so it turns,
+ * lights and shadows with the moulding it sits on.
+ *
+ * WHERE IT GOES, AND WHY THERE
+ * ----------------------------
+ * In the clear band of bezel between the bottom of the aperture and the
+ * top of the control strip, right-aligned with the strip's outer end.
+ * That band is the one piece of fascia with nothing in it, and aligning
+ * the right edge to the control aperture ties the marking to the
+ * cluster it belongs to instead of leaving it floating in the plastic.
+ *
+ * Both edges are DERIVED, not typed in, so the marking tracks the parts
+ * it is aligned to if either ever moves.
+ *
+ * SIZE, AND THE ONE PLACE PHYSICAL ACCURACY HAD TO GIVE
+ * -----------------------------------------------------
+ * `h` is the height of the whole artwork box; the cap height is a little
+ * over half of it.
+ *
+ * A real model-number marking is about 2.5mm tall. At this hero's size
+ * that is the problem: the stage caps at 660px, which after the camera
+ * fit is roughly 150 CSS pixels per world unit, so a truthful 2.5mm mark
+ * lands at a cap height of THREE PIXELS. Accurate, and completely
+ * illegible — which fails the only functional requirement the marking
+ * has, which is to be read.
+ *
+ * So it is sized as a BRAND marking rather than a model-number one: the
+ * silk-screened maker's name these sets wore under the screen, which
+ * really was 5mm or so and really did run to a fifth of the casting's
+ * width. That keeps it honest to the object while landing at a cap
+ * height that survives the render. It is still type on a moulding, not
+ * a logo lockup.
+ *
+ * This is the number to change if it wants to be quieter or louder;
+ * everything else about the marking follows from it.
+ */
+export const MARKING = {
+  text: "VOYAGERSCAPE · CRT v8.9",
+  /** Height of the artwork box in world units. Cap height ≈ 0.55 of it. */
+  h: 0.072,
+  /** Right edge, shared with the outer end of the control aperture. */
+  right: CONTROLS.strip.x + CONTROLS.strip.w / 2,
+  /** Centred in the bezel band between the aperture and the strip. */
+  y: (SCREEN.cy - SCREEN.h / 2 + (CONTROLS.strip.y + CONTROLS.strip.h / 2)) / 2,
+  /** Stand-off from the casting face. Enough to never z-fight with it. */
+  z: 0.0012,
+} as const;
+
 /* ---------------------------------------------------------------- vents --- */
 
 /**

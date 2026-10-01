@@ -475,10 +475,15 @@ export class ScreenSystem {
     const hold = 2.6;
     const fade = 0.7;
     const age = this.progT;
-    if (!frozen && age > hold + fade) return;
-    const alpha = frozen ? 1 : age < hold ? 1 : 1 - (age - hold) / fade;
-
     const prog = this.programmes[this.index];
+    /* A channel may declare its label permanent, in which case it is a
+       station ident rather than a caption and is never dismissed. Only
+       the dismissal changes: the box, the type, the colours, the place
+       and the tube treatment below are the same code either way. */
+    const permanent = prog.persistentLabel === true;
+    if (!frozen && !permanent && age > hold + fade) return;
+    const alpha = frozen || permanent ? 1 : age < hold ? 1 : 1 - (age - hold) / fade;
+
     const text = prog.label;
     ctx.save();
     ctx.globalAlpha = alpha;

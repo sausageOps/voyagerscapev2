@@ -5,6 +5,8 @@ import * as THREE from "three";
 import { PALETTE } from "./palette";
 import { createPlasticRoughness, createRoomReflection } from "./env";
 import { createGlassMaterial } from "./glass";
+import { createMarkingArtwork } from "./marking";
+import { MARKING } from "../proportions";
 
 /**
  * MATERIAL SET
@@ -39,6 +41,8 @@ export interface CrtMaterials {
   glass: THREE.ShaderMaterial;
   led: THREE.MeshStandardMaterial;
   ledLens: THREE.MeshPhysicalMaterial;
+  /** The pad-printed fascia marking. `userData.aspect` sizes its plane. */
+  marking: THREE.MeshStandardMaterial;
   dispose: () => void;
 }
 
@@ -292,6 +296,32 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
       depthWrite: false,
     });
 
+    /* ----------------------------------------------- fascia marking ---
+       Ink on the casting, so it is a lit surface rather than an overlay:
+       same standard BRDF as the mouldings, rougher than the bezel it
+       sits on (print scatters more than polished ABS) and with only a
+       trace of environment, because ink does not catch the room the way
+       the plastic around it does.
+
+       `transparent` with `depthWrite` off and a polygon offset: it is a
+       decal a thousandth of a unit off the face, and the offset means it
+       cannot z-fight even at a grazing angle where the depth buffer's
+       precision is worst. */
+    const markingArt = createMarkingArtwork(MARKING.text);
+    const marking = new THREE.MeshStandardMaterial({
+      color: tint(PALETTE.marking, 0.62),
+      map: markingArt.texture,
+      transparent: true,
+      roughness: 0.74,
+      metalness: 0.0,
+      envMapIntensity: env(0.14),
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
+    });
+    marking.userData.aspect = markingArt.aspect;
+
     const all: THREE.Material[] = [
       shell,
       shellRear,
@@ -306,6 +336,7 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
       glass,
       led,
       ledLens,
+      marking,
     ];
 
     return {
@@ -322,6 +353,7 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
       glass,
       led,
       ledLens,
+      marking,
       dispose: () => {
         all.forEach((m) => m.dispose());
         /* The clones share `source` with `rough`, so disposing the
@@ -332,6 +364,7 @@ export function useCrtMaterials(dim = 0): CrtMaterials {
         });
         rough?.dispose();
         glassEnv?.dispose();
+        markingArt.dispose();
       },
     };
   }, [dim]);

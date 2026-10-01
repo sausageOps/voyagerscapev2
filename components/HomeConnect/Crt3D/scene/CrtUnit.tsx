@@ -3,7 +3,7 @@
 import { forwardRef } from "react";
 import type { MutableRefObject } from "react";
 import * as THREE from "three";
-import { FRONT_Z, SCREEN } from "../proportions";
+import { FRONT_Z, MARKING, SCREEN } from "../proportions";
 import type { MonitorGeometry } from "../geometry/monitor";
 import type { CrtMaterials } from "../materials/materials";
 import { PALETTE } from "../materials/palette";
@@ -53,6 +53,12 @@ const CrtUnit = forwardRef<THREE.Group, {
 ) {
   const { housing, screen, controls, base } = geometry;
 
+  /* The marking's plane is sized from its own artwork so the type is
+     never stretched: the height is authored, the width follows the
+     raster. Right-aligned to the control aperture, so the plane's centre
+     is half its width inboard of that edge. */
+  const markW = MARKING.h * ((materials.marking.userData.aspect as number) || 10);
+
   return (
     <group ref={ref}>
       {/* ---------------------------------------------------- housing --- */}
@@ -97,6 +103,20 @@ const CrtUnit = forwardRef<THREE.Group, {
           stick out of the fascia in a tone that only makes sense in a
           hole. Same geometry, correct material. */}
       <mesh geometry={controls.badges} material={materials.bezel} />
+
+      {/* ------------------------------------------- fascia marking ---
+          Pad-printed artwork on the bezel, in the clear band between the
+          aperture and the control strip. It is a child of the unit, so
+          it turns with the casting, takes the same key and softbox as
+          the plastic it sits on, and goes into shadow with it — which is
+          the whole difference between printing and an overlay. */}
+      <mesh
+        material={materials.marking}
+        position={[MARKING.right - markW / 2, MARKING.y, FRONT_Z + MARKING.z]}
+        renderOrder={2}
+      >
+        <planeGeometry args={[markW, MARKING.h]} />
+      </mesh>
 
       <group ref={powerRef} position={geometry.powerOrigin}>
         <mesh geometry={controls.power} material={materials.buttonPower} />
