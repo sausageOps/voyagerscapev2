@@ -9,6 +9,14 @@
   position: relative;
   z-index: 1;
   padding: 0 var(--gutter);
+  /* `100vw` includes the vertical scrollbar's track in most browsers, while
+     every other width used on this page (including the header's, which is
+     laid out with plain padding, not vw) does not. Left uncorrected, that
+     gap throws off anything that reconstructs a width from `100vw`, by half
+     the scrollbar's width. HomeConnect measures the real gap on mount/resize
+     (see HomeConnect.tsx) and writes it here; 0px is the correct value
+     whenever there is no scrollbar (and the safe default before hydration). */
+  --vs-scrollbar-w: 0px;
 }
 
 .inner {
@@ -24,9 +32,13 @@
 .sayHi {
   position: absolute;
   top: calc(clamp(14px, 1.7vw, 22px) + 59px);
-  /* .inner is capped on wide screens, while the fixed header is not. Keep
-     this row on the same left edge as the header's brand mark. */
-  left: calc(-1 * max(0px, (100vw - 1440px - 2 * var(--gutter)) / 2));
+  /* .inner is capped on wide screens, while the fixed header (BrandMark's
+     anchor) is not — it only ever applies `var(--gutter)` as padding. Pull
+     this row back out by exactly the amount .inner's centring added, so it
+     lands on that same gutter-from-viewport edge. --vs-scrollbar-w corrects
+     `100vw` to the real, scrollbar-excluded viewport width this centring
+     is actually computed from, so the row lines up exactly, not "close". */
+  left: calc(-1 * max(0px, (100vw - var(--vs-scrollbar-w) - 1440px - 2 * var(--gutter)) / 2));
   display: flex;
   align-items: center;
   flex-wrap: wrap;

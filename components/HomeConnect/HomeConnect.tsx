@@ -62,6 +62,26 @@ export default function HomeConnect() {
   const recorder = useRecorder();
   const rootRef = useRef<HTMLDivElement | null>(null);
 
+  /* Keep the say-hi row's left edge (styles.sayHi) exact, not approximate:
+     `100vw`, which its CSS uses to reconstruct the hero's real width, counts
+     the vertical scrollbar's track in most browsers, while every other
+     width on the page (including the header's) does not. Measuring the gap
+     here and exposing it as --vs-scrollbar-w is what lets that CSS land the
+     row on the header's own gutter-from-viewport edge exactly. */
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const setScrollbarWidth = () => {
+      root.style.setProperty(
+        "--vs-scrollbar-w",
+        `${Math.max(0, window.innerWidth - document.documentElement.clientWidth)}px`,
+      );
+    };
+    setScrollbarWidth();
+    window.addEventListener("resize", setScrollbarWidth);
+    return () => window.removeEventListener("resize", setScrollbarWidth);
+  }, []);
+
   /* Entry: coordinated timeline for hero elements */
   useEffect(() => {
     if (!loaded || !rootRef.current) return;
