@@ -1,6 +1,6 @@
 /* =========================================================
    BRAND MARK — V:/ ⇄ VOYAGERSCAPE
-   One capsule, two states. The in-flow ghost holds the
+   One chip, two states. The in-flow ghost holds the
    compact V:/ footprint; the real chip floats over it from
    the same left anchor and grows to the right only.
    ========================================================= */
@@ -12,7 +12,7 @@
   flex: none;
 }
 
-/* Shared capsule silhouette (ghost + interactive mark) */
+/* Shared chip silhouette (ghost + interactive mark) */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -21,7 +21,10 @@
   height: 34px;
   min-width: 52px;
   padding: 0 12px;
-  border-radius: 12px;
+  /* Same corner character as the greeting chip (GreetingPill): a compact
+     rectangle with a subtle radius — never a pill. Both states, compact and
+     expanded, share it. */
+  border-radius: clamp(4px, 0.08em, 6px);
   background: var(--vs-ink);
   color: #f7f3ec;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset;
@@ -46,13 +49,12 @@
   left: 0;
   top: 0;
   width: max-content;
-  transition: transform var(--t-fast) var(--e-out), border-radius var(--t-med) var(--e-out);
+  transition: transform var(--t-fast) var(--e-out);
   will-change: transform;
 }
 
 .mark:hover {
   transform: translateY(-1.5px) scale(1.02);
-  border-radius: 999px;
 }
 
 .mark:active {
@@ -92,7 +94,7 @@
 
 /* ---------- Reveal windows ----------
    Both are horizontal masks. Their widths are the only animated layout
-   values; the capsule simply follows its content. --mark-tail-w / --mark-word-w
+   values; the chip simply follows its content. --mark-tail-w / --mark-word-w
    are measured from the rendered type at mount (see BrandMark.tsx); until then
    the tail falls back to its natural width, so the resting mark is never
    JS-dependent. */
@@ -176,13 +178,12 @@
     transform: none;
   }
 
-  /* The expansion itself is the hover affordance here: no lift, no scale,
-     only the capsule widening and rounding into a pill. (Coarse pointers,
-     which never expand, keep the original lift untouched.) */
+  /* The expansion itself is the hover affordance here: no lift, no scale —
+     only the rectangle widening. (Coarse pointers, which never expand, keep
+     the original lift untouched.) */
   .mark:hover:not(:active),
   .mark:focus-visible:not(:active) {
     transform: none;
-    border-radius: 999px;
   }
 }
 
