@@ -16,6 +16,11 @@
 
   --vs-pink: #f1b8e4;
   --vs-lavender: #d8ccff;
+  /* Same colour, as channels: the Liquid Glass material tints itself with
+     `rgba(var(--glass-tint), …)`, so a surface that wants to be lavender
+     needs the triplet rather than the hex. Kept next to its hex so the two
+     cannot drift. */
+  --vs-lavender-rgb: 216, 204, 255;
   --vs-yellow: #f3e5b5;
   --vs-peach: #f5d8b8;
 

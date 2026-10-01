@@ -57,8 +57,16 @@
 /* ---------------- Floating control (top-right) ---------------- */
 .controls {
   position: absolute;
-  top: calc(var(--header-h) + clamp(14px, 2svh, 28px));
-  right: 0;
+  /* Hung off the header's own geometry, directly under "Press / for ?":
+     the header's top padding + its row height puts us at the bottom edge of
+     that row, and one spacing step opens the gap. */
+  top: calc(clamp(14px, 1.7vw, 22px) + var(--header-h) + var(--space-5));
+  /* Mirror of .sayHi's escape (see above): .inner is capped at 1440px and
+     centred, while the fixed header only ever applies var(--gutter), so on
+     wide screens `right: 0` sits well inboard of the header's right edge.
+     Pull the row back out by exactly what .inner's centring added so it
+     lands on the same gutter-from-viewport edge as "Press / for ?". */
+  right: calc(-1 * max(0px, (100vw - var(--vs-scrollbar-w) - 1440px - 2 * var(--gutter)) / 2));
   z-index: 5;
 }
 

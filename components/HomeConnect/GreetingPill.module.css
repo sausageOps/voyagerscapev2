@@ -7,16 +7,16 @@
    ========================================================= */
 
 .pill {
+  /* Ground: the footer's "General Enquiries" tag, not a copy of it. The
+     footer composes the very same rule (see .metaLabelEnquiries in
+     SiteFooter.module.css), so the two chips are literally painted by one
+     declaration and can never drift apart. No background is declared here —
+     the composed class is the single source of truth for this yellow. */
+  composes: footLabelEnquiries from "../MobileMenu.module.css";
   display: inline-flex;
   align-items: center;
   padding: 4px 11px;
   border-radius: clamp(4px, 0.08em, 6px);
-  /* Pale cream-yellow: the site's existing washed-yellow chip treatment
-     (same as the general-enquiries tags) — --vs-yellow eased 50% into the
-     page ground. The rgba line is the no-color-mix fallback and lands on
-     the identical tone over --vs-bg. */
-  background: rgba(243, 229, 181, 0.5);
-  background: color-mix(in srgb, var(--vs-yellow) 50%, var(--vs-bg));
   border: 1px solid rgba(17, 17, 17, 0.06);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
   font-family: var(--font-mono);
