@@ -7,17 +7,16 @@
    ========================================================= */
 
 .pill {
+  /* Ground: the footer's "General Enquiries" tag, not a copy of it. The
+     footer composes the very same rule (see .metaLabelEnquiries in
+     SiteFooter.module.css), so the two chips are literally painted by one
+     declaration and can never drift apart. No background is declared here —
+     the composed class is the single source of truth for this yellow. */
+  composes: footLabelEnquiries from "../MobileMenu.module.css";
   display: inline-flex;
   align-items: center;
   padding: 4px 11px;
   border-radius: clamp(4px, 0.08em, 6px);
-  /* Pale mustard: the palette's --vs-yellow at full strength, warmed a step
-     toward a muted ochre so the chip reads unmistakably yellow against the
-     cream ground instead of dissolving into it — pastel and low-key, never
-     the saturated signal yellow. The flat line is the no-color-mix fallback
-     and lands on the identical tone. */
-  background: #edd99d;
-  background: color-mix(in srgb, var(--vs-yellow) 80%, #d4ab3e);
   border: 1px solid rgba(17, 17, 17, 0.06);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
   font-family: var(--font-mono);
