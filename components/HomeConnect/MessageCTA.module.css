@@ -2,6 +2,17 @@
   will-change: transform;
 }
 
+/* Ground: the palette's lavender, poured into the existing glass material
+   rather than painted over it — the control keeps its blur, backdrop
+   sampling, edge highlight, pointer sheen and hover brightening (the hover
+   rule still raises --glass-alpha), it is simply tinted periwinkle instead
+   of warm white. Compounded with the variant class so it outranks
+   .vs-glass--clear's own alpha whatever order the stylesheets load in. */
+:global(.vs-glass--clear).cta {
+  --glass-tint: var(--vs-lavender-rgb);
+  --glass-alpha: 0.5;
+}
+
 .cta {
   height: 52px;
   padding: 0 24px;
