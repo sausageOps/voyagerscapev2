@@ -79,7 +79,9 @@
   align-items: center;
   font-family: var(--font-mono);
   font-size: 13px;
-  font-weight: 500;
+  /* JetBrains Mono Regular — the same weight the revealed wordmark uses, so
+     V:/ and VOYAGERSCAPE are one continuous piece of type. */
+  font-weight: 400;
   letter-spacing: 0.02em;
   line-height: 1;
 }
