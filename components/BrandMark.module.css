@@ -10,6 +10,14 @@
   display: inline-flex;
   align-items: center;
   flex: none;
+
+  /* ---- Reveal motion ----
+     One duration for expand and collapse so the mark reads the same in both
+     directions. The easing stays in the site's ease-out family, just a
+     gentler curve than --e-out (which front-loads almost all of its travel
+     and would still read as fast at this duration). No overshoot. */
+  --mark-dur: 0.58s;
+  --mark-ease: cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 /* Shared chip silhouette (ghost + interactive mark) */
@@ -132,6 +140,9 @@
 
 .wordInner {
   transform: translateX(-7px);
+  /* The wordmark sits at the site's regular mono weight (JetBrains Mono 400),
+     not the chip glyph's medium — same family, size and tracking. */
+  font-weight: 400;
 }
 
 /* ---------- Expansion (desktop, fine pointers only) ----------
@@ -142,35 +153,35 @@
 @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
   .tail {
     opacity: 1;
-    transition: width 0.3s var(--e-out), opacity 0.16s linear 0.08s;
+    transition: width var(--mark-dur) var(--mark-ease), opacity 0.3s linear 0.15s;
   }
 
   .word {
-    transition: width 0.3s var(--e-out), opacity 0.18s linear;
+    transition: width var(--mark-dur) var(--mark-ease), opacity 0.33s linear;
   }
 
   .wordInner {
-    transition: transform 0.3s var(--e-out);
+    transition: transform var(--mark-dur) var(--mark-ease);
   }
 
   .mark:hover .tail,
   .mark:focus-visible .tail {
     width: 0;
     opacity: 0;
-    transition: width 0.32s var(--e-out), opacity 0.12s linear;
+    transition: width var(--mark-dur) var(--mark-ease), opacity 0.22s linear;
   }
 
   .mark:hover .word,
   .mark:focus-visible .word {
     width: var(--mark-word-w, 11.3ch);
     opacity: 1;
-    transition: width 0.32s var(--e-out), opacity 0.2s linear 0.08s;
+    transition: width var(--mark-dur) var(--mark-ease), opacity 0.36s linear 0.15s;
   }
 
   .mark:hover .wordInner,
   .mark:focus-visible .wordInner {
     transform: translateX(0);
-    transition: transform 0.32s var(--e-out);
+    transition: transform var(--mark-dur) var(--mark-ease);
   }
 
   /* The tail collapses on hover — no rotation to fight the reveal. */
