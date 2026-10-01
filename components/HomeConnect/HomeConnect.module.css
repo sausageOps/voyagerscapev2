@@ -32,8 +32,7 @@
   pointer-events: none;
 }
 
-.head a,
-.head .smiley {
+.head a {
   pointer-events: auto;
 }
 
@@ -63,11 +62,19 @@
   font-weight: 500;
 }
 
-.smiley {
+/* The trademark that rides the Voyagerscape capsule: a legal detail, not a
+   word — small, raised to the cap line and dimmed to secondary weight. It
+   never takes focus or announces itself; it is simply present. */
+.tm {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--vs-ink);
+  align-self: flex-start;
+  margin-top: 0.3em;
+  margin-left: 0.16em;
+  font-size: 0.36em;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  opacity: 0.62;
 }
 
 /* ---------------- Centre object ---------------- */

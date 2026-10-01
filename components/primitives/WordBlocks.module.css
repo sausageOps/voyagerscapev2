@@ -63,6 +63,42 @@
   border-color: rgba(17, 17, 17, 0.06);
 }
 
+/* Ash-black translucent glass — the hero's oversized words float in this
+   material. Deliberately translucent, and deliberately only lightly
+   blurred: whatever passes behind a block (the CRT included) must stay
+   visibly readable through it, so the tone is carried by a half-clear
+   film rather than by opacity. Cream text, as on --glass--dark; the film
+   is deep enough that the type holds 3:1 against the cream page while
+   still passing the broadcast behind it. */
+.glass {
+  color: #f7f3ec;
+  border-color: rgba(17, 17, 17, 0.24);
+  background-color: rgba(26, 26, 24, 0.55);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.02) 44%,
+    rgba(17, 17, 17, 0.12)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 0 0 1px rgba(17, 17, 17, 0.04);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .glass {
+    -webkit-backdrop-filter: blur(8px) saturate(150%) brightness(1.04);
+    backdrop-filter: blur(8px) saturate(150%) brightness(1.04);
+  }
+}
+
+/* No backdrop sampling: keep the words readable by thickening the film. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background-color: rgba(26, 26, 24, 0.9);
+  }
+}
+
 .brk {
   flex-basis: 100%;
   height: 0;
@@ -107,30 +143,38 @@
   letter-spacing: 0.012em;
 }
 
-/* the disc sits beside the address, as in the reference */
-.hero .word.lavender {
-  border-radius: 50%;
-  padding: 0;
-  width: 1.32em;
-  min-width: 1.32em;
-  height: 1.32em;
-  min-height: 1.32em;
-  background: var(--vs-yellow);
+/* the glass darkens a shade rather than lightening — it is a tinted
+   material, not a cream capsule, and must stay that way on contact */
+.hero .glass:hover {
+  background-color: rgba(26, 26, 24, 0.64);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.03) 44%,
+    rgba(17, 17, 17, 0.12)
+  );
+  border-color: rgba(17, 17, 17, 0.32);
 }
 
-.hero .lavender svg {
-  transition: transform var(--t-med) var(--e-out);
+.hero .glass:active {
+  background-color: rgba(26, 26, 24, 0.7);
 }
 
-/* the disc reacts when the address beside it is hovered, and on its own.
-   `.slot` is display:contents, so the pairing goes through the wrapper. */
-.hero .slot:has(.pink:hover) + .slot .lavender svg,
-.hero .lavender:hover svg {
-  transform: rotate(-14deg) scale(1.1);
+/* "Create" closes the statement in the lavender pill, mirroring the pink
+   article that opens it. */
+.hero .lavender {
+  border-radius: 999px;
+  padding-inline: 0.52em;
+  font-size: 0.86em;
+  letter-spacing: -0.006em;
+  background: var(--vs-lavender);
 }
 
 .hero .lavender:hover {
-  background: #f6dfa8;
+  background: #e4dbff;
+  border-color: rgba(17, 17, 17, 0.14);
+  padding-inline: 0.68em;
+  letter-spacing: 0.012em;
 }
 
 .hero .wide {
@@ -177,21 +221,15 @@
     border-radius: 0.24em;
     min-height: 1.38em;
   }
-  /* the address is the longest token — give it its own metric so it and the
-     disc sit on one line instead of orphaning */
+  /* the pastel pills carry their own metric at small sizes, mirroring the
+     article and the closing word so neither outgrows the glass line */
   .hero .pink {
     font-size: 0.7em;
     padding-inline: 0.55em;
   }
   .hero .lavender {
-    width: 1.16em;
-    min-width: 1.16em;
-    height: 1.16em;
-  }
-  /* give the glyph room inside the disc at small sizes */
-  .hero .lavender svg {
-    width: 0.68em;
-    height: 0.68em;
+    font-size: 0.7em;
+    padding-inline: 0.55em;
   }
   .statement {
     font-size: clamp(0.78rem, 3.9vw, 1rem);

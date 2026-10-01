@@ -12,35 +12,37 @@ import RecorderPanel from "./RecorderPanel";
 import Directory from "./Directory";
 import styles from "./HomeConnect.module.css";
 
-const STUDIO_EMAIL = "studio@voyagerscape.co";
 const GENERAL_EMAIL = "hello@voyagerscape";
 
-/** Oversized statement, set as word capsules like the reference. */
+/**
+ * Oversized statement, set as word capsules like the reference.
+ *
+ * The identity line, one word per line: the article opens, the name carries
+ * the ™, and the three practice verbs hold the middle. "The" and "Create"
+ * stay the soft pastel pills; the name and verbs sit in the ash-black
+ * translucent glass, which floats them over the composition while keeping
+ * the CRT visible through the material wherever the two meet.
+ */
 const HERO: WordDef[] = [
-  { text: "Looking" },
-  { text: "To" },
-  { text: "Explore" },
-  { text: "Your" },
-  { text: "Next" },
-  { text: "Idea?", break: true },
-  { text: "Then" },
-  { text: "Write" },
-  { text: "Us" },
-  { text: "At" },
-  { text: STUDIO_EMAIL, accent: "pink", href: `mailto:${STUDIO_EMAIL}`, wide: true },
+  { text: "The", accent: "pink", break: true },
   {
-    accent: "lavender",
+    text: "Voyagerscape",
+    accent: "glass",
     node: (
-      <span className={styles.smiley} aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor">
-          <circle cx="12" cy="12" r="9.2" strokeWidth="1.5" />
-          <circle cx="8.8" cy="10" r="1.1" fill="currentColor" stroke="none" />
-          <circle cx="15.2" cy="10" r="1.1" fill="currentColor" stroke="none" />
-          <path d="M8.2 14.4c1 1.3 2.3 1.9 3.8 1.9s2.8-.6 3.8-1.9" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </span>
+      <>
+        Voyagerscape
+        {/* The trademark is a quiet legal detail, not a word: small, raised
+            and secondary, never read aloud. */}
+        <span className={styles.tm} aria-hidden="true">
+          ™
+        </span>
+      </>
     ),
+    break: true,
   },
+  { text: "Explore", accent: "glass", break: true },
+  { text: "Observe", accent: "glass", break: true },
+  { text: "Create", accent: "lavender" },
 ];
 
 export default function HomeConnect() {

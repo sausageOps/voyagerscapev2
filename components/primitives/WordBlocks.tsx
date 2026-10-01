@@ -10,7 +10,9 @@ export interface WordDef {
   node?: ReactNode;
   /** Blocked words sit in a soft capsule; unblocked words sit bare. */
   block?: boolean;
-  accent?: "pink" | "lavender" | "plain";
+  /** Capsule material. `glass` is the ash-black translucent treatment used
+      by the hero's big words — see `.glass` in WordBlocks.module.css. */
+  accent?: "pink" | "lavender" | "plain" | "glass";
   href?: string;
   /** Forces a line break after this word. */
   break?: boolean;
