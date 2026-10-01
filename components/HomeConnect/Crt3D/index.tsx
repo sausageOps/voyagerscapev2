@@ -69,7 +69,7 @@ export default function Crt3D({
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [lost, setLost] = useState(false);
   const [pressed, setPressed] = useState(false);
-  const [label, setLabel] = useState("VOYAGE DRIVE");
+  const [label, setLabel] = useState("SAN ANIKREAS");
   const pressTimer = useRef<number | null>(null);
   const mobileInteracting = useRef(false);
 

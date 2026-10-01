@@ -225,7 +225,12 @@ export default function CrtRig({
 
   /* The screen. Created once; owns its canvas, its texture and the
      channel state machine. */
-  const screen = useMemo(() => new ScreenSystem(), []);
+  /* The SWITCH is the only thing that changes channel. The dwell timer
+     is off because the channels are now clips of real length — up to
+     30s against a 9.5s dwell — and an automatic cut would both truncate
+     every one of them and make the loop impossible to ever see. Delete
+     the option to put the unattended cycling back. */
+  const screen = useMemo(() => new ScreenSystem({ autoCycle: false }), []);
   const crt = useMemo(() => createCrtMaterial(screen.texture), [screen]);
 
   useEffect(
@@ -300,6 +305,11 @@ export default function CrtRig({
     const frame = screen.update(dt, !idle);
     crt.uniforms.uTime.value = t;
     crt.uniforms.uTrans.value = frame.transition;
+    /* Per-channel raster linearity. Set as a cut rather than eased: the
+       programme it belongs to is itself swapped on one frame, in the
+       middle of the sync disturbance, so easing it would drag the old
+       channel's geometry across the new channel's picture. */
+    crt.uniforms.uUndistort.value = frame.undistort;
 
     if (onLabel && frame.label !== lastLabel.current) {
       lastLabel.current = frame.label;

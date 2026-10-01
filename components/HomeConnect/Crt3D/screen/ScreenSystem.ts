@@ -52,6 +52,17 @@ import { createProgrammes, type Programme } from "./programmes";
 
 /** Per-programme persistence. Keyed by programme id. */
 const PERSISTENCE: Record<string, number> = {
+  /* The video channels. Lower than the procedural programmes they stand
+     in for: the footage already carries the source's own motion blur, so
+     the full 0.13 smears a bright HUD into a permanent ghost. Enough to
+     keep them on the same tube as everything else, not enough to
+     double-expose them. One value across all five, because they get one
+     treatment — the channel changes, the set does not. */
+  channel01: 0.06,
+  channel02: 0.06,
+  channel03: 0.06,
+  channel04: 0.06,
+  channel05: 0.06,
   drive: 0.13,
   maze: 0.1,
   arcade: 0.075,
@@ -80,6 +91,17 @@ export interface ScreenOptions {
   gain?: number;
   /** Index this unit must not switch to — the other monitor's channel. */
   peer?: () => number;
+  /**
+   * Whether the dwell timer is allowed to change channel on its own.
+   *
+   * Defaults to true, which is the authored behaviour: an unattended
+   * archive monitor works its way through the programmes by itself. A
+   * unit showing real footage wants it off, because a clip that runs
+   * longer than the dwell would be cut off mid-shot and could never be
+   * seen to loop — there, the switch is the only thing that changes
+   * channel.
+   */
+  autoCycle?: boolean;
 }
 
 export interface ScreenFrame {
@@ -89,6 +111,8 @@ export interface ScreenFrame {
   label: string;
   /** Rough mean luminance, 0–1, for the spill light on the bezel. */
   luma: number;
+  /** Raster-linearity request of the programme currently held, 0–1. */
+  undistort: number;
 }
 
 export class ScreenSystem {
@@ -116,12 +140,14 @@ export class ScreenSystem {
   private dwellLen: number;
   private gain: number;
   private peer?: () => number;
+  private autoCycle: boolean;
 
   constructor(opts: ScreenOptions = {}) {
     this.fps = opts.fps ?? CHANNELS.fps;
     this.dwellLen = opts.dwell ?? CHANNELS.dwell;
     this.gain = opts.gain ?? 1;
     this.peer = opts.peer;
+    this.autoCycle = opts.autoCycle ?? true;
     this.canvas = document.createElement("canvas");
     this.canvas.width = CHANNELS.texW;
     this.canvas.height = CHANNELS.texH;
@@ -178,6 +204,11 @@ export class ScreenSystem {
     return this.index;
   }
 
+  /** Raster linearity wanted by the programme on screen. 0 unless it asks. */
+  private get undistort(): number {
+    return this.programmes[this.index].undistort ?? 0;
+  }
+
   /** Advance the channel. The only input this machine has. */
   bump() {
     if (this.transT >= 0) return; // already changing; ignore the double-tap
@@ -212,11 +243,16 @@ export class ScreenSystem {
         this.programmes[this.index].reset();
         this.paintAcc = 0;
       }
-      if (this.paintAcc === 0) {
+      /* Painted once, then left alone — unless the programme says its
+         picture has arrived since. That is the asynchronous case only
+         (channel 01 decoding its first video frame); the procedural
+         programmes never report dirty, so this path is byte-for-byte the
+         behaviour it had. */
+      if (this.paintAcc === 0 || this.programmes[this.index].dirty?.()) {
         this.paint(0, true);
         this.paintAcc = 1;
       }
-      return { transition: 0, label: this.label, luma: this.luma };
+      return { transition: 0, label: this.label, luma: this.luma, undistort: this.undistort };
     }
 
     this.progT += dt;
@@ -239,7 +275,7 @@ export class ScreenSystem {
         this.programmes[this.index].reset();
       }
       if (this.transT >= CHANNELS.transition) this.transT = -1;
-    } else if (this.dwell >= this.dwellLen) {
+    } else if (this.autoCycle && this.dwell >= this.dwellLen) {
       this.bump();
     }
 
@@ -251,7 +287,12 @@ export class ScreenSystem {
       this.paintAcc = 0;
     }
 
-    return { transition: this.transitionAmount(), label: this.label, luma: this.luma };
+    return {
+      transition: this.transitionAmount(),
+      label: this.label,
+      luma: this.luma,
+      undistort: this.undistort,
+    };
   }
 
   /**
@@ -305,6 +346,7 @@ export class ScreenSystem {
     });
 
     this.drawChannelOsd(ctx, w, force);
+    this.drawIdent(ctx, h);
     ctx.restore();
 
     /* ---- phosphor persistence ---- */
@@ -452,10 +494,15 @@ export class ScreenSystem {
     const hold = 2.6;
     const fade = 0.7;
     const age = this.progT;
-    if (!frozen && age > hold + fade) return;
-    const alpha = frozen ? 1 : age < hold ? 1 : 1 - (age - hold) / fade;
-
     const prog = this.programmes[this.index];
+    /* A channel may declare its label permanent, in which case it is a
+       station ident rather than a caption and is never dismissed. Only
+       the dismissal changes: the box, the type, the colours, the place
+       and the tube treatment below are the same code either way. */
+    const permanent = prog.persistentLabel === true;
+    if (!frozen && !permanent && age > hold + fade) return;
+    const alpha = frozen || permanent ? 1 : age < hold ? 1 : 1 - (age - hold) / fade;
+
     const text = prog.label;
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -477,6 +524,78 @@ export class ScreenSystem {
     ctx.fillText(`0${this.index + 1}`, 20, 24);
     ctx.fillStyle = "#e8f2f6";
     ctx.fillText(text, 40, 24);
+    ctx.restore();
+  }
+
+  /**
+   * THE SET'S IDENT
+   * ---------------
+   * The lower-left counterpart to the channel OSD, and deliberately the
+   * same object turned upside down: same box, same lit tab, same rule,
+   * same two-tone split of a dim prefix against a bright name, same
+   * type at the same size. The only thing mirrored is which edge the
+   * rule sits on — it underlines the channel name at the top and
+   * overlines the ident at the bottom, so in both cases the line is the
+   * one that separates the readout from the picture.
+   *
+   * WHY IT IS DRAWN HERE AND NOT ON THE PLASTIC
+   * -------------------------------------------
+   * Because it is the SET talking, not a sticker. Painted into the
+   * phosphor canvas it goes through the whole tube with everything else
+   * — persistence, scanlines, bloom, convergence, the curvature, and
+   * the sync disturbance on a channel change — so it is light coming
+   * off the same raster as the picture rather than artwork sitting in
+   * front of it. That is also why it needs no placement constants: it
+   * is positioned in raster pixels, like the OSD.
+   *
+   * IT BELONGS TO THE MONITOR, SO IT IS ON EVERY CHANNEL
+   * ----------------------------------------------------
+   * Unlike the channel OSD, nothing about it is per-programme. It
+   * identifies the hardware, which does not change when the channel
+   * does — and it was previously on the casing, where it was visible
+   * at all times, so keeping it on every channel is what makes this a
+   * move rather than a redesign.
+   *
+   * WHERE IT LANDS
+   * --------------
+   * Ten pixels off the bottom of the raster, mirroring the OSD's ten
+   * off the top. On channel 01 that puts it cleanly inside the
+   * letterbox bar under the 16:9 picture, so it covers no gameplay at
+   * all — the bar runs from 210 and the box occupies 210 to 230.
+   */
+  private static readonly IDENT_PREFIX = "V:/";
+  private static readonly IDENT_NAME = "VOYAGERSCAPE · CRT v8.9";
+
+  private drawIdent(ctx: CanvasRenderingContext2D, h: number) {
+    ctx.save();
+    ctx.globalAlpha = 1;
+    ctx.font = `600 11px ${this.mono}`;
+
+    /* The 6.8px gutter is not arbitrary: it is what reproduces the
+       channel OSD's own layout exactly when the prefix is two
+       characters wide, so the two readouts are set to one rule rather
+       than to two sets of eyeballed numbers. */
+    const nameX = 20 + ctx.measureText(ScreenSystem.IDENT_PREFIX).width + 6.8;
+    const tw = ctx.measureText(ScreenSystem.IDENT_NAME).width;
+    const bw = nameX + tw - 6;
+
+    const top = h - 30;
+
+    ctx.fillStyle = "rgba(6,10,14,0.78)";
+    ctx.fillRect(10, top, bw, 20);
+    // The lit tab stays on the left edge — the mirror is vertical only.
+    ctx.fillStyle = "#7fd8c0";
+    ctx.fillRect(10, top, 3, 20);
+    // The rule moves to the top: it still faces the picture.
+    ctx.fillStyle = "#4e6b78";
+    ctx.fillRect(10, top, bw, 1);
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#6f8b98";
+    ctx.fillText(ScreenSystem.IDENT_PREFIX, 20, top + 14);
+    ctx.fillStyle = "#e8f2f6";
+    ctx.fillText(ScreenSystem.IDENT_NAME, nameX, top + 14);
     ctx.restore();
   }
 
@@ -502,6 +621,9 @@ export class ScreenSystem {
   }
 
   dispose() {
+    /* Most programmes are pure canvas work and own nothing to release.
+       The video channel owns a media element, so the hook exists. */
+    for (const p of this.programmes) p.dispose?.();
     this.texture.dispose();
     this.canvas.width = 0;
     this.canvas.height = 0;
