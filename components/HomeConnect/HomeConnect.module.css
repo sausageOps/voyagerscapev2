@@ -24,7 +24,9 @@
 .sayHi {
   position: absolute;
   top: calc(clamp(14px, 1.7vw, 22px) + 59px);
-  left: 0;
+  /* .inner is capped on wide screens, while the fixed header is not. Keep
+     this row on the same left edge as the header's brand mark. */
+  left: calc(-1 * max(0px, (100vw - 1440px - 2 * var(--gutter)) / 2));
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -64,7 +66,7 @@
 .stage {
   position: absolute;
   left: 50%;
-  top: 44%;
+  top: calc(44% - 24px);
   transform: translate(-50%, -50%);
   z-index: 1;
   display: flex;
@@ -81,7 +83,7 @@
 /* ---------------- Large centered headline (in front of CRT) ---------------- */
 .head {
   position: absolute;
-  top: calc(50% + clamp(62px, 7.2vw, 100px));
+  top: calc(50% + clamp(62px, 7.2vw, 100px) - 24px);
   left: 0;
   right: 0;
   margin: 0 auto;
@@ -140,6 +142,9 @@
     order: 2;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    /* Keep the typography track tied to the CRT layout box rather than to
+       the tablet viewport height. This preserves the attached overlap used
+       by the working desktop and narrow-mobile compositions. */
     grid-template-rows: var(--crt-type-anchor) auto;
     justify-items: center;
     align-items: start;
