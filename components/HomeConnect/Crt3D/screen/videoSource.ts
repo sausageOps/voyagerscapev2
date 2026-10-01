@@ -50,14 +50,46 @@
  */
 
 /**
+ * ASSET REVISIONS, BY CHANNEL NUMBER
+ * ----------------------------------
+ * A clip that is REPLACED keeps its filename, so every cache between the
+ * file and the tube — the browser's HTTP cache, its separate media cache,
+ * and any proxy in front of the dev server — is entitled to keep serving
+ * the bytes it already has. The element makes that worse by design: it
+ * sets `src` exactly once, at construction, and never re-fetches, so an
+ * already-loaded page will loop the old footage indefinitely no matter
+ * what is on disk.
+ *
+ * A revision in the query string is the cheapest fix that actually
+ * guarantees the right bytes: a cache entry keyed on the old URL cannot
+ * satisfy a request for the new one. The value is the commit that
+ * replaced the asset, so it reads as provenance rather than as a magic
+ * number, and the map only names channels whose clip has actually been
+ * swapped — every other channel's URL is left exactly as it was.
+ *
+ * Only needed while filenames are stable across content changes. If the
+ * clips ever move to content-hashed names this whole map disappears.
+ */
+const ASSET_REV: Record<number, string> = {
+  /* Channel 01's clip was replaced in a2b82b3: it had been a duplicate of
+     channel 04's NFS footage, and is now the GTA San Andreas clip. Same
+     filename, completely different content — exactly the case a cache
+     cannot detect on its own. */
+  1: "a2b82b3",
+};
+
+/**
  * Where a channel's clip lives. All five are committed to the repository
  * and served statically from `/public/crt`, so there is no network
  * dependency, no CDN and no manifest to keep in step — the channel number
  * IS the filename, and adding a sixth is a file plus a line in the table
  * in `programmes.ts`.
  */
-export const channelSrc = (n: number): string =>
-  `/crt/channel-${String(n).padStart(2, "0")}.mp4`;
+export const channelSrc = (n: number): string => {
+  const path = `/crt/channel-${String(n).padStart(2, "0")}.mp4`;
+  const rev = ASSET_REV[n];
+  return rev ? `${path}?v=${rev}` : path;
+};
 
 /** Channel 01's source, and the constructor's default. */
 export const CHANNEL_01_SRC = channelSrc(1);
