@@ -300,6 +300,11 @@ export default function CrtRig({
     const frame = screen.update(dt, !idle);
     crt.uniforms.uTime.value = t;
     crt.uniforms.uTrans.value = frame.transition;
+    /* Per-channel raster linearity. Set as a cut rather than eased: the
+       programme it belongs to is itself swapped on one frame, in the
+       middle of the sync disturbance, so easing it would drag the old
+       channel's geometry across the new channel's picture. */
+    crt.uniforms.uUndistort.value = frame.undistort;
 
     if (onLabel && frame.label !== lastLabel.current) {
       lastLabel.current = frame.label;

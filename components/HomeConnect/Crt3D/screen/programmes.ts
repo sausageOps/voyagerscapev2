@@ -80,6 +80,16 @@ export interface Programme {
   dirty?: () => boolean;
   /** Optional. Release anything this programme owns outside the canvas. */
   dispose?: () => void;
+  /**
+   * Optional, 0–1. How much of the tube's built-in raster distortion to
+   * cancel while this programme is on screen. Defaults to 0 — the
+   * authored behaviour — which is what every procedural channel wants:
+   * they are drawn in raster space and the pinch in the corners is part
+   * of the look. Photographic content wants it cancelled, because the
+   * mapping is anisotropic at the corners and shears anything with a
+   * recognisable shape. See the RASTER LINEARITY note in crtMaterial.ts.
+   */
+  undistort?: number;
 }
 
 /* ----------------------------------------------------------- utilities ---- */
@@ -198,6 +208,12 @@ function createChannel01(): Programme {
   return {
     id: "channel01",
     label: "VOYAGE DRIVE",
+    /* Full cancel. The footage has a HUD in all four corners — a
+       speedometer dial, a minimap, a readout — and those are exactly the
+       shapes the corner shear is most visible on. The tube keeps its
+       physical bulge, its glass and a third of the barrel term, so the
+       screen is still curved; the picture on it is just no longer bent. */
+    undistort: 1,
     reset: () => video.rewind(),
     dirty: () => video.dirty(),
     dispose: () => video.dispose(),

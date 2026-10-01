@@ -95,6 +95,8 @@ export interface ScreenFrame {
   label: string;
   /** Rough mean luminance, 0–1, for the spill light on the bezel. */
   luma: number;
+  /** Raster-linearity request of the programme currently held, 0–1. */
+  undistort: number;
 }
 
 export class ScreenSystem {
@@ -184,6 +186,11 @@ export class ScreenSystem {
     return this.index;
   }
 
+  /** Raster linearity wanted by the programme on screen. 0 unless it asks. */
+  private get undistort(): number {
+    return this.programmes[this.index].undistort ?? 0;
+  }
+
   /** Advance the channel. The only input this machine has. */
   bump() {
     if (this.transT >= 0) return; // already changing; ignore the double-tap
@@ -227,7 +234,7 @@ export class ScreenSystem {
         this.paint(0, true);
         this.paintAcc = 1;
       }
-      return { transition: 0, label: this.label, luma: this.luma };
+      return { transition: 0, label: this.label, luma: this.luma, undistort: this.undistort };
     }
 
     this.progT += dt;
@@ -262,7 +269,12 @@ export class ScreenSystem {
       this.paintAcc = 0;
     }
 
-    return { transition: this.transitionAmount(), label: this.label, luma: this.luma };
+    return {
+      transition: this.transitionAmount(),
+      label: this.label,
+      luma: this.luma,
+      undistort: this.undistort,
+    };
   }
 
   /**

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { SCREEN } from "../proportions";
 
 /**
  * CRT DISPLAY SHADER
@@ -46,6 +47,13 @@ export interface CrtUniforms {
   uScanFade: { value: number };
   /** Master brightness, also used for the click flicker. */
   uGain: { value: number };
+  /**
+   * How much of the raster's built-in geometric distortion to cancel for
+   * the current programme. 0 = the authored behaviour, untouched; 1 =
+   * the picture is laid out as a true rectangle. Per-channel — see the
+   * RASTER LINEARITY note in the fragment shader.
+   */
+  uUndistort: { value: number };
 }
 
 const VERT = /* glsl */ `
@@ -65,8 +73,17 @@ const FRAG = /* glsl */ `
   uniform float uWarm;
   uniform float uScanFade;
   uniform float uGain;
+  uniform float uUndistort;
 
   varying vec2 vUv;
+
+  /* Superellipse exponent of the tube face. Interpolated from SCREEN.n so
+     it cannot drift away from the mesh it is cancelling. */
+  const float SE_N = ${SCREEN.n.toFixed(1)};
+  /* What is left of the shader's own barrel term once a programme asks to
+     be shown undistorted. Small, but not zero: the edges keep a trace of
+     raster curvature on top of the glass's physical bulge. */
+  const float RESIDUAL_BARREL = 0.35;
 
   const vec2 TEXEL = vec2(1.0 / 320.0, 1.0 / 240.0);
   /* Deliberately below the source's 240 lines. Matching them 1:1 beats
@@ -99,7 +116,48 @@ const FRAG = /* glsl */ `
        the glass's job, not the shader's. */
     vec2 c = uv * 2.0 - 1.0;
     float r2 = dot(c, c);
-    c *= 1.0 + 0.028 * r2 - 0.012 * r2 * r2;
+
+    /* ---- raster linearity ----------------------------------------------
+       The tube face is a regular grid in unit-square space pushed OUT onto
+       the superellipse outline, and its UVs stay on the untouched square.
+       That is deliberate — it makes the picture meet the aperture corner
+       to corner, and on the procedural programmes the pinch it leaves in
+       the corners reads as free pincushion.
+
+       On photographic content it does not. The grid is compressed hardest
+       along the diagonals, so the mapping is strongly ANISOTROPIC there —
+       about 2.5:1 at the corners, which shears anything with a known
+       shape, a straight edge or a circle in it. The barrel term below is
+       1.6% and radially symmetric; it is not the cause and turning it off
+       does not help.
+
+       So a programme can ask for the mapping to be undone, by sampling at
+       the position the mesh actually put this fragment at rather than at
+       the square grid coordinate it was authored on. k here is exactly
+       the factor tubeFaceGeometry() applied to the vertex, so multiplying
+       by it inverts the pinch and leaves the picture linear.
+
+       NOTHING ABOUT THE OBJECT MOVES. The mesh, its curvature, the glass
+       in front of it and the aperture are all untouched; this is a change
+       of where the texture is read, not of where anything sits. The cost
+       is that the squircle now crops the picture's extreme corners by a
+       few percent instead of squashing them into the radius — which is
+       what a rounded aperture does to a rectangular raster anyway.
+
+       r2 above is deliberately taken BEFORE this, so the vignette and
+       the overall tube shading are bit-identical on every channel. */
+    float barrel = 1.0;
+    if (uUndistort > 0.001) {
+      vec2 ac = abs(c);
+      float m = max(ac.x, ac.y);
+      if (m > 1e-5) {
+        float norm = pow(pow(ac.x, SE_N) + pow(ac.y, SE_N), 1.0 / SE_N);
+        c *= mix(1.0, m / norm, uUndistort);
+      }
+      barrel = mix(1.0, RESIDUAL_BARREL, uUndistort);
+    }
+
+    c *= 1.0 + barrel * (0.028 * r2 - 0.012 * r2 * r2);
 
     /* ---- channel change ------------------------------------------------
        A tube losing and regaining sync: the picture rolls, a horizontal
@@ -208,6 +266,7 @@ export function createCrtMaterial(map: THREE.Texture): {
     uWarm: { value: 0 },
     uScanFade: { value: 1 },
     uGain: { value: 1 },
+    uUndistort: { value: 0 },
   };
 
   const material = new THREE.ShaderMaterial({
