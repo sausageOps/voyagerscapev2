@@ -128,23 +128,25 @@ export default function HomeConnect() {
           )}
         </div>
 
-        {/* ---- The object: optically centred in the upper hero area ---- */}
-        <div className={styles.stage}>
-          <div className={styles.objectWrap} data-hero-device>
-            <HeroObject
-              recordingState={recorder.recordingState}
-              playbackState={recorder.playbackState}
-              level={recorder.level}
-              onShutter={onShutter}
-            />
+        <div className={styles.composition}>
+          {/* ---- The object: optically centred in the upper hero area ---- */}
+          <div className={styles.stage}>
+            <div className={styles.objectWrap} data-hero-device>
+              <HeroObject
+                recordingState={recorder.recordingState}
+                playbackState={recorder.playbackState}
+                level={recorder.level}
+                onShutter={onShutter}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* ---- Large centered headline underneath CRT (visually static) ---- */}
-        <div className={styles.head}>
-          <h1 className={styles.title}>
-            <WordBlocks words={HERO_WORDS} reveal interactive={false} />
-          </h1>
+          {/* ---- Large centered headline underneath CRT (visually static) ---- */}
+          <div className={styles.head}>
+            <h1 className={styles.title}>
+              <WordBlocks words={HERO_WORDS} reveal interactive={false} />
+            </h1>
+          </div>
         </div>
       </div>
     </div>
