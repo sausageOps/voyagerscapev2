@@ -35,31 +35,21 @@
 
 /* Capsuled word — physical translucent frosted-glass label */
 .blocked {
-  background: rgba(180, 180, 180, 0.05);
-  backdrop-filter: blur(5px) saturate(115%);
-  -webkit-backdrop-filter: blur(5px) saturate(115%);
-  border: 1px solid rgba(60, 60, 60, 0.08);
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.25),
-    inset 0 0 0 1px rgba(17, 17, 17, 0.02),
-    0 2px 8px rgba(17, 17, 17, 0.02),
-    0 8px 24px -6px rgba(17, 17, 17, 0.03);
+  background: rgba(180, 180, 180, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
   will-change: transform;
 }
 
 .blocked:hover {
-  background: rgba(180, 180, 180, 0.14);
-  border-color: rgba(60, 60, 60, 0.12);
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.40),
-    inset 0 0 0 1px rgba(17, 17, 17, 0.03),
-    0 4px 12px rgba(17, 17, 17, 0.025),
-    0 12px 28px -6px rgba(17, 17, 17, 0.035);
+  background: rgba(180, 180, 180, 0.26);
 }
 
 /* Touch devices get press feedback */
 .blocked:active {
-  background: rgba(180, 180, 180, 0.22);
+  background: rgba(180, 180, 180, 0.34);
 }
 
 .word:focus-visible {
@@ -82,56 +72,45 @@
   border-radius: clamp(4px, 0.08em, 6px);
 }
 
-/* Color accent surfaces */
+/* Color accent surfaces — pills (The / Create): flat, solid, graphic fill,
+   no glass/blur/shadow, matching the ToyFight reference's flat colored
+   capsules. Hue values are unchanged, just made opaque. backdrop-filter,
+   box-shadow and border are explicitly cleared here because these elements
+   also carry .blocked, whose glass treatment would otherwise still apply. */
 .lavender {
-  background: rgba(205, 190, 242, 0.32);
-  backdrop-filter: blur(5px) saturate(115%);
-  -webkit-backdrop-filter: blur(5px) saturate(115%);
-  border: 1px solid rgba(60, 60, 60, 0.08);
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
-    inset 0 0 0 1px rgba(150, 130, 210, 0.08),
-    0 2px 8px rgba(150, 130, 210, 0.02),
-    0 8px 24px -6px rgba(17, 17, 17, 0.03);
+  background: rgba(205, 190, 242, 1);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
 }
 
 .lavender:hover {
-  background: rgba(225, 215, 250, 0.35);
-  border-color: rgba(60, 60, 60, 0.14);
+  background: rgba(225, 215, 250, 1);
 }
 
 .cream {
-  background: rgba(180, 180, 180, 0.05);
-  backdrop-filter: blur(5px) saturate(115%);
-  -webkit-backdrop-filter: blur(5px) saturate(115%);
-  border-color: rgba(60, 60, 60, 0.08);
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.25),
-    inset 0 0 0 1px rgba(17, 17, 17, 0.02),
-    0 2px 8px rgba(17, 17, 17, 0.02),
-    0 8px 24px -6px rgba(17, 17, 17, 0.03);
+  background: rgba(180, 180, 180, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
 }
 
 .cream:hover {
-  background: rgba(180, 180, 180, 0.14);
-  border-color: rgba(60, 60, 60, 0.12);
+  background: rgba(180, 180, 180, 0.26);
 }
 
 .pink {
-  background: rgba(242, 185, 224, 0.32);
-  backdrop-filter: blur(5px) saturate(115%);
-  -webkit-backdrop-filter: blur(5px) saturate(115%);
-  border: 1px solid rgba(60, 60, 60, 0.08);
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
-    inset 0 0 0 1px rgba(185, 110, 165, 0.08),
-    0 2px 8px rgba(220, 120, 180, 0.02),
-    0 8px 24px -6px rgba(17, 17, 17, 0.03);
+  background: rgba(242, 185, 224, 1);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
 }
 
 .pink:hover {
-  background: rgba(250, 218, 242, 0.35);
-  border-color: rgba(60, 60, 60, 0.14);
+  background: rgba(250, 218, 242, 1);
 }
 
 .yellow {
@@ -162,9 +141,9 @@
 
 /* ---------- Hero Scale ---------- */
 .hero {
-  column-gap: clamp(4px, 0.4vw, 7px);
+  column-gap: clamp(3px, 0.3vw, 5.5px);
   row-gap: clamp(2.5px, 0.22vw, 4px);
-  font-size: clamp(2.4rem, 4.6vw, 5.2rem);
+  font-size: clamp(2.424rem, 4.646vw, 5.252rem);
   line-height: 1.10;
   font-weight: 400;
   letter-spacing: -0.015em;
@@ -188,19 +167,46 @@
   transform: none !important;
 }
 
-/* Explore: Large pill with fully rounded ends */
-.hero .cream {
-  border-radius: 999px;
-  padding-inline: 0.52em;
+/* Rectangles: "Voyagerscape", "Observe" — taller, tightly hugged left/right.
+   Top/bottom padding and font-size are unchanged; only the horizontal
+   padding inherited from .hero .word (0.38em) is tightened here. */
+.hero .rounded {
+  font-weight: 500;
+  padding-top: 0.22em;
+  padding-bottom: 0.26em;
+  padding-left: 0.165em;
+  padding-right: 0.165em;
 }
 
-/* Small Style pills: "The" and "Create" — identical metrics and pill height */
+/* Explore: pill shape, but shares the rectangles' vertical type scale
+   (same font-size already inherited from .hero .word; font-weight matches
+   .hero .rounded's subtle Medium bump). This aligns its top/bottom padding
+   with .hero .rounded so Voyagerscape / Explore / Observe sit on one
+   consistent vertical system. Horizontal padding stays its own pill value,
+   matching The/Create's padding proportion. */
+.hero .cream {
+  font-weight: 500;
+  border-radius: 999px;
+  padding-top: 0.22em;
+  padding-bottom: 0.26em;
+  padding-inline: 0.24em;
+}
+
+/* Pull the forced line-break between "The / Voyagerscape" and
+   "Explore / Observe / Create" tighter, without touching block padding,
+   dimensions, or the hero's own vertical position in the page. */
+.hero .brk {
+  margin-top: -0.15em;
+}
+
+/* Small Style pills: "The" and "Create" — identical metrics and pill height,
+   tightened horizontal fit */
 .hero .lavender,
 .hero .pink {
   font-size: 0.74em;
   font-weight: 400;
   line-height: 1.10;
-  padding: 0.18em 0.52em 0.22em;
+  padding: 0.18em 0.24em 0.22em;
   border-radius: 999px;
   min-height: 1.42em;
   align-self: center;
