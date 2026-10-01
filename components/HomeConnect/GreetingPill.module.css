@@ -10,9 +10,7 @@
   display: inline-flex;
   align-items: center;
   padding: 4px 11px;
-  /* Small rounded rectangle (6–8px) — a soft chip, deliberately not a
-     capsule. */
-  border-radius: 8px;
+  border-radius: clamp(4px, 0.08em, 6px);
   /* Pale cream-yellow: the site's existing washed-yellow chip treatment
      (same as the general-enquiries tags) — --vs-yellow eased 50% into the
      page ground. The rgba line is the no-color-mix fallback and lands on
