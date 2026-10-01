@@ -1,5 +1,19 @@
-.mark {
+/* =========================================================
+   BRAND MARK — V:/ ⇄ VOYAGERSCAPE
+   One capsule, two states. The in-flow ghost holds the
+   compact V:/ footprint; the real chip floats over it from
+   the same left anchor and grows to the right only.
+   ========================================================= */
+
+.root {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
+/* Shared capsule silhouette (ghost + interactive mark) */
+.chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -11,6 +25,27 @@
   background: var(--vs-ink);
   color: #f7f3ec;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset;
+  white-space: nowrap;
+}
+
+/* Invisible sizer: the header only ever measures the compact state. */
+.ghost {
+  position: relative;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ghost .caret {
+  animation: none;
+}
+
+/* The live mark. Absolutely anchored to the ghost's left edge, width driven
+   purely by its own content, so expanding is a pure rightward growth. */
+.mark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: max-content;
   transition: transform var(--t-fast) var(--e-out), border-radius var(--t-med) var(--e-out);
   will-change: transform;
 }
@@ -27,7 +62,11 @@
 
 .glyph {
   display: inline-flex;
-  align-items: baseline;
+  /* Centred rather than baseline-aligned: every child carries the same font
+     metrics and line-height, so the optical result is identical, but the
+     reveal windows (which clip their overflow) can no longer synthesise a
+     stray baseline. */
+  align-items: center;
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 500;
@@ -49,6 +88,102 @@
 
 .mark:hover .slash {
   transform: translateX(1.5px) rotate(-8deg);
+}
+
+/* ---------- Reveal windows ----------
+   Both are horizontal masks. Their widths are the only animated layout
+   values; the capsule simply follows its content. --mark-tail-w / --mark-word-w
+   are measured from the rendered type at mount (see BrandMark.tsx); until then
+   the tail falls back to its natural width, so the resting mark is never
+   JS-dependent. */
+.tail,
+.word {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  /* Flex items must be free to collapse past their content. */
+  min-width: 0;
+  flex: none;
+  /* Clip horizontally only — the padding/margin pair lifts the clip box clear
+     of ascenders and descenders. */
+  padding: 4px 0;
+  margin: -4px 0;
+}
+
+.tailNatural,
+.tailInner,
+.wordInner {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex: none;
+}
+
+.tail {
+  width: var(--mark-tail-w);
+}
+
+.word {
+  width: 0;
+  opacity: 0;
+}
+
+.wordInner {
+  transform: translateX(-7px);
+}
+
+/* ---------- Expansion (desktop, fine pointers only) ----------
+   Touch and coarse pointers keep the compact V:/ state: no hover required,
+   nothing to discover, nothing that can overflow. The 1024px floor is the
+   header's existing breakpoint — below it the nav joins the row, so the
+   wordmark stays folded rather than reaching across it. */
+@media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+  .tail {
+    opacity: 1;
+    transition: width 0.3s var(--e-out), opacity 0.16s linear 0.08s;
+  }
+
+  .word {
+    transition: width 0.3s var(--e-out), opacity 0.18s linear;
+  }
+
+  .wordInner {
+    transition: transform 0.3s var(--e-out);
+  }
+
+  .mark:hover .tail,
+  .mark:focus-visible .tail {
+    width: 0;
+    opacity: 0;
+    transition: width 0.32s var(--e-out), opacity 0.12s linear;
+  }
+
+  .mark:hover .word,
+  .mark:focus-visible .word {
+    width: var(--mark-word-w, 11.3ch);
+    opacity: 1;
+    transition: width 0.32s var(--e-out), opacity 0.2s linear 0.08s;
+  }
+
+  .mark:hover .wordInner,
+  .mark:focus-visible .wordInner {
+    transform: translateX(0);
+    transition: transform 0.32s var(--e-out);
+  }
+
+  /* The tail collapses on hover — no rotation to fight the reveal. */
+  .mark:hover .slash {
+    transform: none;
+  }
+
+  /* The expansion itself is the hover affordance here: no lift, no scale,
+     only the capsule widening and rounding into a pill. (Coarse pointers,
+     which never expand, keep the original lift untouched.) */
+  .mark:hover:not(:active),
+  .mark:focus-visible:not(:active) {
+    transform: none;
+    border-radius: 999px;
+  }
 }
 
 .caret {
@@ -80,5 +215,18 @@
 @media (prefers-reduced-motion: reduce) {
   .caret {
     animation: none;
+  }
+
+  .tail,
+  .word,
+  .wordInner,
+  .mark:hover .tail,
+  .mark:hover .word,
+  .mark:hover .wordInner,
+  .mark:focus-visible .tail,
+  .mark:focus-visible .word,
+  .mark:focus-visible .wordInner {
+    transition-duration: 0.01ms;
+    transition-delay: 0s;
   }
 }
