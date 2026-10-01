@@ -49,8 +49,18 @@
  * the next `draw()` starts it again. Nothing else has to know.
  */
 
-/** Channel 01's source. Committed to the repository, served statically. */
-export const CHANNEL_01_SRC = "/crt/channel-01.mp4";
+/**
+ * Where a channel's clip lives. All five are committed to the repository
+ * and served statically from `/public/crt`, so there is no network
+ * dependency, no CDN and no manifest to keep in step — the channel number
+ * IS the filename, and adding a sixth is a file plus a line in the table
+ * in `programmes.ts`.
+ */
+export const channelSrc = (n: number): string =>
+  `/crt/channel-${String(n).padStart(2, "0")}.mp4`;
+
+/** Channel 01's source, and the constructor's default. */
+export const CHANNEL_01_SRC = channelSrc(1);
 
 /**
  * Gestures allowed to retry a blocked autoplay. A muted, inline video is

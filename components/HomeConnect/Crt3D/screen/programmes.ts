@@ -1,4 +1,4 @@
-import { CHANNEL_01_SRC, VideoSource } from "./videoSource";
+import { channelSrc, VideoSource } from "./videoSource";
 
 /**
  * THE PROGRAMMES
@@ -186,27 +186,46 @@ function sprite(
 }
 
 /* ======================================================================== */
-/* 1 — VOYAGE DRIVE                                                         */
+/* THE ARCHIVE — FIVE VIDEO CHANNELS                                        */
 /* ======================================================================== */
 
 /**
- * CHANNEL 01 — LOCAL VIDEO (PROTOTYPE)
- * ====================================
+ * A CHANNEL WHOSE PICTURE COMES FROM A FILE
+ * =========================================
  *
- * The one programme whose picture comes from a file instead of from an
- * algorithm. It is still a programme in every other respect: it paints
- * into the shared 320×240 raster at the same 24fps, under the same
- * phosphor persistence, the same OSD, the same sync disturbance on a
- * channel change and the same tube shader. Nothing about it is composited
- * over the glass, so there is no flat rectangle sitting on top of the
- * monitor — the footage is simply what the raster happens to contain.
+ * One factory, used five times. The programme is still a programme in
+ * every respect that matters: it paints into the shared 320×240 raster at
+ * the same 24fps, under the same phosphor persistence, the same OSD, the
+ * same sync disturbance on a channel change and the same tube shader.
+ * Nothing is composited over the glass, so there is no flat rectangle
+ * sitting on top of the monitor — the footage is simply what the raster
+ * happens to contain.
  *
  * `videoSource.ts` owns the element and the playback policy; everything
  * here is the one blit and the fallback for the moment before the first
  * frame has decoded.
+ *
+ * THE ELEMENT IS BUILT ON FIRST USE, NOT UP FRONT
+ * -----------------------------------------------
+ * Five `VideoSource`s constructed eagerly would mean five `<video>`
+ * elements all with `preload="auto"`, i.e. the hero pulling every clip in
+ * the archive — several megabytes — before anyone has touched the switch,
+ * to show one of them. So the element is created the first time the
+ * channel is actually asked to draw. Channel 01 is drawn on the very
+ * first frame, so the page's opening behaviour is exactly what it was;
+ * the other four cost nothing until they are switched to, and then only
+ * once, because the source is kept alive for the rest of the session and
+ * is instant on every later visit.
+ *
+ * The brief wait on a channel's FIRST appearance is already a designed
+ * state, not a gap: the tube shows its own ACQUIRING SIGNAL readout,
+ * which is what a set does between locking on and getting a picture.
  */
-function createChannel01(): Programme {
-  const video = new VideoSource(CHANNEL_01_SRC);
+function createVideoChannel(n: number, id: string, label: string): Programme {
+  /* Built on demand — see above. Everything downstream goes through
+     `src()`, except the paths that must not themselves cause a load. */
+  let video: VideoSource | null = null;
+  const src = () => (video ??= new VideoSource(channelSrc(n)));
 
   /* How long the tube waits before admitting there is no picture. Long
      enough that a normal load never shows it, short enough that a failed
@@ -214,28 +233,37 @@ function createChannel01(): Programme {
   const PATIENCE = 0.7;
 
   return {
-    id: "channel01",
-    label: "VOYAGE DRIVE",
+    id,
+    label,
     /* Full cancel. The footage has a HUD in all four corners — a
        speedometer dial, a minimap, a readout — and those are exactly the
        shapes the corner shear is most visible on. The tube keeps its
        physical bulge, its glass and a third of the barrel term, so the
        screen is still curved; the picture on it is just no longer bent. */
     undistort: 1,
-    /* This channel is the project's own ident, so its label stays up for
-       as long as it is on air — same box, same type, same place, same
-       tube treatment, just never dismissed. */
+    /* A channel identifier, not an intro caption: the label stays up for
+       as long as the channel is on air — same box, same type, same
+       place, same tube treatment, just never dismissed. */
     persistentLabel: true,
-    reset: () => video.rewind(),
-    dirty: () => video.dirty(),
-    dispose: () => video.dispose(),
+    /* Selecting a channel starts its clip from the top. `reset()` is
+       called by the state machine at the moment of the cut, so this is
+       also the point the source is wanted — hence `src()` rather than
+       the optional chain. */
+    reset: () => src().rewind(),
+    /* Must NOT construct: this is polled on the frozen path to ask
+       whether an already-running load has produced a frame yet. A
+       channel that has never drawn has nothing to be dirty about. */
+    dirty: () => video?.dirty() ?? false,
+    /* Equally must not construct — disposing something never built. */
+    dispose: () => video?.dispose(),
     draw: ({ ctx, t, w, h, mono, frozen }) => {
+      const v = src();
       /* Reduced motion holds one still frame of every other programme, so
          it holds one still frame of this one too. The clip is paused, not
          hidden: "reduced motion" means do not animate at the user, not
          blank the channel. */
-      video.setPlaying(!frozen);
-      if (video.draw(ctx, w, h)) return;
+      v.setPlaying(!frozen);
+      if (v.draw(ctx, w, h)) return;
 
       /* No frame yet. A tube tuned to a channel that has not come up is
          not a blank page — it is an unlit raster with the set's own
@@ -246,6 +274,25 @@ function createChannel01(): Programme {
     },
   };
 }
+
+/**
+ * THE CHANNEL TABLE
+ * =================
+ *
+ * The running order, and the only place it is declared. Position in this
+ * array IS the channel number: the OSD numbers itself from the index, and
+ * the state machine steps through it with a modulo, so 01 → 02 → 03 → 04
+ * → 05 → 01 falls out of the array order rather than being asserted
+ * anywhere. The filename is derived from the same index, so a channel
+ * cannot end up labelled with one clip and playing another.
+ */
+const CHANNEL_TABLE: ReadonlyArray<{ id: string; label: string }> = [
+  { id: "channel01", label: "SAN ANIKREAS" },
+  { id: "channel02", label: "HITMAN2: SILENT ANIKET" },
+  { id: "channel03", label: "POP: ANIKET WITHIN" },
+  { id: "channel04", label: "NFS: ANIKET UNDERGROUND" },
+  { id: "channel05", label: "HALO: COMBAT MODI" },
+];
 
 /**
  * Pseudo-3D scanline road, the technique every 16-bit and early-polygon
@@ -1673,7 +1720,13 @@ function createPixel(): Programme {
  * would do the same.
  */
 export function createProgrammes(): Programme[] {
-  /* Slot 01 is the video prototype. The procedural `createDrive()` it
-     replaces is unchanged and one word away from being back in. */
-  return [createChannel01(), createMaze(), createArcade(), createSignal(), createPixel()];
+  /* Every slot is now an archive clip, built straight from the table so
+     the order, the labels and the filenames cannot drift apart.
+     
+     The procedural programmes below — `createDrive`, `createMaze`,
+     `createArcade`, `createSignal`, `createPixel` — are retained
+     untouched and out of the rotation. They are the fallback if a clip
+     is ever pulled, and putting one back on air is one entry in this
+     array. */
+  return CHANNEL_TABLE.map((c, i) => createVideoChannel(i + 1, c.id, c.label));
 }

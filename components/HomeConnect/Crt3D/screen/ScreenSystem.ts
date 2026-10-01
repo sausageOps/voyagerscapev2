@@ -52,12 +52,17 @@ import { createProgrammes, type Programme } from "./programmes";
 
 /** Per-programme persistence. Keyed by programme id. */
 const PERSISTENCE: Record<string, number> = {
-  /* The video channel. Lower than the procedural drive it stands in for:
-     the footage already carries the source's own motion blur, so the full
-     0.13 smears the bright HUD into a permanent ghost. Enough to keep it
-     on the same tube as the other channels, not enough to double-expose
-     it. */
+  /* The video channels. Lower than the procedural programmes they stand
+     in for: the footage already carries the source's own motion blur, so
+     the full 0.13 smears a bright HUD into a permanent ghost. Enough to
+     keep them on the same tube as everything else, not enough to
+     double-expose them. One value across all five, because they get one
+     treatment — the channel changes, the set does not. */
   channel01: 0.06,
+  channel02: 0.06,
+  channel03: 0.06,
+  channel04: 0.06,
+  channel05: 0.06,
   drive: 0.13,
   maze: 0.1,
   arcade: 0.075,
@@ -86,6 +91,17 @@ export interface ScreenOptions {
   gain?: number;
   /** Index this unit must not switch to — the other monitor's channel. */
   peer?: () => number;
+  /**
+   * Whether the dwell timer is allowed to change channel on its own.
+   *
+   * Defaults to true, which is the authored behaviour: an unattended
+   * archive monitor works its way through the programmes by itself. A
+   * unit showing real footage wants it off, because a clip that runs
+   * longer than the dwell would be cut off mid-shot and could never be
+   * seen to loop — there, the switch is the only thing that changes
+   * channel.
+   */
+  autoCycle?: boolean;
 }
 
 export interface ScreenFrame {
@@ -124,12 +140,14 @@ export class ScreenSystem {
   private dwellLen: number;
   private gain: number;
   private peer?: () => number;
+  private autoCycle: boolean;
 
   constructor(opts: ScreenOptions = {}) {
     this.fps = opts.fps ?? CHANNELS.fps;
     this.dwellLen = opts.dwell ?? CHANNELS.dwell;
     this.gain = opts.gain ?? 1;
     this.peer = opts.peer;
+    this.autoCycle = opts.autoCycle ?? true;
     this.canvas = document.createElement("canvas");
     this.canvas.width = CHANNELS.texW;
     this.canvas.height = CHANNELS.texH;
@@ -257,7 +275,7 @@ export class ScreenSystem {
         this.programmes[this.index].reset();
       }
       if (this.transT >= CHANNELS.transition) this.transT = -1;
-    } else if (this.dwell >= this.dwellLen) {
+    } else if (this.autoCycle && this.dwell >= this.dwellLen) {
       this.bump();
     }
 
