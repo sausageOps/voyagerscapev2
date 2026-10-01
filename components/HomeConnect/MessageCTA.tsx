@@ -47,7 +47,7 @@ export default function MessageCTA({ onOpen, open }: { onOpen: () => void; open:
         data-magnetic
       >
         <span className={styles.prompt} aria-hidden="true">
-          &gt;/
+          <span className={styles.promptGlyph}>&gt;/</span>
         </span>
         <span className={styles.text}>Leave Us A Message</span>
       </GlassControl>
