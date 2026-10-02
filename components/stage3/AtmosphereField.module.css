@@ -12,7 +12,7 @@
   pointer-events: none;
   /* The field is purely decorative and must never be selectable. */
   user-select: none;
-  background: #d5d7e2;
+  background: #dcdddf;
 }
 
 /* Static pastel field. Visible before the first GL frame and the complete
@@ -20,12 +20,15 @@
 .fallback {
   position: absolute;
   inset: 0;
+  /* A frozen mesh gradient: the same five spots at their t=0 positions,
+     same palette. No animation, no blur filter. */
   background:
-    radial-gradient(74% 64% at 16% 52%, #cfc4e9 0%, rgba(207, 196, 233, 0) 64%),
-    radial-gradient(70% 62% at 78% 22%, #b9cfea 0%, rgba(185, 207, 234, 0) 62%),
-    radial-gradient(82% 70% at 62% 88%, #c0dcc9 0%, rgba(192, 220, 201, 0) 66%),
-    radial-gradient(86% 72% at 24% 10%, #f5efe1 0%, rgba(245, 239, 225, 0) 68%),
-    linear-gradient(162deg, #e6e3ea 0%, #d3d8e8 46%, #dfe4e2 100%);
+    radial-gradient(58% 72% at 2% 22%, #f5efe1 0%, rgba(245, 239, 225, 0) 70%),
+    radial-gradient(56% 70% at 92% 24%, #cfc4e9 0%, rgba(207, 196, 233, 0) 68%),
+    radial-gradient(58% 70% at 6% 84%, #c0dcc9 0%, rgba(192, 220, 201, 0) 70%),
+    radial-gradient(54% 68% at 94% 82%, #b9cfea 0%, rgba(185, 207, 234, 0) 68%),
+    radial-gradient(46% 58% at 50% 50%, #f1e9dc 0%, rgba(241, 233, 220, 0) 72%),
+    #e3e2e6;
 }
 
 .canvas {

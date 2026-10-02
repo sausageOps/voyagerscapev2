@@ -26,7 +26,7 @@
   /* Hard clip: the atmosphere exists only inside the frame. */
   overflow: hidden;
   isolation: isolate;
-  background: #d5d7e2;
+  background: #dcdddf;
   /* Fixes Safari's rounded-corner clipping of a composited child. */
   transform: translateZ(0);
 }

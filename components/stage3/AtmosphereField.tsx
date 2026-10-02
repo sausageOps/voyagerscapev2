@@ -3,7 +3,7 @@
 /* =========================================================
    STAGE 3 — ATMOSPHERE PROTOTYPE (ISOLATED)
 
-   A single full-frame procedural colour field. Mounted only by
+   Host for the procedural mesh gradient. Mounted only by
    /stage3-atmosphere; imported by nothing else in the app.
 
    Contract:
@@ -21,7 +21,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import styles from "./AtmosphereField.module.css";
-import { FRAGMENT_SHADER, VERTEX_SHADER } from "./atmosphereShaders";
+import { FRAGMENT_SHADER, VERTEX_SHADER } from "./meshGradientShaders";
 
 /** Retina is wasted on a field with no edges in it. */
 const DPR_CAP = 1.5;
@@ -147,7 +147,7 @@ export default function AtmosphereField() {
       gl.useProgram(program);
       gl.disable(gl.DEPTH_TEST);
       gl.disable(gl.BLEND);
-      gl.clearColor(0.835, 0.843, 0.882, 1);
+      gl.clearColor(0.864, 0.865, 0.876, 1);
       return true;
     };
 
