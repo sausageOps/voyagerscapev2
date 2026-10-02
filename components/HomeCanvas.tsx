@@ -17,6 +17,24 @@ export default function HomeCanvas({ children }: { children: ReactNode }) {
     const target = { x: 0, y: 0 };
     const current = { x: 0, y: 0 };
     let raf = 0;
+    let ambientStart = 0;
+
+    // Autonomous ambient drift. Each field gets two slow, non-harmonic
+    // oscillators per axis so the motion is quasi-periodic: the four fields
+    // never settle into a shared rhythm or repeat the same path. Amplitudes
+    // stay far below the pointer response, which remains the dominant motion.
+    const TAU = Math.PI * 2;
+    const drift = (
+      seconds: number,
+      amplitude: number,
+      slowPeriod: number,
+      slowPhase: number,
+      fastPeriod: number,
+      fastPhase: number,
+    ) =>
+      amplitude *
+      (0.72 * Math.sin((seconds / slowPeriod) * TAU + slowPhase) +
+        0.28 * Math.sin((seconds / fastPeriod) * TAU + fastPhase));
 
     const setTargetFromPointer = (event: PointerEvent) => {
       const bounds = frame.getBoundingClientRect();
@@ -37,15 +55,20 @@ export default function HomeCanvas({ children }: { children: ReactNode }) {
 
       // Ambient offsets are intentionally small and live in this same RAF
       // loop as the pointer response. Each field has its own slow phase.
-      const seconds = timestamp / 1000;
-      const lavenderX = Math.sin((seconds / 13) * Math.PI * 2) * 34;
-      const lavenderY = Math.cos((seconds / 15) * Math.PI * 2) * 24;
-      const mintX = Math.cos((seconds / 14) * Math.PI * 2) * 30;
-      const mintY = Math.sin((seconds / 16) * Math.PI * 2) * 27;
-      const blueX = Math.sin((seconds / 11) * Math.PI * 2) * 22;
-      const blueY = Math.cos((seconds / 13) * Math.PI * 2) * 18;
-      const creamX = Math.cos((seconds / 18) * Math.PI * 2) * 18;
-      const creamY = Math.sin((seconds / 20) * Math.PI * 2) * 14;
+      if (!ambientStart) ambientStart = timestamp;
+      const seconds = (timestamp - ambientStart) / 1000;
+      // Ease the drift in from the base layout so nothing jumps on mount.
+      const settle = Math.min(1, seconds / 2.4);
+      const intro = settle * settle * (3 - 2 * settle);
+
+      const lavenderX = intro * drift(seconds, 34, 12.7, 0.0, 19.3, 2.1);
+      const lavenderY = intro * drift(seconds, 26, 14.6, 1.7, 23.1, 4.4);
+      const mintX = intro * drift(seconds, 30, 15.4, 2.6, 24.7, 0.8);
+      const mintY = intro * drift(seconds, 27, 13.9, 4.9, 21.3, 3.3);
+      const blueX = intro * drift(seconds, 28, 10.9, 5.2, 17.7, 1.4);
+      const blueY = intro * drift(seconds, 22, 12.8, 3.1, 19.9, 5.7);
+      const creamX = intro * drift(seconds, 26, 18.5, 1.1, 27.4, 3.9);
+      const creamY = intro * drift(seconds, 20, 16.3, 5.8, 25.1, 2.4);
 
       frame.style.setProperty("--field-strong-x", `${(lavenderX + current.x).toFixed(2)}px`);
       frame.style.setProperty("--field-strong-y", `${(lavenderY + current.y).toFixed(2)}px`);
