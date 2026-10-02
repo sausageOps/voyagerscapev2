@@ -225,15 +225,84 @@ svg {
    shadow. Definition comes from the fill against the page.
    ========================================================= */
 
+/* =========================================================
+   PROJECT RULE — GLASS NEVER IMPLIES A BORDER OR A SHADOW
+   ---------------------------------------------------------
+   "Glass" in Voyagerscape means exactly two things:
+
+       translucent surface  +  (optional) backdrop blur
+
+   It does NOT mean border, box-shadow, inset highlight,
+   outline, gradient edge, glow, or a decorative pseudo-element
+   edge. Those are separate, opt-in design decisions.
+
+   A component may still declare `border` / `box-shadow` for a
+   specific, deliberate reason — it just never inherits one
+   from being glass. Nothing here disables borders or shadows
+   on non-glass elements.
+   ========================================================= */
+
 .vs-glass {
   position: relative;
   background-color: rgba(var(--glass-tint), var(--glass-alpha));
   transition: background-color var(--t-fast) var(--e-out), transform var(--t-fast) var(--e-out);
+
+  /* The canonical guarantee. Declared on the shared class itself (not in a
+     :where() block) so the glass system can never silently grow an edge;
+     a component that genuinely needs one still wins with its own module
+     selector, which is at least as specific and loads after globals. */
+  border: none;
+  box-shadow: none;
 }
 
 /* Default radius at zero specificity so component modules always win */
 :where(.vs-glass) {
   border-radius: var(--r-pill);
+}
+
+/* Backdrop blur is permitted and is opt-in per surface:
+   set `--glass-blur: 12px` on the element (or a variant) and the material
+   samples what is behind it. Unset, it costs nothing. */
+:where(.vs-glass) {
+  -webkit-backdrop-filter: var(--glass-backdrop, none);
+  backdrop-filter: var(--glass-backdrop, none);
+}
+
+.vs-glass[style*="--glass-blur"],
+.vs-glass--blur {
+  --glass-backdrop: blur(var(--glass-blur, 12px));
+}
+
+/* Interaction states may change tone / transform — never the edge.
+   Kept at the same specificity level as the component hover rules that
+   could otherwise reintroduce an edge through the shared system. */
+.vs-glass:hover,
+.vs-glass:focus,
+.vs-glass:active {
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+/* Keyboard focus is the one sanctioned ring: it is transient, it is drawn
+   outside the surface via outline-offset, and it never persists as a
+   decorative border. It inherits the global :focus-visible treatment. */
+.vs-glass:focus-visible {
+  border: none;
+  box-shadow: none;
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 3px;
+}
+
+/* No decorative edge/highlight/glow pseudo-elements from the glass system.
+   Zero specificity (:where) so any pseudo-element a component defines for
+   an unrelated functional purpose — icons, carets, underlines, counters —
+   still works normally. */
+:where(.vs-glass)::before,
+:where(.vs-glass)::after {
+  box-shadow: none;
+  border: none;
+  filter: none;
 }
 
 /* Clearer treatment — floating controls over rich content */
