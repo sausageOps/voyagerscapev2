@@ -171,7 +171,7 @@
    Top/bottom padding and font-size are unchanged; only the horizontal
    padding inherited from .hero .word (0.38em) is tightened here. */
 .hero .rounded {
-  font-weight: 500;
+  font-weight: 400;
   padding-top: 0.22em;
   padding-bottom: 0.26em;
   padding-left: 0.165em;
@@ -185,7 +185,7 @@
    consistent vertical system. Horizontal padding stays its own pill value,
    matching The/Create's padding proportion. */
 .hero .cream {
-  font-weight: 500;
+  font-weight: 400;
   border-radius: 999px;
   padding-top: 0.22em;
   padding-bottom: 0.26em;
