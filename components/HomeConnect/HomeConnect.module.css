@@ -1,326 +1,162 @@
-/* =========================================================
-   HOME — art-directed per range.
-   Desktop (>1100px): Unified hero composition:
-   CRT sits directly above and slightly overlaps the upper edge
-   of the dense, centered, oversized typography blocks.
-   ========================================================= */
-
-.hero {
+.frame {
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  --type-shift-x: 0px;
+  --type-shift-y: 0px;
+  --object-shift-x: 0px;
+  --object-shift-y: 0px;
   position: relative;
-  z-index: 1;
-  padding: 0 var(--gutter);
-  /* `100vw` includes the vertical scrollbar's track in most browsers, while
-     every other width used on this page (including the header's, which is
-     laid out with plain padding, not vw) does not. Left uncorrected, that
-     gap throws off anything that reconstructs a width from `100vw`, by half
-     the scrollbar's width. HomeConnect measures the real gap on mount/resize
-     (see HomeConnect.tsx) and writes it here; 0px is the correct value
-     whenever there is no scrollbar (and the safe default before hydration). */
-  --vs-scrollbar-w: 0px;
+  isolation: isolate;
+  min-height: calc(100svh - 32px);
+  margin: 16px;
+  overflow: hidden;
+  border-radius: 19px;
+  background: #e9e1d6;
+  color: #171517;
 }
 
-.inner {
-  position: relative;
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  min-height: 100svh;
-  padding: calc(var(--header-h) + clamp(14px, 2svh, 28px)) 0 clamp(20px, 3svh, 36px);
-}
-
-/* ---------------- Say hi (top-left) ---------------- */
-.sayHi {
+.atmosphere {
   position: absolute;
-  top: calc(clamp(14px, 1.7vw, 22px) + 59px);
-  /* .inner is capped on wide screens, while the fixed header (BrandMark's
-     anchor) is not — it only ever applies `var(--gutter)` as padding. Pull
-     this row back out by exactly the amount .inner's centring added, so it
-     lands on that same gutter-from-viewport edge. --vs-scrollbar-w corrects
-     `100vw` to the real, scrollbar-excluded viewport width this centring
-     is actually computed from, so the row lines up exactly, not "close". */
-  left: calc(-1 * max(0px, (100vw - var(--vs-scrollbar-w) - 1440px - 2 * var(--gutter)) / 2));
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  opacity: 0;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(70% 92% at var(--mouse-x) var(--mouse-y), rgba(241, 184, 228, .64), transparent 55%),
+    radial-gradient(68% 80% at calc(100% - var(--mouse-x)) 12%, rgba(216, 204, 255, .72), transparent 58%),
+    radial-gradient(60% 80% at 8% 100%, rgba(245, 216, 184, .8), transparent 62%),
+    linear-gradient(120deg, #f3eadc 0%, #e7e0e5 48%, #e4dded 100%);
+  animation: atmosphereDrift 18s ease-in-out infinite alternate;
+  transform: scale(1.08);
+  will-change: background-position, transform;
+}
+
+.atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  opacity: .2;
+  background: radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(63, 44, 66, .13) 100%);
+  mix-blend-mode: multiply;
+}
+
+@keyframes atmosphereDrift {
+  from { transform: scale(1.08) translate3d(-1%, -1%, 0); }
+  to { transform: scale(1.12) translate3d(1%, 1%, 0); }
+}
+
+.header {
+  position: absolute;
   z-index: 5;
+  inset: 18px 22px auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
 }
 
-.sayHiText {
-  font-family: var(--font-mono);
-  font-size: var(--fs-micro);
-  letter-spacing: var(--tracking-tight);
-  color: var(--vs-ink);
-}
+.brand { justify-self: start; }
+.brand :global(svg) { width: 42px; height: auto; }
+.header :global(.vs-glass) { background: rgba(255, 252, 247, .68); color: #171517; }
+.header :global(.vs-glass[data-active="true"]) { background: #171517; color: #f7f0e8; }
 
-/* ---------------- Floating control (top-right) ---------------- */
-.controls {
-  position: absolute;
-  /* Hung off the header's own geometry, directly under "Press / for ?":
-     the header's top padding + its row height puts us at the bottom edge of
-     that row, and one spacing step opens the gap. */
-  top: calc(clamp(14px, 1.7vw, 22px) + var(--header-h) + var(--space-5));
-  /* Mirror of .sayHi's escape (see above): .inner is capped at 1440px and
-     centred, while the fixed header only ever applies var(--gutter), so on
-     wide screens `right: 0` sits well inboard of the header's right edge.
-     Pull the row back out by exactly what .inner's centring added so it
-     lands on the same gutter-from-viewport edge as "Press / for ?". */
-  right: calc(-1 * max(0px, (100vw - var(--vs-scrollbar-w) - 1440px - 2 * var(--gutter)) / 2));
-  z-index: 5;
-}
-
-.panelFloat {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: var(--z-float);
-}
-
-/* ---------------- CRT + hero words composition ---------------- */
-.composition {
-  display: contents;
-}
-
-/* ---------------- CRT Hero Object (upper/center, behind typography) ---------------- */
-.stage {
-  position: absolute;
-  left: 50%;
-  top: calc(44% - 24px);
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  pointer-events: auto;
-}
-
-.objectWrap {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-/* ---------------- Large centered headline (in front of CRT) ---------------- */
-.head {
-  position: absolute;
-  top: calc(50% + clamp(62px, 7.2vw, 100px) - 24px);
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  width: 100%;
-  max-width: 1440px;
-  pointer-events: none;
-}
-
-.title {
-  margin: 0;
-  font-weight: 400;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.tmBadge {
+.hint {
+  justify-self: end;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  vertical-align: top;
-  margin-left: 0.10em;
-  transform: translateY(-0.18em);
-  line-height: 1;
-  pointer-events: none;
+  gap: 6px;
+  padding: 6px 1px;
+  color: rgba(23, 21, 23, .72);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.hint kbd {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  background: rgba(255,255,255,.5);
+  font: inherit;
+  color: inherit;
+}
+.hint:hover { opacity: .62; }
+
+.centerpiece {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.wordLayer {
+  position: absolute;
+  z-index: 1;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: clamp(4.3rem, 10.8vw, 10.6rem);
+  font-weight: 500;
+  letter-spacing: -.075em;
+  line-height: .8;
+  color: rgba(26, 22, 28, .92);
+  transform: translate3d(var(--type-shift-x), var(--type-shift-y), 0);
+  transition: color .4s ease;
   user-select: none;
 }
+.objectLayer {
+  position: relative;
+  z-index: 2;
+  transform: translate3d(var(--object-shift-x), var(--object-shift-y), 0) translateY(7%);
+  will-change: transform;
+}
+.objectLayer :global(.stage) { filter: drop-shadow(0 24px 24px rgba(68, 42, 63, .15)); }
 
-/* Plain ™ glyph — replaces the former circled badge SVG. No border, no
-   background, no container: just the display face's own trademark mark,
-   sized to the word's scale. Sized on an inner element so .tmBadge's
-   em-based offset and lift keep resolving against the word's font-size,
-   holding the mark in its established spot above the x-height. */
-.tmMark {
-  font-size: 0.38em;
-  line-height: 1;
+.footerDetail {
+  position: absolute;
+  z-index: 4;
+  left: 24px;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(23, 21, 23, .62);
+  font: 9px/1 var(--font-mono);
+  letter-spacing: .11em;
+}
+.footerDetail i { display: block; width: 30px; height: 1px; background: currentColor; }
+.footerDetail i:nth-child(2) { width: 11px; opacity: .55; }
+.footerDetail i:nth-child(3) { width: 4px; opacity: .35; }
+.footerDetail span { margin-left: 4px; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+@media (max-width: 1100px) {
+  .header { grid-template-columns: 1fr auto; }
+  .header nav { grid-column: 1 / -1; grid-row: 2; justify-self: center; margin-top: 12px; }
+  .hint { grid-column: 2; grid-row: 1; }
+  .wordLayer { font-size: clamp(3.4rem, 11.5vw, 8rem); }
 }
 
-.head * {
-  pointer-events: none !important;
-  cursor: default !important;
-  user-select: none;
-}
-
-/* ---------------- Breakpoints ---------------- */
-
-/* Tablet (768–1099px) */
-@media (max-width: 1099px) {
-  .inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: clamp(14px, 2svh, 28px);
-    min-height: auto;
-    padding-bottom: clamp(36px, 6svh, 64px);
-  }
-  .composition {
-    --crt-compose-w: clamp(240px, min(50vw, 44svh), 410px);
-    --crt-type-anchor: calc(var(--crt-compose-w) * 0.82);
-    order: 2;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    /* Keep the typography track tied to the CRT layout box rather than to
-       the tablet viewport height. This preserves the attached overlap used
-       by the working desktop and narrow-mobile compositions. */
-    grid-template-rows: var(--crt-type-anchor) auto;
-    justify-items: center;
-    align-items: start;
-    width: 100%;
-  }
-  .sayHi {
-    position: relative;
-    top: auto;
-    left: auto;
-    align-self: flex-start;
-    margin-bottom: 4px;
-  }
-  .stage {
-    position: relative;
-    left: auto;
-    top: auto;
-    grid-column: 1;
-    grid-row: 1;
-    align-self: start;
-    transform: none;
-    margin: 0 auto;
-    order: initial;
-    z-index: 1;
-  }
-  .head {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    grid-column: 1;
-    grid-row: 2;
-    align-self: start;
-    transform: none;
-    margin: 0 auto;
-    order: initial;
-    max-width: 100%;
-    z-index: 3;
-  }
-  .controls {
-    position: relative;
-    top: auto;
-    right: auto;
-    margin-top: 16px;
-    display: flex;
-    justify-content: center;
-    order: 4;
-  }
-  .panelFloat {
-    position: absolute;
-    top: -8px;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-  }
-}
-
-@media (max-width: 899px) {
-  .composition {
-    --crt-compose-w: min(66vw, 38svh, 360px);
-  }
-}
-
-/* Mobile (<768px) */
 @media (max-width: 767px) {
-  .inner {
-    padding-top: calc(48px + 16px);
-    padding-bottom: 40px;
-    gap: 12px;
-  }
-  .composition {
-    --crt-compose-w: min(70vw, 34svh, 320px);
-  }
-  .sayHi {
-    position: relative;
-    top: auto;
-    left: auto;
-    align-self: flex-start;
-    order: 1;
-    margin-bottom: 0;
-  }
-  .stage {
-    position: relative;
-    left: auto;
-    top: auto;
-    grid-column: 1;
-    grid-row: 1;
-    align-self: start;
-    transform: none;
-    margin: 0 auto;
-    order: initial;
-    z-index: 1;
-  }
-  .head {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    grid-column: 1;
-    grid-row: 2;
-    align-self: start;
-    transform: none;
-    margin: 0 auto;
-    order: initial;
-    max-width: 100%;
-    z-index: 3;
-  }
-  .controls {
-    position: relative;
-    top: auto;
-    right: auto;
-    order: 4;
+  .frame { min-height: calc(100svh - 16px); margin: 8px; border-radius: 16px; }
+  .header { inset: 14px 14px auto; grid-template-columns: 1fr auto; }
+  .brand :global(svg) { width: 35px; }
+  .header nav { margin-top: 10px; width: 100%; }
+  .header nav ul { justify-content: center; gap: 1px; }
+  .header nav a,
+  .header nav button { transform: scale(.78); transform-origin: center; }
+  .wordLayer {
+    top: 40%;
     width: 100%;
-    margin-top: 8px;
-    display: flex;
-    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    font-size: clamp(3rem, 15vw, 6rem);
+    line-height: .86;
+    overflow-wrap: anywhere;
+    padding: 0 9px;
   }
-
-  /* Mobile: recorder becomes floating sheet pinned above fold */
-  .panelFloat {
-    position: fixed;
-    top: auto;
-    bottom: max(14px, env(safe-area-inset-bottom));
-    left: 50%;
-    z-index: 80;
-  }
+  .objectLayer { transform: translate3d(var(--object-shift-x), var(--object-shift-y), 0) translateY(10%); }
+  .footerDetail { left: 15px; bottom: 16px; }
 }
 
-@media (max-width: 430px) {
-  .composition {
-    --crt-compose-w: min(75vw, 32svh, 290px);
-  }
-}
-
-/* Short desktop viewports (e.g. 1100px+ with height < 760px) */
-@media (min-width: 1100px) and (max-height: 760px) {
-  .inner {
-    padding-top: calc(var(--header-h) + 10px);
-  }
-  .stage {
-    top: 43%;
-    z-index: 1;
-  }
-  .head {
-    top: calc(48% + clamp(50px, 6vw, 82px));
-    z-index: 3;
-  }
+@media (prefers-reduced-motion: reduce) {
+  .atmosphere { animation: none; }
+  .wordLayer, .objectLayer { transform: none; }
 }

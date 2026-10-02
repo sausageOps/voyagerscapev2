@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { UIProvider } from "@/lib/ui-store";
 import VisualModeProvider from "@/components/VisualModeProvider";
 import SmoothScroll from "@/components/SmoothScroll";
@@ -22,21 +23,22 @@ import SiteFooter from "@/components/SiteFooter";
  * page-transition layer.
  */
 export default function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+
   return (
     <UIProvider>
       <VisualModeProvider>
         <SmoothScroll>
           <RouteTransitionProvider>
-            <a className="vs-skip" href="#main">
-              Skip to content
-            </a>
+            <a className="vs-skip" href="#main">Skip to content</a>
             <PageLoader />
-            <SiteHeader />
-            <MobileMenu />
+            {!isHome && <SiteHeader />}
+            {!isHome && <MobileMenu />}
             <RouteTransition>
               <main id="main">{children}</main>
             </RouteTransition>
-            <SiteFooter />
+            {!isHome && <SiteFooter />}
             <CommandTerminal />
             <Cursor />
           </RouteTransitionProvider>

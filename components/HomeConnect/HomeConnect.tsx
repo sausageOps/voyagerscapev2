@@ -3,149 +3,90 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useUI } from "@/lib/ui-store";
 import { useRecorder } from "@/lib/use-recorder";
-import { gsap, revealUp, prefersReducedMotion } from "@/lib/motion";
-import WordBlocks, { type WordDef } from "@/components/primitives/WordBlocks";
+import BrandMark from "@/components/BrandMark";
+import NavMenu from "@/components/NavMenu";
 import HeroObject from "./HeroObject";
-import GreetingPill from "./GreetingPill";
-import MessageCTA from "./MessageCTA";
-import RecorderPanel from "./RecorderPanel";
 import styles from "./HomeConnect.module.css";
 
-const GENERAL_EMAIL = "hello@voyagerscape";
-
-/** Target identity statement: two connected horizontal rows under the CRT */
-const HERO_WORDS: WordDef[] = [
-  { text: "The", shape: "pill", round: true, accent: "lavender" },
-  {
-    text: "Voyagerscape",
-    shape: "rounded",
-    break: true,
-    node: (
-      <>
-        Voyagerscape
-        <span className={styles.tmBadge} aria-label="trademark">
-          <span className={styles.tmMark}>™</span>
-        </span>
-      </>
-    ),
-  },
-  { text: "Explore", shape: "pill", round: true, accent: "cream" },
-  { text: "Observe", shape: "rounded" },
-  { text: "Create", shape: "pill", round: true, accent: "pink" },
-];
-
 export default function HomeConnect() {
-  const { loaded, recorderOpen, setRecorderOpen } = useUI();
+  const { setTerminalOpen, terminalOpen } = useUI();
   const recorder = useRecorder();
-  const rootRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
+  const pointer = useRef({ x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 });
+  const raf = useRef<number | null>(null);
 
-  /* Keep the say-hi row's left edge (styles.sayHi) exact, not approximate:
-     `100vw`, which its CSS uses to reconstruct the hero's real width, counts
-     the vertical scrollbar's track in most browsers, while every other
-     width on the page (including the header's) does not. Measuring the gap
-     here and exposing it as --vs-scrollbar-w is what lets that CSS land the
-     row on the header's own gutter-from-viewport edge exactly. */
   useEffect(() => {
-    const root = rootRef.current;
+    const root = canvasRef.current;
     if (!root) return;
-    const setScrollbarWidth = () => {
-      root.style.setProperty(
-        "--vs-scrollbar-w",
-        `${Math.max(0, window.innerWidth - document.documentElement.clientWidth)}px`,
-      );
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+
+    const move = (event: PointerEvent) => {
+      pointer.current.tx = event.clientX / window.innerWidth;
+      pointer.current.ty = event.clientY / window.innerHeight;
     };
-    setScrollbarWidth();
-    window.addEventListener("resize", setScrollbarWidth);
-    return () => window.removeEventListener("resize", setScrollbarWidth);
+    const tick = () => {
+      const p = pointer.current;
+      p.x += (p.tx - p.x) * 0.045;
+      p.y += (p.ty - p.y) * 0.045;
+      root.style.setProperty("--mouse-x", `${p.x * 100}%`);
+      root.style.setProperty("--mouse-y", `${p.y * 100}%`);
+      root.style.setProperty("--type-shift-x", `${(p.x - 0.5) * 10}px`);
+      root.style.setProperty("--type-shift-y", `${(p.y - 0.5) * 6}px`);
+      root.style.setProperty("--object-shift-x", `${(p.x - 0.5) * 16}px`);
+      root.style.setProperty("--object-shift-y", `${(p.y - 0.5) * 10}px`);
+      raf.current = window.requestAnimationFrame(tick);
+    };
+    window.addEventListener("pointermove", move, { passive: true });
+    raf.current = window.requestAnimationFrame(tick);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      if (raf.current) window.cancelAnimationFrame(raf.current);
+    };
   }, []);
 
-  /* Entry: coordinated timeline for hero elements */
-  useEffect(() => {
-    if (!loaded || !rootRef.current) return;
-    const ctx = gsap.context(() => {
-      revealUp("[data-hero-fade]", { delay: 0.12, stagger: 0.07, y: 12 });
-      revealUp("[data-word-reveal]", { delay: 0.16, stagger: 0.03, y: 20 });
-      gsap.fromTo(
-        "[data-hero-device]",
-        { opacity: 0, y: 22, scale: 0.97 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: "expo.out", delay: 0.3 },
-      );
-      gsap.fromTo(
-        "[data-hero-cta]",
-        { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out", delay: 0.5 },
-      );
-    }, rootRef);
-    return () => ctx.revert();
-  }, [loaded]);
-
   const onShutter = useCallback(() => {
-    if (recorder.recordingState === "recording") {
-      void recorder.stop();
-    } else if (recorder.hasClip) {
-      recorder.preview();
-    }
+    if (recorder.recordingState === "recording") void recorder.stop();
+    else if (recorder.hasClip) recorder.preview();
   }, [recorder]);
 
   return (
-    <div className={styles.hero} ref={rootRef}>
-      <div className={styles.inner}>
-        {/* ---- Say Hi, top-left ---- */}
-        <div className={styles.sayHi} data-hero-fade>
-          <GreetingPill />
-          <span className={styles.sayHiText}>{GENERAL_EMAIL}</span>
+    <section className={styles.frame} ref={canvasRef} aria-label="Voyagerscape opening experience">
+      <div className={styles.atmosphere} aria-hidden="true" />
+      <header className={styles.header}>
+        <div className={styles.brand}><BrandMark /></div>
+        <NavMenu />
+        <button
+          type="button"
+          className={styles.hint}
+          onClick={() => setTerminalOpen(!terminalOpen)}
+          aria-expanded={terminalOpen}
+          aria-controls="vs-command-terminal"
+          data-cursor="link"
+          data-cursor-label="Terminal"
+        >
+          <span>Press</span><kbd>/</kbd><span>for ?</span>
+        </button>
+      </header>
+
+      <div className={styles.centerpiece}>
+        <div className={styles.wordLayer} aria-hidden="true">
+          VOYAGERSCAPE
         </div>
-
-        {/* ---- Floating control, top-right ---- */}
-        <div className={styles.controls} data-hero-cta>
-          {recorderOpen ? (
-            <div className={styles.panelFloat}>
-              <RecorderPanel
-                open={recorderOpen}
-                onClose={() => {
-                  setRecorderOpen(false);
-                  if (recorder.recordingState === "recording") void recorder.stop();
-                }}
-                recordingState={recorder.recordingState}
-                playbackState={recorder.playbackState}
-                elapsedMs={recorder.elapsedMs}
-                level={recorder.level}
-                error={recorder.error}
-                hasClip={recorder.hasClip}
-                supported={recorder.supported}
-                onStart={recorder.start}
-                onStop={recorder.stop}
-                onPreview={recorder.preview}
-                onDiscard={recorder.discard}
-                onSubmit={recorder.submit}
-              />
-            </div>
-          ) : (
-            <MessageCTA open={recorderOpen} onOpen={() => setRecorderOpen(true)} />
-          )}
-        </div>
-
-        <div className={styles.composition}>
-          {/* ---- The object: optically centred in the upper hero area ---- */}
-          <div className={styles.stage}>
-            <div className={styles.objectWrap} data-hero-device>
-              <HeroObject
-                recordingState={recorder.recordingState}
-                playbackState={recorder.playbackState}
-                level={recorder.level}
-                onShutter={onShutter}
-              />
-            </div>
-          </div>
-
-          {/* ---- Large centered headline underneath CRT (visually static) ---- */}
-          <div className={styles.head}>
-            <h1 className={styles.title}>
-              <WordBlocks words={HERO_WORDS} reveal interactive={false} />
-            </h1>
-          </div>
+        <div className={styles.objectLayer}>
+          <HeroObject
+            recordingState={recorder.recordingState}
+            playbackState={recorder.playbackState}
+            level={recorder.level}
+            onShutter={onShutter}
+          />
         </div>
       </div>
-    </div>
+
+      <div className={styles.footerDetail} aria-hidden="true">
+        <i /><i /><i /><span>VSC / 01</span>
+      </div>
+      <p className={styles.srOnly}>Voyagerscape. An interactive archive monitor. Click the monitor to change channel.</p>
+    </section>
   );
 }
