@@ -1,0 +1,60 @@
+/* Stage 3 prototype shell. Deliberately plain: a neutral test surface and one
+   large rounded frame, so the atmosphere is judged on its own. */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  box-sizing: border-box;
+  min-height: 100svh;
+  background: #15161a;
+  color: #b7b9c2;
+}
+
+.frame {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: min(76svh, 760px);
+  border-radius: 18px;
+  overflow: hidden;
+  isolation: isolate;
+  background: #e9e3d8;
+  touch-action: none;
+}
+
+.labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: center;
+  font-family: var(--font-mono-tech), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7e808b;
+}
+
+.swatches {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+@media (max-width: 767px) {
+  .shell {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .frame {
+    border-radius: 16px;
+    min-height: min(72svh, 620px);
+  }
+}
