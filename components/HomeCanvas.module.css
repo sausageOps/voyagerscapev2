@@ -1,10 +1,12 @@
 .canvas {
-  --pointer-x: 0px;
-  --pointer-y: 0px;
-  --pointer-x-soft: 0px;
-  --pointer-y-soft: 0px;
-  --pointer-x-counter: 0px;
-  --pointer-y-counter: 0px;
+  --field-strong-x: 0px;
+  --field-strong-y: 0px;
+  --field-opposite-x: 0px;
+  --field-opposite-y: 0px;
+  --field-diagonal-x: 0px;
+  --field-diagonal-y: 0px;
+  --field-soft-x: 0px;
+  --field-soft-y: 0px;
   position: relative;
   width: calc(100% - 32px);
   max-width: calc(100% - 32px);
@@ -18,93 +20,89 @@
   background: #e9e1d6;
 }
 
-/* A stationary clipped layer. It carries only the fixed warm base; movement
-   belongs exclusively to the four color fields below. */
+/* Stationary clipping layer. Only its child fields are animated. */
 .atmosphere {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   min-width: 0;
-  border-radius: inherit;
   overflow: hidden;
+  border-radius: inherit;
   pointer-events: none;
   z-index: 0;
   background: #e9e1d6;
 }
 
-/* Oversized, solid pastel masses. Their huge scale, low opacity and strong
-   blur dissolve every edge into the fixed base instead of drawing patterns. */
+/* Oversized solid pastel masses. Blur and low opacity erase their geometry. */
 .field {
   position: absolute;
   display: block;
-  width: 86%;
-  height: 86%;
+  width: 112%;
+  height: 112%;
   border-radius: 9999px;
   pointer-events: none;
-  opacity: .18;
-  filter: blur(110px);
+  opacity: .16;
+  filter: blur(118px);
   will-change: transform;
 }
 
 .lavender {
-  top: -18%;
-  left: 54%;
+  top: -38%;
+  left: 48%;
   background: #d8ccff;
-  transform: translate3d(var(--pointer-x-soft), var(--pointer-y-soft), 0) scale(1.1);
-  animation: lavenderDrift 13s ease-in-out infinite alternate;
+  opacity: .18;
+  transform: translate3d(var(--field-strong-x), var(--field-strong-y), 0) scale(1.06);
+  animation: lavenderDrift 16s ease-in-out infinite alternate;
 }
 
 .pink {
-  top: 30%;
-  left: -20%;
+  top: 24%;
+  left: -40%;
   background: #f1b8e4;
-  opacity: .14;
-  filter: blur(125px);
-  transform: translate3d(var(--pointer-x-counter), var(--pointer-y-counter), 0) scale(1.12);
-  animation: pinkDrift 17s ease-in-out infinite alternate;
-}
-
-.cream {
-  top: 48%;
-  left: 20%;
-  background: #f5d8b8;
-  opacity: .16;
-  filter: blur(135px);
-  transform: translate3d(var(--pointer-x), var(--pointer-y), 0) scale(1.14);
-  animation: creamDrift 21s ease-in-out infinite alternate;
+  transform: translate3d(var(--field-opposite-x), var(--field-opposite-y), 0) scale(1.08);
+  animation: pinkDrift 21s ease-in-out infinite alternate;
 }
 
 .blue {
-  top: -20%;
-  left: 42%;
+  top: -34%;
+  left: 28%;
   background: #d9def5;
   opacity: .13;
-  filter: blur(145px);
-  transform: translate3d(var(--pointer-x-counter), var(--pointer-y-soft), 0) scale(1.16);
-  animation: blueDrift 25s ease-in-out infinite alternate;
+  filter: blur(136px);
+  transform: translate3d(var(--field-diagonal-x), var(--field-diagonal-y), 0) scale(1.1);
+  animation: blueDrift 27s ease-in-out infinite alternate;
 }
 
-/* Only the fields receive transforms. The animation adds a tiny autonomous
-   drift to the pointer offset; frame, atmosphere and content never move. */
+.cream {
+  top: 42%;
+  left: 8%;
+  background: #f5d8b8;
+  opacity: .13;
+  filter: blur(142px);
+  transform: translate3d(var(--field-soft-x), var(--field-soft-y), 0) scale(1.12);
+  animation: creamDrift 31s ease-in-out infinite alternate;
+}
+
+/* These are the only moving elements in the system. */
 @keyframes lavenderDrift {
-  from { transform: translate3d(calc(var(--pointer-x-soft) - 1.5%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.08); }
-  to { transform: translate3d(calc(var(--pointer-x-soft) + 1.5%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.14); }
+  from { transform: translate3d(calc(var(--field-strong-x) - 1.2%), calc(var(--field-strong-y) - 1%), 0) scale(1.04); }
+  to { transform: translate3d(calc(var(--field-strong-x) + 1.2%), calc(var(--field-strong-y) + 1%), 0) scale(1.1); }
 }
 
 @keyframes pinkDrift {
-  from { transform: translate3d(calc(var(--pointer-x-counter) + 1%), calc(var(--pointer-y-counter) - 1.5%), 0) scale(1.1); }
-  to { transform: translate3d(calc(var(--pointer-x-counter) - 1%), calc(var(--pointer-y-counter) + 1.5%), 0) scale(1.16); }
-}
-
-@keyframes creamDrift {
-  from { transform: translate3d(calc(var(--pointer-x) - 1%), calc(var(--pointer-y) + 1%), 0) scale(1.12); }
-  to { transform: translate3d(calc(var(--pointer-x) + 1%), calc(var(--pointer-y) - 1%), 0) scale(1.18); }
+  from { transform: translate3d(calc(var(--field-opposite-x) + 1%), calc(var(--field-opposite-y) - 1.2%), 0) scale(1.06); }
+  to { transform: translate3d(calc(var(--field-opposite-x) - 1%), calc(var(--field-opposite-y) + 1.2%), 0) scale(1.12); }
 }
 
 @keyframes blueDrift {
-  from { transform: translate3d(calc(var(--pointer-x-counter) - 1.2%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.14); }
-  to { transform: translate3d(calc(var(--pointer-x-counter) + 1.2%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.2); }
+  from { transform: translate3d(calc(var(--field-diagonal-x) - 1.1%), calc(var(--field-diagonal-y) + 1%), 0) scale(1.08); }
+  to { transform: translate3d(calc(var(--field-diagonal-x) + 1.1%), calc(var(--field-diagonal-y) - 1%), 0) scale(1.14); }
+}
+
+@keyframes creamDrift {
+  from { transform: translate3d(calc(var(--field-soft-x) + .7%), calc(var(--field-soft-y) + 1%), 0) scale(1.1); }
+  to { transform: translate3d(calc(var(--field-soft-x) - .7%), calc(var(--field-soft-y) - 1%), 0) scale(1.15); }
 }
 
 .canvas > :not(.atmosphere) {
@@ -124,25 +122,22 @@
   }
 
   .field {
-    width: 100%;
-    height: 100%;
-    filter: blur(92px);
+    width: 125%;
+    height: 125%;
+    filter: blur(100px);
   }
 
-  .pink { filter: blur(104px); }
-  .cream { filter: blur(112px); }
-  .blue { filter: blur(122px); }
-  .lavender { animation-duration: 13s; }
-  .pink { animation-duration: 17s; }
-  .cream { animation-duration: 21s; }
-  .blue { animation-duration: 25s; }
+  .lavender { animation-duration: 16s; }
+  .pink { animation-duration: 21s; }
+  .blue { animation-duration: 27s; }
+  .cream { animation-duration: 31s; }
 }
 
 @media (min-width: 768px) and (max-width: 1100px) and (any-pointer: coarse) {
-  .lavender { animation-duration: 13s; }
-  .pink { animation-duration: 17s; }
-  .cream { animation-duration: 21s; }
+  .lavender { animation-duration: 15s; }
+  .pink { animation-duration: 20s; }
   .blue { animation-duration: 25s; }
+  .cream { animation-duration: 29s; }
 }
 
 @media (prefers-reduced-motion: reduce) {
