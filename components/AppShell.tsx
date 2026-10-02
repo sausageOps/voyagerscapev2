@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { UIProvider } from "@/lib/ui-store";
 import VisualModeProvider from "@/components/VisualModeProvider";
 import SmoothScroll from "@/components/SmoothScroll";
@@ -11,6 +12,7 @@ import Cursor from "@/components/Cursor";
 import PageLoader from "@/components/PageLoader";
 import RouteTransition, { RouteTransitionProvider } from "@/components/RouteTransition";
 import SiteFooter from "@/components/SiteFooter";
+import HomeCanvas from "@/components/HomeCanvas";
 
 /**
  * Global frame. Every future route mounts inside this shell, so adding
@@ -22,6 +24,13 @@ import SiteFooter from "@/components/SiteFooter";
  * page-transition layer.
  */
 export default function AppShell({ children }: { children: ReactNode }) {
+  const isHome = usePathname() === "/";
+  const page = (
+    <RouteTransition>
+      <main id="main">{children}</main>
+    </RouteTransition>
+  );
+
   return (
     <UIProvider>
       <VisualModeProvider>
@@ -33,9 +42,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <PageLoader />
             <SiteHeader />
             <MobileMenu />
-            <RouteTransition>
-              <main id="main">{children}</main>
-            </RouteTransition>
+            {isHome ? <HomeCanvas>{page}</HomeCanvas> : page}
             <SiteFooter />
             <CommandTerminal />
             <Cursor />

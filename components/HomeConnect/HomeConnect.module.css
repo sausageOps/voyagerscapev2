@@ -24,7 +24,7 @@
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  min-height: 100svh;
+  min-height: calc(100svh - 32px);
   padding: calc(var(--header-h) + clamp(14px, 2svh, 28px)) 0 clamp(20px, 3svh, 36px);
 }
 
