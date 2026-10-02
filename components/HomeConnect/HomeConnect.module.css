@@ -1,326 +1,108 @@
-/* =========================================================
-   HOME — art-directed per range.
-   Desktop (>1100px): Unified hero composition:
-   CRT sits directly above and slightly overlaps the upper edge
-   of the dense, centered, oversized typography blocks.
-   ========================================================= */
+.home { position: relative; z-index: 1; --pointer-x: 0; --pointer-y: 0; }
+.sectionIndex { font: 500 var(--fs-nano)/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+.hero { min-height: 100svh; padding: 0 var(--gutter); position: relative; overflow: hidden; }
+.hero::before { content:""; position:absolute; width:28vw; height:28vw; border-radius:50%; background:var(--vs-lavender); opacity:.48; left:-11vw; top:22%; transform:translate(calc(var(--pointer-x) * 10px),calc(var(--pointer-y) * 8px)); transition:transform .8s var(--e-out); }
+.heroGrid { min-height:100svh; max-width:1440px; margin:auto; position:relative; padding-top:calc(var(--header-h) + 56px); }
+.heroMeta { position:absolute; top:calc(var(--header-h) + 44px); left:0; right:0; display:flex; justify-content:space-between; font:var(--fs-nano)/1 var(--font-mono); letter-spacing:.1em; }
+.sideNote { position:absolute; left:0; top:43%; font:500 clamp(.62rem,.72vw,.75rem)/1.65 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; }
+.heroTitle { position:absolute; inset:18% 0 auto; display:flex; flex-direction:column; font:500 clamp(6rem,15vw,14rem)/.65 var(--font-display); letter-spacing:-.075em; text-transform:uppercase; z-index:1; }
+.heroTitle span:last-child { text-align:right; }
+.heroObject { position:absolute; left:50%; top:45%; transform:translate(-50%,-50%); z-index:3; }
+.channelReadout { position:absolute; top:27%; left:50%; z-index:4; transform:translateX(-50%); white-space:nowrap; padding:8px 12px; border-radius:3px; color:#f7f3ec; background:#111; font:500 .6rem/1 var(--font-mono); letter-spacing:.1em; }
+.liveDot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--vs-pink); margin-right:6px; animation:pulse 1.8s infinite; }
+.heroStatement { position:absolute; left:9%; bottom:12%; z-index:4; font:400 clamp(2.2rem,5.4vw,5.5rem)/.85 var(--font-display); letter-spacing:-.055em; display:flex; flex-direction:column; }
+.heroStatement span:last-child { margin-left:1.5em; }
+.heroStatement em { color:#6d57af; font-style:normal; }
+.scrollCue { position:absolute; right:0; bottom:9%; display:flex; align-items:center; gap:12px; font:500 var(--fs-nano)/1 var(--font-mono); letter-spacing:.1em; writing-mode:vertical-rl; }
+.scrollCue b { font:400 1.2rem var(--font-body); }
+@keyframes pulse { 50% { opacity:.35; } }
 
-.hero {
-  position: relative;
-  z-index: 1;
-  padding: 0 var(--gutter);
-  /* `100vw` includes the vertical scrollbar's track in most browsers, while
-     every other width used on this page (including the header's, which is
-     laid out with plain padding, not vw) does not. Left uncorrected, that
-     gap throws off anything that reconstructs a width from `100vw`, by half
-     the scrollbar's width. HomeConnect measures the real gap on mount/resize
-     (see HomeConnect.tsx) and writes it here; 0px is the correct value
-     whenever there is no scrollbar (and the safe default before hydration). */
-  --vs-scrollbar-w: 0px;
+.signal { background:var(--vs-yellow); overflow:hidden; }
+.signalBand { background:#111; color:#f7f3ec; padding:13px 0 11px; white-space:nowrap; font:500 .7rem/1 var(--font-mono); letter-spacing:.1em; }
+.signalBand div { width:max-content; animation:marquee 24s linear infinite; }
+@keyframes marquee { to { transform:translateX(-50%); } }
+.signalInner { max-width:1440px; min-height:72svh; margin:auto; padding:clamp(80px,10vw,150px) var(--gutter); display:grid; grid-template-columns:1fr 4fr 1.2fr; gap:4vw; align-items:start; }
+.signalInner h2 { font:400 clamp(3.4rem,7.7vw,8rem)/.85 var(--font-display); letter-spacing:-.06em; text-transform:uppercase; }
+.signalInner h2 i { font-style:normal; color:#8b7040; }
+.signalInner p { max-width:28ch; font-size:clamp(.9rem,1.2vw,1.1rem); line-height:1.5; }
+.signalGlyph { grid-column:2; display:flex; gap:5px; align-items:center; height:36px; margin-top:20px; }
+.signalGlyph span { width:clamp(18px,5vw,80px); height:4px; background:#111; }
+.signalGlyph span:nth-child(2),.signalGlyph span:nth-child(4){height:18px;border-radius:50%;}
+
+.featured { padding:clamp(90px,12vw,180px) var(--gutter); max-width:1530px; margin:auto; }
+.sectionHead { display:grid; grid-template-columns:1fr auto 1fr; align-items:end; margin-bottom:clamp(35px,5vw,70px); }
+.sectionHead h2 { font:500 clamp(4rem,10vw,10rem)/.72 var(--font-display); letter-spacing:-.065em; }
+.count { justify-self:end; font:500 var(--fs-micro)/1 var(--font-mono); }
+.workStage { display:grid; grid-template-columns:minmax(0,3.2fr) minmax(210px,1fr); gap:clamp(18px,3vw,50px); }
+.workFrame { position:relative; height:min(66vw,72vh); min-height:460px; overflow:hidden; background:#171715; }
+.workFrame video { width:100%; height:100%; object-fit:cover; animation:filmIn .7s var(--e-out); }
+@keyframes filmIn { from { opacity:0; transform:scale(1.035); } }
+.frameCode,.frameCross { position:absolute; top:16px; color:#fff; font:500 .65rem var(--font-mono); mix-blend-mode:difference; }
+.frameCode { left:16px; }.frameCross { right:16px; font-size:1rem; }
+.workInfo { display:flex; flex-direction:column; justify-content:flex-end; gap:22px; padding-bottom:3px; }
+.workInfo div { padding-top:10px; border-top:1px solid var(--vs-line); display:flex; flex-direction:column; gap:4px; }
+.workInfo span { font:500 .58rem var(--font-mono); letter-spacing:.1em; color:var(--vs-ink-soft); }
+.workInfo strong { font:400 clamp(.9rem,1.3vw,1.15rem) var(--font-body); }
+.workStrip { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:12px; }
+.workThumb { text-align:left; opacity:.45; transition:opacity .3s,transform .3s; }
+.workThumb[data-active="true"],.workThumb:hover { opacity:1; transform:translateY(-3px); }
+.workThumb video { width:100%; aspect-ratio:1.55; object-fit:cover; filter:saturate(.65); background:#aaa; }
+.workThumb span { display:block; font:500 .55rem var(--font-mono); margin-top:8px; }
+.workThumb b { display:block; font:400 .78rem var(--font-body); margin-top:2px; }
+.textLink { display:flex; justify-content:space-between; border-bottom:1px solid #111; padding:18px 0 10px; margin-top:35px; font:500 .68rem var(--font-mono); letter-spacing:.1em; }
+
+.broadcast { min-height:110svh; background:#111; color:#f5f0e8; position:relative; overflow:hidden; padding:clamp(90px,10vw,150px) var(--gutter); }
+.broadcast::before { content:""; position:absolute; inset:0; opacity:.12; background:repeating-linear-gradient(0deg,transparent 0 3px,#fff 4px); pointer-events:none; }
+.broadcastTop { position:relative; z-index:2; display:flex; justify-content:space-between; }
+.broadcastTop p { font:500 .62rem/1.5 var(--font-mono); letter-spacing:.08em; }
+.broadcastTitle { position:absolute; left:var(--gutter); top:26%; z-index:1; font:400 clamp(5rem,13vw,13rem)/.68 var(--font-display); letter-spacing:-.07em; }
+.broadcastObject { position:absolute; left:62%; top:54%; transform:translate(-50%,-50%) scale(1.15); z-index:3; }
+.frequency { position:absolute; bottom:8%; left:var(--gutter); right:var(--gutter); display:flex; align-items:center; gap:15px; font:500 .6rem var(--font-mono); }
+.frequency i { height:1px; background:#f5f0e8; flex:1; position:relative; }
+.frequency i::after { content:""; position:absolute; left:24%; top:-4px; width:9px; height:9px; border-radius:50%; background:var(--vs-pink); }
+
+.world { min-height:100svh; padding:clamp(80px,11vw,160px) var(--gutter); display:grid; grid-template-columns:1.25fr 1fr; gap:clamp(35px,7vw,110px); align-items:center; background:var(--vs-bg-deep); }
+.worldVisual { position:relative; height:75vh; min-height:550px; overflow:hidden; }
+.worldVisual video { width:100%; height:100%; object-fit:cover; filter:saturate(.72) sepia(.08); }
+.coordTop,.coordBottom { position:absolute; left:14px; padding:6px 9px; background:#f5f0e8; font:500 .56rem var(--font-mono); letter-spacing:.08em; }.coordTop{top:14px}.coordBottom{bottom:14px}
+.target { position:absolute; width:52px; height:52px; border:1px solid rgba(255,255,255,.8); border-radius:50%; left:62%; top:36%; }
+.target::after,.target::before { content:""; position:absolute; background:#fff; }.target::after{width:70px;height:1px;left:-10px;top:25px}.target::before{height:70px;width:1px;left:25px;top:-10px}
+.worldCopy h2 { font:400 clamp(3.8rem,7vw,7.6rem)/.77 var(--font-display); letter-spacing:-.06em; margin:30px 0; }
+.worldCopy h2 i { color:#9c83e2; font-style:normal; }
+.worldCopy p { max-width:37ch; font-size:1rem; line-height:1.6; }
+.roundLink { margin-top:50px; width:125px; height:125px; border-radius:50%; display:grid; place-items:center; text-align:center; background:var(--vs-lavender); font:500 .63rem/1.45 var(--font-mono); transition:transform .35s var(--e-out); }.roundLink:hover{transform:rotate(-7deg) scale(1.05)}
+
+.lab { padding:clamp(90px,12vw,180px) var(--gutter); overflow:hidden; }
+.labHead { display:grid; grid-template-columns:1fr 2.2fr 1fr; gap:3vw; align-items:start; max-width:1440px; margin:0 auto 70px; }
+.labHead h2 { font:400 clamp(4.5rem,9vw,9rem)/.75 var(--font-display); letter-spacing:-.06em; }
+.labHead p { max-width:25ch; line-height:1.5; }
+.experimentList { max-width:1440px; margin:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.experiment { min-height:520px; padding:24px; position:relative; display:flex; flex-direction:column; overflow:hidden; }
+.experiment>span,.experiment>b { font:500 .58rem var(--font-mono); letter-spacing:.1em; }.experiment h3{font:400 clamp(2.2rem,3.5vw,4rem)/.9 var(--font-display);margin-top:60px}.experiment p{max-width:24ch;margin-top:15px;line-height:1.45}.experiment>b{margin-top:auto;align-self:flex-end}
+.lavender{background:var(--vs-lavender)}.pink{background:var(--vs-pink)}.yellow{background:var(--vs-yellow)}
+.experimentGraphic { position:absolute; right:-40px; bottom:50px; width:240px; height:240px; border-radius:50%; border:1px solid rgba(17,17,17,.4); transition:transform .7s var(--e-out); }.experiment:hover .experimentGraphic{transform:rotate(35deg) scale(1.12)}
+.experimentGraphic i { position:absolute; inset:25%; border:1px solid rgba(17,17,17,.5); border-radius:50%; }.experimentGraphic i:nth-child(2){inset:42% 0; border-radius:0}.experimentGraphic i:nth-child(3){inset:0 48%;border-radius:0}
+
+.identity { min-height:95svh; background:#171716; color:#f5f0e8; padding:clamp(90px,10vw,160px) var(--gutter); display:flex; flex-direction:column; justify-content:space-between; }
+.identity h2 { font:400 clamp(4.5rem,10.5vw,11rem)/.76 var(--font-display); letter-spacing:-.065em; margin:60px 0; }.identity h2 span{color:var(--vs-pink)}.identity h2 i{font-style:normal;color:var(--vs-lavender)}
+.identityMeta { display:flex; justify-content:flex-end; gap:8vw; align-items:flex-end; }.identityMeta p{max-width:40ch;line-height:1.55;color:#bbb}.identityMeta a{font:500 .65rem var(--font-mono);letter-spacing:.08em;border-bottom:1px solid;padding-bottom:5px}
+
+.contact { min-height:90svh; position:relative; padding:clamp(110px,14vw,210px) var(--gutter); text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; }
+.contact::before { content:""; position:absolute; width:52vw;height:52vw;max-width:700px;max-height:700px;border-radius:50%;background:var(--vs-pink);opacity:.38;z-index:-1; }
+.contact h2 { font:400 clamp(4.2rem,9vw,9.5rem)/.78 var(--font-display);letter-spacing:-.065em;margin:35px 0 25px}.contact h2 i{font-style:normal;color:#9d4f84}.contact>p{max-width:45ch;line-height:1.55}.contactControl{margin-top:40px;min-height:70px;position:relative;z-index:3}.contactMail{margin-top:18px;font:500 .6rem var(--font-mono);letter-spacing:.09em}
+.contactOrbit { position:absolute;width:min(75vw,880px);height:min(75vw,880px);border:1px solid rgba(17,17,17,.12);border-radius:50%;animation:spin 30s linear infinite;pointer-events:none}.contactOrbit span{position:absolute;top:-6px;left:35%;font:500 .55rem var(--font-mono);letter-spacing:.1em;background:var(--vs-bg);padding:0 10px}@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:900px){
+ .heroTitle{top:26%;font-size:clamp(5rem,17vw,9rem)}.heroObject{top:47%}.heroStatement{left:0;bottom:14%}.sideNote{top:auto;bottom:4%}
+ .signalInner{grid-template-columns:1fr}.signalInner h2,.signalInner p,.signalGlyph{grid-column:1}.sectionHead{grid-template-columns:1fr auto}.sectionHead h2{grid-column:1/-1;grid-row:2;margin-top:35px}.workStage{grid-template-columns:1fr}.workFrame{height:67svh}.workInfo{display:grid;grid-template-columns:1fr 1fr}.labHead{grid-template-columns:1fr}.labHead h2{margin:30px 0}.experimentList{grid-template-columns:1fr 1fr}.experiment:last-child{grid-column:1/-1}.world{grid-template-columns:1fr}.worldVisual{height:65svh;min-height:440px}.broadcastObject{left:58%;top:60%;transform:translate(-50%,-50%) scale(1.3)}
 }
-
-.inner {
-  position: relative;
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  min-height: 100svh;
-  padding: calc(var(--header-h) + clamp(14px, 2svh, 28px)) 0 clamp(20px, 3svh, 36px);
+@media(max-width:600px){
+ .heroGrid{padding-top:80px}.heroMeta{top:76px}.heroMeta span:last-child{display:none}.heroTitle{top:24%;font-size:22vw;line-height:.72}.heroTitle span:last-child{text-align:left;margin-left:.16em}.heroObject{top:47%;transform:translate(-50%,-50%) scale(1.08)}.channelReadout{top:31%}.heroStatement{font-size:12vw;bottom:15%;left:2%}.heroStatement span:last-child{margin-left:.5em}.scrollCue{bottom:4%}.sideNote{display:none}
+ .signalInner{min-height:80svh;padding-top:80px}.signalInner h2{font-size:14vw;margin-top:40px}.signalGlyph{margin-top:40px}
+ .featured{padding-inline:16px}.sectionHead .sectionIndex{max-width:18ch}.workFrame{height:65svh;min-height:460px}.workInfo{grid-template-columns:1fr 1fr}.workStrip{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px}.workThumb{min-width:42vw;scroll-snap-align:start}.workThumb b{font-size:.7rem}
+ .broadcast{min-height:100svh;padding-inline:16px}.broadcastTitle{top:24%;font-size:20vw}.broadcastTop p{display:none}.broadcastObject{left:50%;top:59%;transform:translate(-50%,-50%) scale(1.2)}
+ .world{padding-inline:16px}.worldCopy{grid-row:1}.worldVisual{grid-row:2}.worldCopy h2{font-size:15vw}.roundLink{width:105px;height:105px}
+ .lab{padding-inline:16px}.labHead h2{font-size:17vw}.experimentList{grid-template-columns:1fr}.experiment,.experiment:last-child{grid-column:auto;min-height:440px}.experiment h3{font-size:12vw}
+ .identity{padding-inline:16px}.identity h2{font-size:15.5vw;line-height:.82}.identityMeta{flex-direction:column;align-items:flex-start}.contact{padding-inline:16px}.contact h2{font-size:15vw}.contact::before{width:100vw;height:100vw}.contactOrbit{width:120vw;height:120vw}
 }
-
-/* ---------------- Say hi (top-left) ---------------- */
-.sayHi {
-  position: absolute;
-  top: calc(clamp(14px, 1.7vw, 22px) + 59px);
-  /* .inner is capped on wide screens, while the fixed header (BrandMark's
-     anchor) is not — it only ever applies `var(--gutter)` as padding. Pull
-     this row back out by exactly the amount .inner's centring added, so it
-     lands on that same gutter-from-viewport edge. --vs-scrollbar-w corrects
-     `100vw` to the real, scrollbar-excluded viewport width this centring
-     is actually computed from, so the row lines up exactly, not "close". */
-  left: calc(-1 * max(0px, (100vw - var(--vs-scrollbar-w) - 1440px - 2 * var(--gutter)) / 2));
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  opacity: 0;
-  z-index: 5;
-}
-
-.sayHiText {
-  font-family: var(--font-mono);
-  font-size: var(--fs-micro);
-  letter-spacing: var(--tracking-tight);
-  color: var(--vs-ink);
-}
-
-/* ---------------- Floating control (top-right) ---------------- */
-.controls {
-  position: absolute;
-  /* Hung off the header's own geometry, directly under "Press / for ?":
-     the header's top padding + its row height puts us at the bottom edge of
-     that row, and one spacing step opens the gap. */
-  top: calc(clamp(14px, 1.7vw, 22px) + var(--header-h) + var(--space-5));
-  /* Mirror of .sayHi's escape (see above): .inner is capped at 1440px and
-     centred, while the fixed header only ever applies var(--gutter), so on
-     wide screens `right: 0` sits well inboard of the header's right edge.
-     Pull the row back out by exactly what .inner's centring added so it
-     lands on the same gutter-from-viewport edge as "Press / for ?". */
-  right: calc(-1 * max(0px, (100vw - var(--vs-scrollbar-w) - 1440px - 2 * var(--gutter)) / 2));
-  z-index: 5;
-}
-
-.panelFloat {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: var(--z-float);
-}
-
-/* ---------------- CRT + hero words composition ---------------- */
-.composition {
-  display: contents;
-}
-
-/* ---------------- CRT Hero Object (upper/center, behind typography) ---------------- */
-.stage {
-  position: absolute;
-  left: 50%;
-  top: calc(44% - 24px);
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  pointer-events: auto;
-}
-
-.objectWrap {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-/* ---------------- Large centered headline (in front of CRT) ---------------- */
-.head {
-  position: absolute;
-  top: calc(50% + clamp(62px, 7.2vw, 100px) - 24px);
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  width: 100%;
-  max-width: 1440px;
-  pointer-events: none;
-}
-
-.title {
-  margin: 0;
-  font-weight: 400;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.tmBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: top;
-  margin-left: 0.10em;
-  transform: translateY(-0.18em);
-  line-height: 1;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* Plain ™ glyph — replaces the former circled badge SVG. No border, no
-   background, no container: just the display face's own trademark mark,
-   sized to the word's scale. Sized on an inner element so .tmBadge's
-   em-based offset and lift keep resolving against the word's font-size,
-   holding the mark in its established spot above the x-height. */
-.tmMark {
-  font-size: 0.38em;
-  line-height: 1;
-}
-
-.head * {
-  pointer-events: none !important;
-  cursor: default !important;
-  user-select: none;
-}
-
-/* ---------------- Breakpoints ---------------- */
-
-/* Tablet (768–1099px) */
-@media (max-width: 1099px) {
-  .inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: clamp(14px, 2svh, 28px);
-    min-height: auto;
-    padding-bottom: clamp(36px, 6svh, 64px);
-  }
-  .composition {
-    --crt-compose-w: clamp(240px, min(50vw, 44svh), 410px);
-    --crt-type-anchor: calc(var(--crt-compose-w) * 0.82);
-    order: 2;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    /* Keep the typography track tied to the CRT layout box rather than to
-       the tablet viewport height. This preserves the attached overlap used
-       by the working desktop and narrow-mobile compositions. */
-    grid-template-rows: var(--crt-type-anchor) auto;
-    justify-items: center;
-    align-items: start;
-    width: 100%;
-  }
-  .sayHi {
-    position: relative;
-    top: auto;
-    left: auto;
-    align-self: flex-start;
-    margin-bottom: 4px;
-  }
-  .stage {
-    position: relative;
-    left: auto;
-    top: auto;
-    grid-column: 1;
-    grid-row: 1;
-    align-self: start;
-    transform: none;
-    margin: 0 auto;
-    order: initial;
-    z-index: 1;
-  }
-  .head {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    grid-column: 1;
-    grid-row: 2;
-    align-self: start;
-    transform: none;
-    margin: 0 auto;
-    order: initial;
-    max-width: 100%;
-    z-index: 3;
-  }
-  .controls {
-    position: relative;
-    top: auto;
-    right: auto;
-    margin-top: 16px;
-    display: flex;
-    justify-content: center;
-    order: 4;
-  }
-  .panelFloat {
-    position: absolute;
-    top: -8px;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-  }
-}
-
-@media (max-width: 899px) {
-  .composition {
-    --crt-compose-w: min(66vw, 38svh, 360px);
-  }
-}
-
-/* Mobile (<768px) */
-@media (max-width: 767px) {
-  .inner {
-    padding-top: calc(48px + 16px);
-    padding-bottom: 40px;
-    gap: 12px;
-  }
-  .composition {
-    --crt-compose-w: min(70vw, 34svh, 320px);
-  }
-  .sayHi {
-    position: relative;
-    top: auto;
-    left: auto;
-    align-self: flex-start;
-    order: 1;
-    margin-bottom: 0;
-  }
-  .stage {
-    position: relative;
-    left: auto;
-    top: auto;
-    grid-column: 1;
-    grid-row: 1;
-    align-self: start;
-    transform: none;
-    margin: 0 auto;
-    order: initial;
-    z-index: 1;
-  }
-  .head {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    grid-column: 1;
-    grid-row: 2;
-    align-self: start;
-    transform: none;
-    margin: 0 auto;
-    order: initial;
-    max-width: 100%;
-    z-index: 3;
-  }
-  .controls {
-    position: relative;
-    top: auto;
-    right: auto;
-    order: 4;
-    width: 100%;
-    margin-top: 8px;
-    display: flex;
-    justify-content: center;
-  }
-
-  /* Mobile: recorder becomes floating sheet pinned above fold */
-  .panelFloat {
-    position: fixed;
-    top: auto;
-    bottom: max(14px, env(safe-area-inset-bottom));
-    left: 50%;
-    z-index: 80;
-  }
-}
-
-@media (max-width: 430px) {
-  .composition {
-    --crt-compose-w: min(75vw, 32svh, 290px);
-  }
-}
-
-/* Short desktop viewports (e.g. 1100px+ with height < 760px) */
-@media (min-width: 1100px) and (max-height: 760px) {
-  .inner {
-    padding-top: calc(var(--header-h) + 10px);
-  }
-  .stage {
-    top: 43%;
-    z-index: 1;
-  }
-  .head {
-    top: calc(48% + clamp(50px, 6vw, 82px));
-    z-index: 3;
-  }
-}
+@media(prefers-reduced-motion:reduce){.signalBand div,.contactOrbit,.liveDot{animation:none}.workFrame video{animation:none}}

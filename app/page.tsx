@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import HomeConnect from "@/components/HomeConnect/HomeConnect";
 
 export const metadata: Metadata = {
-  title: "Voyagerscape — Connect",
+  title: "Voyagerscape — Visual Art, Machines & Field Notes",
   description:
-    "Voyagerscape is an independent design practice building considered digital objects. Leave us a message.",
+    "Voyagerscape is a living visual archive where photography, technology and experimentation meet.",
 };
 
 export default function HomePage() {

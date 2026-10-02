@@ -1,14 +1,4 @@
 import type { Metadata } from "next";
-import PlaceholderPage from "@/components/PlaceholderPage";
-
-export const metadata: Metadata = { title: "Art" };
-
-export default function ArtPage() {
-  return (
-    <PlaceholderPage
-      title="Art"
-      index="01"
-      note="This is where the Voyagerscape photography and art portfolio will live — galleries, projects and filters. The shell, navigation, terminal and visual modes already work here."
-    />
-  );
-}
+import EditorialPage from "@/components/EditorialPage";
+export const metadata: Metadata = { title: "Visual Archive", description: "Selected photography, moving image and visual studies from Voyagerscape." };
+export default function ArtPage(){ return <EditorialPage variant="art" />; }

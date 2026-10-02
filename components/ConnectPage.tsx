@@ -1,110 +1,33 @@
 "use client";
-
 import { useUI } from "@/lib/ui-store";
 import { useRecorder } from "@/lib/use-recorder";
-import TechLabel from "@/components/primitives/TechLabel";
 import MessageCTA from "@/components/HomeConnect/MessageCTA";
 import RecorderPanel from "@/components/HomeConnect/RecorderPanel";
 import styles from "./ConnectPage.module.css";
 
-/**
- * Dedicated /connect route. A genuinely separate page from the homepage: it
- * does NOT render the home hero/camera composition. It reuses the existing
- * Connect-specific functionality — the "Leave us a message" recorder
- * (MessageCTA + RecorderPanel + useRecorder) and the studio contact details.
- * The command terminal is already available globally via the app shell.
- */
 export default function ConnectPage() {
   const { recorderOpen, setRecorderOpen } = useUI();
   const recorder = useRecorder();
-
-  return (
-    <section className={styles.wrap}>
-      <div className={styles.inner}>
-        <TechLabel nano className={styles.index}>
-          02 — Transmission desk
-        </TechLabel>
-        <h1 className={styles.title}>Connect</h1>
-        <p className={styles.note}>
-          Leave the studio a voice message, or reach us directly. The transmission desk is open.
-        </p>
-
-        <div className={styles.control}>
-          {recorderOpen ? (
-            <RecorderPanel
-              open={recorderOpen}
-              onClose={() => {
-                setRecorderOpen(false);
-                if (recorder.recordingState === "recording") void recorder.stop();
-              }}
-              recordingState={recorder.recordingState}
-              playbackState={recorder.playbackState}
-              elapsedMs={recorder.elapsedMs}
-              level={recorder.level}
-              error={recorder.error}
-              hasClip={recorder.hasClip}
-              supported={recorder.supported}
-              onStart={recorder.start}
-              onStop={recorder.stop}
-              onPreview={recorder.preview}
-              onDiscard={recorder.discard}
-              onSubmit={recorder.submit}
-            />
-          ) : (
-            <MessageCTA open={recorderOpen} onOpen={() => setRecorderOpen(true)} />
-          )}
-        </div>
-
-        <div className={styles.contacts}>
-          <div className={styles.contactCol}>
-            <TechLabel nano className={styles.contactLabel}>
-              New Projects
-            </TechLabel>
-            <a className={styles.contactLink} href="mailto:studio@voyagerscape.co" data-cursor="link">
-              studio@voyagerscape.co
-            </a>
-          </div>
-
-          <div className={styles.contactCol}>
-            <TechLabel nano className={styles.contactLabel}>
-              General Enquiries
-            </TechLabel>
-            <a className={styles.contactLink} href="mailto:hello@voyagerscape.co" data-cursor="link">
-              hello@voyagerscape.co
-            </a>
-          </div>
-
-          <div className={styles.contactCol}>
-            <TechLabel nano className={styles.contactLabel}>
-              Connect
-            </TechLabel>
-            <span className={styles.socials}>
-              <a
-                className={styles.contactLink}
-                href="https://www.linkedin.com"
-                target="_blank"
-                rel="noreferrer noopener"
-                data-cursor="link"
-              >
-                LinkedIn
-              </a>
-              <a
-                className={styles.contactLink}
-                href="https://www.instagram.com"
-                target="_blank"
-                rel="noreferrer noopener"
-                data-cursor="link"
-              >
-                Instagram
-              </a>
-            </span>
-          </div>
-        </div>
-
-        <TechLabel nano className={styles.hint}>
-          Press / for the command terminal
-        </TechLabel>
+  return <div className={styles.page}>
+    <section className={styles.hero} data-nav-surface="dark">
+      <div className={styles.meta}><span>TRANSMISSION DESK / 02</span><span>STATUS: LISTENING</span></div>
+      <h1>SEND<br />A <i>SIGNAL.</i></h1>
+      <p>Projects, collaborations, visual experiments—or something we have not imagined yet. Choose a channel.</p>
+      <div className={styles.radar} aria-hidden="true"><i/><i/><i/><b/></div>
+    </section>
+    <section className={styles.desk}>
+      <div className={styles.voice}>
+        <span>CHANNEL 01 / VOICE</span><h2>LEAVE A TRACE<br />IN THE MACHINE.</h2><p>Record a short voice note directly in the browser. Nothing is captured until you press record.</p>
+        <div className={styles.control}>{recorderOpen ? <RecorderPanel open={recorderOpen} onClose={()=>{setRecorderOpen(false);if(recorder.recordingState==="recording")void recorder.stop();}} recordingState={recorder.recordingState} playbackState={recorder.playbackState} elapsedMs={recorder.elapsedMs} level={recorder.level} error={recorder.error} hasClip={recorder.hasClip} supported={recorder.supported} onStart={recorder.start} onStop={recorder.stop} onPreview={recorder.preview} onDiscard={recorder.discard} onSubmit={recorder.submit}/> : <MessageCTA open={false} onOpen={()=>setRecorderOpen(true)}/>}</div>
+      </div>
+      <div className={styles.channels}>
+        <span>CHANNEL 02 / WRITTEN</span>
+        <a href="mailto:studio@voyagerscape.co"><small>NEW PROJECTS</small><strong>studio@voyagerscape.co</strong><b>↗</b></a>
+        <a href="mailto:hello@voyagerscape.co"><small>GENERAL SIGNAL</small><strong>hello@voyagerscape.co</strong><b>↗</b></a>
+        <span className={styles.socialLabel}>CHANNEL 03 / ELSEWHERE</span>
+        <a href="https://www.instagram.com" target="_blank" rel="noreferrer"><small>VISUAL FEED</small><strong>Instagram</strong><b>↗</b></a>
+        <a href="https://www.linkedin.com" target="_blank" rel="noreferrer"><small>PROFESSIONAL FREQUENCY</small><strong>LinkedIn</strong><b>↗</b></a>
       </div>
     </section>
-  );
+  </div>;
 }

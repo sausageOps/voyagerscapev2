@@ -15,28 +15,27 @@
 
 /* Compact desktop counterparts to the mobile menu's four-shape language. */
 .list > li:nth-child(1) .item {
-  width: 58px;
+  width: 70px;
   padding-inline: 0;
-  border-radius: 12px;
+  border-radius: 4px;
 }
 
 .list > li:nth-child(2) .item {
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border-radius: 50%;
-}
-
-.list > li:nth-child(3) .item {
-  width: 84px;
+  width: 82px;
   padding-inline: 0;
   border-radius: var(--r-pill);
 }
 
-.list > li:nth-child(4) .item {
-  width: 70px;
+.list > li:nth-child(3) .item {
+  width: 88px;
   padding-inline: 0;
-  border-radius: 7px;
+  border-radius: 4px 14px 14px 4px;
+}
+
+.list > li:nth-child(4) .item {
+  width: 82px;
+  padding-inline: 0;
+  border-radius: 14px 4px 4px 14px;
 }
 
 /* The control itself carries an inline transform from the cursor magnet, so the

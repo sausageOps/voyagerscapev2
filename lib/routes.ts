@@ -21,10 +21,10 @@ export interface RouteDef {
  *   ABOUT   → /about     (dedicated about page)
  */
 export const ROUTES: RouteDef[] = [
-  { label: "Home", href: "/", command: "home", ready: true },
-  { label: "Art", href: "/art", command: "art", ready: false },
-  { label: "Connect", href: "/connect", command: "connect", ready: true },
-  { label: "About", href: "/about", command: "about", ready: false },
+  { label: "Signal", href: "/", command: "home", ready: true },
+  { label: "Archive", href: "/art", command: "art", ready: true },
+  { label: "Transmit", href: "/connect", command: "connect", ready: true },
+  { label: "Field Log", href: "/about", command: "about", ready: true },
 ];
 
 /** Items shown in the header cluster, in order. */

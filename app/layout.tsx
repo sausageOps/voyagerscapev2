@@ -79,11 +79,11 @@ export const metadata: Metadata = {
     template: "%s — Voyagerscape",
   },
   description:
-    "Voyagerscape is an independent design practice building considered digital objects. Leave us a message.",
+    "Voyagerscape is a living visual archive where photography, old technology and digital experimentation meet.",
   applicationName: "Voyagerscape",
   openGraph: {
     title: "Voyagerscape",
-    description: "An independent design practice building considered digital objects.",
+    description: "Photography, machines, field notes and visual experiments.",
     siteName: "Voyagerscape",
     type: "website",
   },
