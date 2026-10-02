@@ -20,15 +20,17 @@
 .fallback {
   position: absolute;
   inset: 0;
-  /* A frozen mesh gradient: the same five spots at their t=0 positions,
-     same palette. No animation, no blur filter. */
+  /* A frozen mesh gradient: the same five spots at their t=0 positions and
+     sizes, same palette. Positions re-read off the shader after the v2
+     motion pass, so the fallback and the first GL frame agree. No
+     animation, no blur filter. */
   background:
-    radial-gradient(58% 72% at 2% 22%, #f5efe1 0%, rgba(245, 239, 225, 0) 70%),
-    radial-gradient(56% 70% at 92% 24%, #cfc4e9 0%, rgba(207, 196, 233, 0) 68%),
-    radial-gradient(58% 70% at 6% 84%, #c0dcc9 0%, rgba(192, 220, 201, 0) 70%),
-    radial-gradient(54% 68% at 94% 82%, #b9cfea 0%, rgba(185, 207, 234, 0) 68%),
-    radial-gradient(46% 58% at 50% 50%, #f1e9dc 0%, rgba(241, 233, 220, 0) 72%),
-    #e3e2e6;
+    radial-gradient(48% 87% at 45% 24%, #f5efe1 0%, rgba(245, 239, 225, 0) 70%),
+    radial-gradient(67% 120% at 93% 43%, #cfc4e9 0%, rgba(207, 196, 233, 0) 70%),
+    radial-gradient(54% 98% at 6% 113%, #c0dcc9 0%, rgba(192, 220, 201, 0) 70%),
+    radial-gradient(58% 105% at 58% 94%, #b9cfea 0%, rgba(185, 207, 234, 0) 70%),
+    radial-gradient(36% 65% at 88% 27%, #f1e9dc 0%, rgba(241, 233, 220, 0) 72%),
+    #d1d7e1;
 }
 
 .canvas {
