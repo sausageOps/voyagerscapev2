@@ -30,11 +30,11 @@ import styles from "./HomeCanvas.module.css";
  * saturated than its inputs. The cream/sage/lavender/peach balance matches
  * the static baseline (mean lightness ≈ 0.90, chroma ≤ 0.04).
  *
- * Motion — four spots drift on slow Lissajous orbits (several minutes per
- * cycle, so no perceptible loop) over a gentle simplex bend and a central
- * swirl that decays toward the frame edges. The atmosphere is autonomous:
- * `trackPointer` stays off, and the CRT keeps the page's pointer
- * interaction untouched.
+ * Motion — four spots drift on slow Lissajous orbits (roughly a minute to
+ * a minute and a half per component cycle, so no perceptible loop) over a
+ * gentle simplex bend and a central swirl that decays toward the frame
+ * edges. The atmosphere is autonomous: `trackPointer` stays off, and the
+ * CRT keeps the page's pointer interaction untouched.
  *
  * Quality — Mesh Gradient is a light shader, but this is a fullscreen
  * surface, so the pixel ratio is capped at 1.5 and the frame rate at 30
@@ -55,7 +55,7 @@ const MESH_PARAMS = {
   colorA: "#e0e4da",
   colorB: "#dcd2f0",
   colorC: "#f2dcc0",
-  speed: 0.35,
+  speed: 0.75,
   scale: 1,
   intensity: 1,
   vibrancy: 1,
