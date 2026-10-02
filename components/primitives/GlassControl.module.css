@@ -1,5 +1,4 @@
 .control {
-  --sheen: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -44,8 +43,6 @@
 .control:not(.inert):hover {
   --glass-alpha: calc(0.42 + 0.14);
   transform: translateY(-1.5px);
-  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.06),
-    0 26px 52px -26px rgba(17, 17, 17, 0.3);
 }
 
 .control:not(.inert):hover .inner {
@@ -55,7 +52,6 @@
 /* Active: material compression */
 .control:not(.inert):active {
   transform: translateY(0) scale(0.972);
-  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.07);
   transition-duration: 0.08s;
 }
 
@@ -65,16 +61,7 @@
 
 .control.active {
   background-color: rgba(17, 17, 17, 0.92);
-  background-image: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.14),
-    rgba(255, 255, 255, 0.02) 45%,
-    rgba(0, 0, 0, 0.12)
-  );
   color: #f7f3ec;
-  --glass-edge: rgba(255, 255, 255, 0.3);
-  --glass-edge-low: rgba(255, 255, 255, 0.08);
-  --glass-rim: rgba(0, 0, 0, 0.6);
 }
 
 .control.active:hover {
