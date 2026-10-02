@@ -18,77 +18,93 @@
   background: #e9e1d6;
 }
 
-/* Fixed base plus a small number of independent fields. The atmosphere is
-   entirely inside the frame; only these fields receive transforms. */
+/* A stationary clipped layer. It carries only the fixed warm base; movement
+   belongs exclusively to the four color fields below. */
 .atmosphere {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  min-width: 0;
   border-radius: inherit;
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
-  background:
-    radial-gradient(125% 120% at 16% 84%, rgba(245, 216, 184, .54), transparent 72%),
-    linear-gradient(120deg, #f3eadc 0%, #e7e0e5 48%, #e4dded 100%);
+  background: #e9e1d6;
 }
 
+/* Oversized, solid pastel masses. Their huge scale, low opacity and strong
+   blur dissolve every edge into the fixed base instead of drawing patterns. */
 .field {
   position: absolute;
-  inset: -30%;
   display: block;
-  border-radius: 50%;
+  width: 86%;
+  height: 86%;
+  border-radius: 9999px;
   pointer-events: none;
-  filter: blur(80px);
-  will-change: transform, opacity;
+  opacity: .18;
+  filter: blur(110px);
+  will-change: transform;
 }
 
 .lavender {
-  background: radial-gradient(ellipse 72% 68% at 74% 18%, rgba(216, 204, 255, .52), transparent 78%);
+  top: -18%;
+  left: 54%;
+  background: #d8ccff;
   transform: translate3d(var(--pointer-x-soft), var(--pointer-y-soft), 0) scale(1.1);
-  animation: lavenderDrift 9s ease-in-out infinite alternate;
+  animation: lavenderDrift 13s ease-in-out infinite alternate;
 }
 
 .pink {
-  background: radial-gradient(ellipse 74% 70% at 30% 54%, rgba(241, 184, 228, .38), transparent 80%);
-  filter: blur(92px);
-  transform: translate3d(var(--pointer-x-counter), var(--pointer-y-counter), 0) scale(1.08);
-  animation: pinkDrift 11s ease-in-out infinite alternate;
+  top: 30%;
+  left: -20%;
+  background: #f1b8e4;
+  opacity: .14;
+  filter: blur(125px);
+  transform: translate3d(var(--pointer-x-counter), var(--pointer-y-counter), 0) scale(1.12);
+  animation: pinkDrift 17s ease-in-out infinite alternate;
 }
 
 .cream {
-  background: radial-gradient(ellipse 78% 74% at 14% 84%, rgba(255, 238, 211, .3), transparent 82%);
-  filter: blur(105px);
-  transform: translate3d(var(--pointer-x), var(--pointer-y), 0) scale(1.12);
-  animation: creamDrift 15s ease-in-out infinite alternate;
+  top: 48%;
+  left: 20%;
+  background: #f5d8b8;
+  opacity: .16;
+  filter: blur(135px);
+  transform: translate3d(var(--pointer-x), var(--pointer-y), 0) scale(1.14);
+  animation: creamDrift 21s ease-in-out infinite alternate;
 }
 
 .blue {
-  background: radial-gradient(ellipse 72% 68% at 84% 78%, rgba(218, 222, 245, .2), transparent 84%);
-  filter: blur(115px);
-  transform: translate3d(var(--pointer-x-counter), var(--pointer-y-soft), 0) scale(1.14);
-  animation: blueDrift 18s ease-in-out infinite alternate;
+  top: -20%;
+  left: 42%;
+  background: #d9def5;
+  opacity: .13;
+  filter: blur(145px);
+  transform: translate3d(var(--pointer-x-counter), var(--pointer-y-soft), 0) scale(1.16);
+  animation: blueDrift 25s ease-in-out infinite alternate;
 }
 
+/* Only the fields receive transforms. The animation adds a tiny autonomous
+   drift to the pointer offset; frame, atmosphere and content never move. */
 @keyframes lavenderDrift {
-  from { transform: translate3d(calc(var(--pointer-x-soft) - 1%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.08); }
-  to { transform: translate3d(calc(var(--pointer-x-soft) + 1%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.14); }
+  from { transform: translate3d(calc(var(--pointer-x-soft) - 1.5%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.08); }
+  to { transform: translate3d(calc(var(--pointer-x-soft) + 1.5%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.14); }
 }
 
 @keyframes pinkDrift {
-  from { transform: translate3d(calc(var(--pointer-x-counter) + 1%), calc(var(--pointer-y-counter) - 1%), 0) scale(1.06); }
-  to { transform: translate3d(calc(var(--pointer-x-counter) - 1%), calc(var(--pointer-y-counter) + 1%), 0) scale(1.12); }
+  from { transform: translate3d(calc(var(--pointer-x-counter) + 1%), calc(var(--pointer-y-counter) - 1.5%), 0) scale(1.1); }
+  to { transform: translate3d(calc(var(--pointer-x-counter) - 1%), calc(var(--pointer-y-counter) + 1.5%), 0) scale(1.16); }
 }
 
 @keyframes creamDrift {
-  from { transform: translate3d(calc(var(--pointer-x) - 1%), calc(var(--pointer-y) + 1%), 0) scale(1.1); }
-  to { transform: translate3d(calc(var(--pointer-x) + 1%), calc(var(--pointer-y) - 1%), 0) scale(1.16); }
+  from { transform: translate3d(calc(var(--pointer-x) - 1%), calc(var(--pointer-y) + 1%), 0) scale(1.12); }
+  to { transform: translate3d(calc(var(--pointer-x) + 1%), calc(var(--pointer-y) - 1%), 0) scale(1.18); }
 }
 
 @keyframes blueDrift {
-  from { transform: translate3d(calc(var(--pointer-x-counter) - 1%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.12); }
-  to { transform: translate3d(calc(var(--pointer-x-counter) + 1%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.18); }
+  from { transform: translate3d(calc(var(--pointer-x-counter) - 1.2%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.14); }
+  to { transform: translate3d(calc(var(--pointer-x-counter) + 1.2%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.2); }
 }
 
 .canvas > :not(.atmosphere) {
@@ -107,21 +123,26 @@
     border-radius: 16px;
   }
 
-  .field { filter: blur(72px); }
-  .pink { filter: blur(84px); }
-  .cream { filter: blur(96px); }
-  .blue { filter: blur(104px); }
-  .lavender { animation-duration: 10s; }
-  .pink { animation-duration: 12s; }
-  .cream { animation-duration: 14s; }
-  .blue { animation-duration: 16s; }
+  .field {
+    width: 100%;
+    height: 100%;
+    filter: blur(92px);
+  }
+
+  .pink { filter: blur(104px); }
+  .cream { filter: blur(112px); }
+  .blue { filter: blur(122px); }
+  .lavender { animation-duration: 13s; }
+  .pink { animation-duration: 17s; }
+  .cream { animation-duration: 21s; }
+  .blue { animation-duration: 25s; }
 }
 
 @media (min-width: 768px) and (max-width: 1100px) and (any-pointer: coarse) {
-  .lavender { animation-duration: 7s; }
-  .pink { animation-duration: 8s; }
-  .cream { animation-duration: 9s; }
-  .blue { animation-duration: 10s; }
+  .lavender { animation-duration: 13s; }
+  .pink { animation-duration: 17s; }
+  .cream { animation-duration: 21s; }
+  .blue { animation-duration: 25s; }
 }
 
 @media (prefers-reduced-motion: reduce) {
