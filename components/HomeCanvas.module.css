@@ -88,6 +88,35 @@
   transform: translate3d(var(--field-soft-x), var(--field-soft-y), 0);
 }
 
+/* --- Mesh Gradient atmosphere (WebGPU) ------------------------------------
+   Mounted by HomeAtmosphere above the static fields, inside .atmosphere,
+   so it inherits the frame's clip (overflow hidden + radius) and stays
+   below the page content (z-index relationships unchanged). Fully
+   transparent until the shader's first frame is on screen, then faded in
+   over the fields so the renderer swap never pops. */
+
+.shader {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1100ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shaderReady {
+  opacity: 1;
+}
+
+/* The atmosphere is decorative: neither the host wrapper nor the canvas
+   itself may become a pointer target. */
+.shaderHost,
+.shaderHost canvas {
+  pointer-events: none;
+}
+
 .canvas > :not(.atmosphere) {
   position: relative;
   z-index: 1;
@@ -120,6 +149,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .field {
+    transition: none;
+  }
+
+  /* Reduced motion: ShaderCanvas holds a still frame; the crossfade into it
+     is instant rather than animated. */
+  .shader {
     transition: none;
   }
 }
