@@ -22,8 +22,8 @@ export default function HomeCanvas({ children }: { children: ReactNode }) {
       const bounds = frame.getBoundingClientRect();
       const insideX = (event.clientX - bounds.left) / bounds.width;
       const insideY = (event.clientY - bounds.top) / bounds.height;
-      target.x = Math.max(-0.5, Math.min(0.5, insideX - 0.5)) * 150;
-      target.y = Math.max(-0.5, Math.min(0.5, insideY - 0.5)) * 112;
+      target.x = Math.max(-0.5, Math.min(0.5, insideX - 0.5)) * 210;
+      target.y = Math.max(-0.5, Math.min(0.5, insideY - 0.5)) * 160;
     };
 
     const resetTarget = () => {
