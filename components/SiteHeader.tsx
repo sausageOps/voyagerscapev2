@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useUI } from "@/lib/ui-store";
+import { useNavSurface } from "@/lib/use-nav-surface";
 import { gsap, revealUp } from "@/lib/motion";
 import BrandMark from "@/components/BrandMark";
 import NavMenu from "@/components/NavMenu";
@@ -13,6 +14,11 @@ export default function SiteHeader() {
   const { loaded, setTerminalOpen, terminalOpen, mobileMenuOpen, setMobileMenuOpen } = useUI();
   const rootRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
+
+  /* Context-aware nav: tracks which section surface (light/dark) currently
+     sits underneath this header's footprint and publishes it on <html> as
+     data-nav-surface, which NavMenu's pills react to. */
+  useNavSurface(rootRef);
 
   useEffect(() => {
     if (!loaded || !rootRef.current) return;
