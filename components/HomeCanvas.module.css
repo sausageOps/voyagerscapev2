@@ -11,61 +11,74 @@
   margin: 16px;
   overflow: hidden;
   border-radius: 18px;
+  box-sizing: border-box;
   background: #e9e1d6;
 }
 
+/* The atmosphere is a contained decorative layer. The frame is its final
+   clipping boundary; none of these fields can participate in layout. */
 .atmosphere {
   position: absolute;
-  inset: -14%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  pointer-events: none;
   z-index: 0;
   overflow: hidden;
   background:
-    radial-gradient(70% 90% at 15% 86%, rgba(245, 216, 184, .78), transparent 67%),
+    radial-gradient(125% 120% at 16% 84%, rgba(245, 216, 184, .54), transparent 72%),
     linear-gradient(120deg, #f3eadc 0%, #e7e0e5 48%, #e4dded 100%);
-  transform: scale(1.04) translate3d(var(--pointer-x), var(--pointer-y), 0);
+  transform: translate3d(var(--pointer-x), var(--pointer-y), 0);
   animation: baseDrift 12s ease-in-out infinite alternate;
   will-change: transform;
 }
 
-/* Large, diffuse fields move independently so the surface feels layered,
-   never like one gradient being dragged beneath the cursor. */
+/* One broad lavender/pink mass. It is deliberately oversized and blurred so
+   the viewer sees light moving through the surface, never a gradient edge. */
 .atmosphere::before {
   content: "";
   position: absolute;
-  inset: -10%;
+  inset: -24%;
+  border-radius: 50%;
   background:
-    radial-gradient(66% 78% at 78% 12%, rgba(216, 204, 255, .66), transparent 64%),
-    radial-gradient(58% 70% at 38% 42%, rgba(241, 184, 228, .52), transparent 66%);
-  transform: translate3d(var(--pointer-x-soft), var(--pointer-y-soft), 0);
+    radial-gradient(ellipse 78% 70% at 76% 16%, rgba(216, 204, 255, .52), transparent 76%),
+    radial-gradient(ellipse 76% 72% at 30% 54%, rgba(241, 184, 228, .38), transparent 78%);
+  filter: blur(72px);
+  transform: translate3d(var(--pointer-x-soft), var(--pointer-y-soft), 0) scale(1.08);
   animation: lavenderDrift 9s ease-in-out infinite alternate;
   will-change: transform;
 }
 
+/* A second, very low-contrast neutral field moves independently to keep the
+   atmosphere organic without introducing contours, bands, or ripples. */
 .atmosphere::after {
   content: "";
   position: absolute;
-  inset: -12%;
+  inset: -28%;
+  border-radius: 50%;
   background:
-    radial-gradient(64% 76% at 82% 88%, rgba(190, 184, 190, .18), transparent 66%),
-    radial-gradient(62% 72% at 5% 18%, rgba(255, 247, 235, .48), transparent 65%);
-  transform: translate3d(var(--pointer-x-counter), var(--pointer-y-counter), 0);
+    radial-gradient(ellipse 82% 76% at 80% 86%, rgba(190, 184, 190, .12), transparent 80%),
+    radial-gradient(ellipse 84% 78% at 8% 18%, rgba(255, 247, 235, .28), transparent 82%);
+  filter: blur(96px);
+  transform: translate3d(var(--pointer-x-counter), var(--pointer-y-counter), 0) scale(1.08);
   animation: ashDrift 14s ease-in-out infinite alternate;
   will-change: transform;
 }
 
 @keyframes baseDrift {
-  from { transform: scale(1.04) translate3d(calc(var(--pointer-x) - 1%), calc(var(--pointer-y) - 1%), 0); }
-  to { transform: scale(1.08) translate3d(calc(var(--pointer-x) + 1%), calc(var(--pointer-y) + 1%), 0); }
+  from { transform: translate3d(calc(var(--pointer-x) - 1%), calc(var(--pointer-y) - 1%), 0) scale(1.03); }
+  to { transform: translate3d(calc(var(--pointer-x) + 1%), calc(var(--pointer-y) + 1%), 0) scale(1.07); }
 }
 
 @keyframes lavenderDrift {
-  from { transform: translate3d(calc(var(--pointer-x-soft) - 1%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.02); }
-  to { transform: translate3d(calc(var(--pointer-x-soft) + 1%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.06); }
+  from { transform: translate3d(calc(var(--pointer-x-soft) - 1%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.06); }
+  to { transform: translate3d(calc(var(--pointer-x-soft) + 1%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.12); }
 }
 
 @keyframes ashDrift {
-  from { transform: translate3d(calc(var(--pointer-x-counter) - 1%), calc(var(--pointer-y-counter) - 1%), 0) scale(1.03); }
-  to { transform: translate3d(calc(var(--pointer-x-counter) + 1%), calc(var(--pointer-y-counter) + 1%), 0) scale(1.08); }
+  from { transform: translate3d(calc(var(--pointer-x-counter) - 1%), calc(var(--pointer-y-counter) - 1%), 0) scale(1.06); }
+  to { transform: translate3d(calc(var(--pointer-x-counter) + 1%), calc(var(--pointer-y-counter) + 1%), 0) scale(1.12); }
 }
 
 .canvas > :not(.atmosphere) {
