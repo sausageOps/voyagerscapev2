@@ -6,100 +6,126 @@
   --pointer-x-counter: 0px;
   --pointer-y-counter: 0px;
   position: relative;
-  isolation: isolate;
+  width: calc(100% - 32px);
+  max-width: calc(100% - 32px);
+  min-width: 0;
   min-height: calc(100svh - 32px);
   margin: 16px;
-  overflow: hidden;
-  border-radius: 18px;
   box-sizing: border-box;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 18px;
   background: #e9e1d6;
 }
 
-/* The atmosphere is a contained decorative layer. The frame is its final
-   clipping boundary; none of these fields can participate in layout. */
+/* Fixed base plus a small number of independent fields. The atmosphere is
+   entirely inside the frame; only these fields receive transforms. */
 .atmosphere {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   border-radius: inherit;
+  overflow: hidden;
   pointer-events: none;
   z-index: 0;
-  overflow: hidden;
   background:
     radial-gradient(125% 120% at 16% 84%, rgba(245, 216, 184, .54), transparent 72%),
     linear-gradient(120deg, #f3eadc 0%, #e7e0e5 48%, #e4dded 100%);
 }
 
-/* One broad lavender/pink mass. It is deliberately oversized and blurred so
-   the viewer sees light moving through the surface, never a gradient edge. */
-.atmosphere::before {
-  content: "";
+.field {
   position: absolute;
-  inset: -24%;
+  inset: -30%;
+  display: block;
   border-radius: 50%;
-  background:
-    radial-gradient(ellipse 78% 70% at 76% 16%, rgba(216, 204, 255, .52), transparent 76%),
-    radial-gradient(ellipse 76% 72% at 30% 54%, rgba(241, 184, 228, .38), transparent 78%);
-  filter: blur(72px);
-  transform: translate3d(var(--pointer-x-soft), var(--pointer-y-soft), 0) scale(1.08);
-  animation: lavenderDrift 9s ease-in-out infinite alternate;
-  will-change: transform;
+  pointer-events: none;
+  filter: blur(80px);
+  will-change: transform, opacity;
 }
 
-/* A second, very low-contrast neutral field moves independently to keep the
-   atmosphere organic without introducing contours, bands, or ripples. */
-.atmosphere::after {
-  content: "";
-  position: absolute;
-  inset: -28%;
-  border-radius: 50%;
-  background:
-    radial-gradient(ellipse 82% 76% at 80% 86%, rgba(190, 184, 190, .12), transparent 80%),
-    radial-gradient(ellipse 84% 78% at 8% 18%, rgba(255, 247, 235, .28), transparent 82%);
-  filter: blur(96px);
+.lavender {
+  background: radial-gradient(ellipse 72% 68% at 74% 18%, rgba(216, 204, 255, .52), transparent 78%);
+  transform: translate3d(var(--pointer-x-soft), var(--pointer-y-soft), 0) scale(1.1);
+  animation: lavenderDrift 9s ease-in-out infinite alternate;
+}
+
+.pink {
+  background: radial-gradient(ellipse 74% 70% at 30% 54%, rgba(241, 184, 228, .38), transparent 80%);
+  filter: blur(92px);
   transform: translate3d(var(--pointer-x-counter), var(--pointer-y-counter), 0) scale(1.08);
-  animation: ashDrift 14s ease-in-out infinite alternate;
-  will-change: transform;
+  animation: pinkDrift 11s ease-in-out infinite alternate;
+}
+
+.cream {
+  background: radial-gradient(ellipse 78% 74% at 14% 84%, rgba(255, 238, 211, .3), transparent 82%);
+  filter: blur(105px);
+  transform: translate3d(var(--pointer-x), var(--pointer-y), 0) scale(1.12);
+  animation: creamDrift 15s ease-in-out infinite alternate;
+}
+
+.blue {
+  background: radial-gradient(ellipse 72% 68% at 84% 78%, rgba(218, 222, 245, .2), transparent 84%);
+  filter: blur(115px);
+  transform: translate3d(var(--pointer-x-counter), var(--pointer-y-soft), 0) scale(1.14);
+  animation: blueDrift 18s ease-in-out infinite alternate;
 }
 
 @keyframes lavenderDrift {
-  from { transform: translate3d(calc(var(--pointer-x-soft) - 1%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.06); }
-  to { transform: translate3d(calc(var(--pointer-x-soft) + 1%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.12); }
+  from { transform: translate3d(calc(var(--pointer-x-soft) - 1%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.08); }
+  to { transform: translate3d(calc(var(--pointer-x-soft) + 1%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.14); }
 }
 
-@keyframes ashDrift {
-  from { transform: translate3d(calc(var(--pointer-x-counter) - 1%), calc(var(--pointer-y-counter) - 1%), 0) scale(1.06); }
-  to { transform: translate3d(calc(var(--pointer-x-counter) + 1%), calc(var(--pointer-y-counter) + 1%), 0) scale(1.12); }
+@keyframes pinkDrift {
+  from { transform: translate3d(calc(var(--pointer-x-counter) + 1%), calc(var(--pointer-y-counter) - 1%), 0) scale(1.06); }
+  to { transform: translate3d(calc(var(--pointer-x-counter) - 1%), calc(var(--pointer-y-counter) + 1%), 0) scale(1.12); }
+}
+
+@keyframes creamDrift {
+  from { transform: translate3d(calc(var(--pointer-x) - 1%), calc(var(--pointer-y) + 1%), 0) scale(1.1); }
+  to { transform: translate3d(calc(var(--pointer-x) + 1%), calc(var(--pointer-y) - 1%), 0) scale(1.16); }
+}
+
+@keyframes blueDrift {
+  from { transform: translate3d(calc(var(--pointer-x-counter) - 1%), calc(var(--pointer-y-soft) + 1%), 0) scale(1.12); }
+  to { transform: translate3d(calc(var(--pointer-x-counter) + 1%), calc(var(--pointer-y-soft) - 1%), 0) scale(1.18); }
 }
 
 .canvas > :not(.atmosphere) {
   position: relative;
   z-index: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (max-width: 767px) {
   .canvas {
+    width: calc(100% - 16px);
+    max-width: calc(100% - 16px);
     min-height: calc(100svh - 16px);
     margin: 8px;
     border-radius: 16px;
   }
 
-  .atmosphere { animation-duration: 14s; }
-  .atmosphere::before { animation-duration: 10s; }
-  .atmosphere::after { animation-duration: 14s; }
+  .field { filter: blur(72px); }
+  .pink { filter: blur(84px); }
+  .cream { filter: blur(96px); }
+  .blue { filter: blur(104px); }
+  .lavender { animation-duration: 10s; }
+  .pink { animation-duration: 12s; }
+  .cream { animation-duration: 14s; }
+  .blue { animation-duration: 16s; }
 }
 
 @media (min-width: 768px) and (max-width: 1100px) and (any-pointer: coarse) {
-  .atmosphere { animation-duration: 9s; }
-  .atmosphere::before { animation-duration: 6s; }
-  .atmosphere::after { animation-duration: 10s; }
+  .lavender { animation-duration: 7s; }
+  .pink { animation-duration: 8s; }
+  .cream { animation-duration: 9s; }
+  .blue { animation-duration: 10s; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .atmosphere,
-  .atmosphere::before,
-  .atmosphere::after {
+  .field {
     animation: none;
   }
 }

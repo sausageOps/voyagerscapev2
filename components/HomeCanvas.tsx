@@ -21,8 +21,8 @@ export default function HomeCanvas({ children }: { children: ReactNode }) {
     const onMove = (event: PointerEvent) => {
       // Keep the response broad and atmospheric: the field moves a fraction
       // of the pointer distance rather than forming a cursor-sized light.
-      target.x = (event.clientX / window.innerWidth - 0.5) * 230;
-      target.y = (event.clientY / window.innerHeight - 0.5) * 170;
+      target.x = (event.clientX / window.innerWidth - 0.5) * 100;
+      target.y = (event.clientY / window.innerHeight - 0.5) * 75;
     };
 
     const tick = () => {
@@ -50,7 +50,12 @@ export default function HomeCanvas({ children }: { children: ReactNode }) {
 
   return (
     <div className={styles.canvas} ref={ref}>
-      <div className={styles.atmosphere} aria-hidden="true" />
+      <div className={styles.atmosphere} aria-hidden="true">
+        <span className={`${styles.field} ${styles.lavender}`} />
+        <span className={`${styles.field} ${styles.pink}`} />
+        <span className={`${styles.field} ${styles.cream}`} />
+        <span className={`${styles.field} ${styles.blue}`} />
+      </div>
       {children}
     </div>
   );
