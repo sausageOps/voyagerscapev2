@@ -40,14 +40,10 @@
   to { transform: scale(1.08) translate3d(1%, 1%, 0); }
 }
 
-/* Keep the existing homepage geometry; only its surface changes. */
+/* Keep the existing homepage geometry above the atmospheric layer. */
 .canvas > * {
   position: relative;
   z-index: 1;
-}
-
-.canvas > header {
-  position: absolute;
 }
 
 @media (max-width: 767px) {

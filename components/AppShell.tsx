@@ -25,14 +25,10 @@ import HomeCanvas from "@/components/HomeCanvas";
  */
 export default function AppShell({ children }: { children: ReactNode }) {
   const isHome = usePathname() === "/";
-  const content = (
-    <>
-      <SiteHeader />
-      <MobileMenu />
-      <RouteTransition>
-        <main id="main">{children}</main>
-      </RouteTransition>
-    </>
+  const page = (
+    <RouteTransition>
+      <main id="main">{children}</main>
+    </RouteTransition>
   );
 
   return (
@@ -40,9 +36,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <VisualModeProvider>
         <SmoothScroll>
           <RouteTransitionProvider>
-            <a className="vs-skip" href="#main">Skip to content</a>
+            <a className="vs-skip" href="#main">
+              Skip to content
+            </a>
             <PageLoader />
-            {isHome ? <HomeCanvas>{content}</HomeCanvas> : content}
+            <SiteHeader />
+            <MobileMenu />
+            {isHome ? <HomeCanvas>{page}</HomeCanvas> : page}
             <SiteFooter />
             <CommandTerminal />
             <Cursor />
