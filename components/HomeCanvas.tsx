@@ -60,7 +60,7 @@ export default function HomeCanvas({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div className={styles.canvas} ref={ref}>
+    <div className={styles.canvas} ref={ref} data-home-canvas>
       <div className={styles.atmosphere} aria-hidden="true">
         <span className={`${styles.field} ${styles.lavender}`} />
         <span className={`${styles.field} ${styles.pink}`} />

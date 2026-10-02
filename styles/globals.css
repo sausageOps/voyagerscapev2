@@ -126,6 +126,11 @@ body::before {
     radial-gradient(65% 50% at 88% 82%, rgba(216, 204, 255, 0.16), rgba(216, 204, 255, 0) 70%);
 }
 
+/* The homepage owns its own contained atmosphere. */
+body:has([data-home-canvas])::before {
+  display: none;
+}
+
 h1,
 h2,
 h3,
