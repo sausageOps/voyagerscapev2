@@ -138,6 +138,16 @@
   user-select: none;
 }
 
+/* Plain ™ glyph — replaces the former circled badge SVG. No border, no
+   background, no container: just the display face's own trademark mark,
+   sized to the word's scale. Sized on an inner element so .tmBadge's
+   em-based offset and lift keep resolving against the word's font-size,
+   holding the mark in its established spot above the x-height. */
+.tmMark {
+  font-size: 0.38em;
+  line-height: 1;
+}
+
 .head * {
   pointer-events: none !important;
   cursor: default !important;

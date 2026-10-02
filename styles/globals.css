@@ -62,17 +62,12 @@
   --t-fast: 0.22s;
   --t-med: 0.42s;
 
-  /* ---- Glass material ---- */
+  /* ---- Flat surface material ----
+     Two knobs only: the fill tone and its opacity. Every decorative layer
+     the glass system used to add — blur, backdrop sampling, edge highlight,
+     sheen, cast shadow — is gone; surfaces are flat graphic fills. */
   --glass-tint: 255, 253, 249;
   --glass-alpha: 0.42;
-  --glass-blur: 14px;
-  --glass-sat: 180%;
-  --glass-edge: rgba(255, 255, 255, 0.85);
-  --glass-edge-low: rgba(255, 255, 255, 0.28);
-  --glass-rim: rgba(17, 17, 17, 0.1);
-  /* Flat by default: definition comes from edges and surface tone, not from
-     cast shadows. */
-  --glass-shadow: 0 0 0 1px rgba(17, 17, 17, 0.045), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
   --surface-card: rgba(255, 253, 249, 0.66);
   --surface-card-hover: rgba(255, 253, 249, 0.92);
 
@@ -223,85 +218,17 @@ svg {
 }
 
 /* =========================================================
-   LIQUID GLASS — layered optical material
-   1 translucent base · 2 blur · 3 saturation · 4 backdrop
-   sampling · 5 edge highlight · 6 inner highlight · 7 drop
-   shadow · 8 sheen · 9 pointer specular · 10 press compress
+   FLAT SURFACE MATERIAL
+   One language for every UI surface: a solid tone, the
+   component's own border-radius, nothing else — no blur, no
+   backdrop sampling, no edge highlight, no sheen, no cast
+   shadow. Definition comes from the fill against the page.
    ========================================================= */
 
 .vs-glass {
   position: relative;
-  isolation: isolate;
-  /* 1. translucent base with a faint warm sample of the page */
   background-color: rgba(var(--glass-tint), var(--glass-alpha));
-  background-image: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.36),
-    rgba(255, 255, 255, 0.04) 42%,
-    rgba(245, 240, 232, 0.14)
-  );
-  /* 7. shadow beneath the glass */
-  box-shadow: var(--glass-shadow);
-  transform: translateZ(0);
-  transition: background-color var(--t-fast) var(--e-out), box-shadow var(--t-med) var(--e-out),
-    transform var(--t-fast) var(--e-out);
-}
-
-@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-  .vs-glass {
-    /* 2 + 3 + 4. blur, saturation, brightness sampling of the backdrop */
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(1.04);
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(1.04);
-    background-color: rgba(var(--glass-tint), var(--glass-alpha));
-  }
-}
-
-/* 12. graceful fallback — no backdrop-filter: go more opaque */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .vs-glass {
-    background-color: rgba(var(--glass-tint), 0.94);
-  }
-}
-
-/* 5 + 6. bright outer edge + soft internal highlight (single pseudo, no cost) */
-.vs-glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  padding: 1px;
-  background: linear-gradient(
-    150deg,
-    var(--glass-edge) 0%,
-    var(--glass-edge-low) 34%,
-    rgba(255, 255, 255, 0) 52%,
-    var(--glass-rim) 100%
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  z-index: 2;
-}
-
-/* 8 + 9 + 11. sheen sheet driven by --mx/--my pointer specular */
-.vs-glass::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 1;
-  opacity: var(--sheen, 0);
-  background: radial-gradient(
-      55% 120% at var(--mx, 50%) var(--my, 0%),
-      rgba(255, 255, 255, 0.9),
-      rgba(255, 255, 255, 0) 70%
-    ),
-    linear-gradient(115deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 60%);
-  transition: opacity var(--t-med) var(--e-out);
-  mix-blend-mode: screen;
+  transition: background-color var(--t-fast) var(--e-out), transform var(--t-fast) var(--e-out);
 }
 
 /* Default radius at zero specificity so component modules always win */
@@ -312,23 +239,16 @@ svg {
 /* Clearer treatment — floating controls over rich content */
 .vs-glass--clear {
   --glass-alpha: 0.24;
-  --glass-blur: 10px;
-  --glass-sat: 190%;
 }
 
 /* Denser, legible treatment — text surfaces (terminal, panels) */
 .vs-glass--solid {
   --glass-alpha: 0.84;
-  --glass-blur: 26px;
-  --glass-sat: 150%;
 }
 
 .vs-glass--dark {
   --glass-tint: 18, 18, 17;
   --glass-alpha: 0.78;
-  --glass-edge: rgba(255, 255, 255, 0.34);
-  --glass-edge-low: rgba(255, 255, 255, 0.1);
-  --glass-rim: rgba(0, 0, 0, 0.5);
   color: #f7f3ec;
 }
 

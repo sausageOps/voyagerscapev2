@@ -35,7 +35,6 @@
   border-radius: clamp(4px, 0.08em, 6px);
   background: var(--vs-ink);
   color: #f7f3ec;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset;
   white-space: nowrap;
 }
 

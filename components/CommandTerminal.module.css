@@ -42,7 +42,6 @@
   justify-content: space-between;
   gap: 12px;
   padding-bottom: 14px;
-  border-bottom: 1px solid var(--vs-line-soft);
 }
 
 .headText {
@@ -150,7 +149,6 @@
   height: 28px;
   padding: 0 12px;
   border-radius: var(--r-pill);
-  border: 1px solid rgba(17, 17, 17, 0.1);
   background: rgba(255, 255, 255, 0.5);
   font-family: var(--font-mono);
   font-size: var(--fs-nano);
@@ -158,14 +156,13 @@
   text-transform: uppercase;
   color: var(--vs-ink-soft);
   transition: transform var(--t-fast) var(--e-out), background var(--t-fast) var(--e-out),
-    color var(--t-fast) var(--e-out), border-color var(--t-fast) var(--e-out);
+    color var(--t-fast) var(--e-out);
 }
 
 .prompt:hover {
   transform: translateY(-1px);
   background: #fffdf8;
   color: var(--vs-ink);
-  border-color: rgba(17, 17, 17, 0.26);
 }
 
 .prompt:active {
@@ -174,7 +171,6 @@
 
 .prompt[data-active="true"] {
   background: var(--vs-ink);
-  border-color: var(--vs-ink);
   color: var(--vs-bg);
 }
 
@@ -186,7 +182,6 @@
   gap: 10px;
   margin-top: auto;
   padding-top: 12px;
-  border-top: 1px solid var(--vs-line-soft);
   color: var(--vs-ink-faint);
 }
 

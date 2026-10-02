@@ -16,20 +16,16 @@
   gap: 14px;
   padding: 16px 18px 18px;
   border-radius: var(--r-md);
-  border: 1px solid rgba(17, 17, 17, 0.06);
   /* Perfectly square to the grid, and deliberately flat: definition comes
-     from the edge and an inset highlight, never from a cast shadow. */
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+     from the fill alone — no edge, no highlight, no cast shadow. */
   opacity: 0;
-  transition: transform var(--t-fast) var(--e-out), background-color var(--t-fast) var(--e-out),
-    border-color var(--t-fast) var(--e-out);
+  transition: transform var(--t-fast) var(--e-out), background-color var(--t-fast) var(--e-out);
   pointer-events: auto;
   transition: transform var(--t-med) var(--e-out);
 }
 
 .card:hover {
   transform: translateY(-2px);
-  border-color: rgba(17, 17, 17, 0.14);
 }
 
 .card:hover .value {

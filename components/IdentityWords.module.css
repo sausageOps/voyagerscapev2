@@ -45,7 +45,6 @@
   /* Soft rectangle (≈7–10px optical radius at any type scale) */
   border-radius: clamp(7px, 0.34em, 10px);
   background: rgba(255, 253, 249, 0.85);
-  border: 1px solid rgba(17, 17, 17, 0.05);
   white-space: nowrap;
 }
 
