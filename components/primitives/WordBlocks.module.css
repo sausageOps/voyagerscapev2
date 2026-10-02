@@ -78,7 +78,7 @@
    box-shadow and border are explicitly cleared here because these elements
    also carry .blocked, whose glass treatment would otherwise still apply. */
 .lavender {
-  background: rgba(205, 190, 242, 1);
+  background: rgba(217, 206, 247, 1);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   border: none;
@@ -86,7 +86,7 @@
 }
 
 .lavender:hover {
-  background: rgba(225, 215, 250, 1);
+  background: rgba(237, 231, 255, 1);
 }
 
 .cream {
@@ -102,7 +102,7 @@
 }
 
 .pink {
-  background: rgba(242, 185, 224, 1);
+  background: rgba(244, 199, 227, 1);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   border: none;
@@ -110,7 +110,7 @@
 }
 
 .pink:hover {
-  background: rgba(250, 218, 242, 1);
+  background: rgba(252, 232, 245, 1);
 }
 
 .yellow {

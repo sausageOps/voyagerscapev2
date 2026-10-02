@@ -24,30 +24,7 @@ const HERO_WORDS: WordDef[] = [
       <>
         Voyagerscape
         <span className={styles.tmBadge} aria-label="trademark">
-          <svg
-            viewBox="0 0 20 20"
-            width="0.38em"
-            height="0.38em"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            aria-hidden="true"
-          >
-            <circle cx="10" cy="10" r="8.75" />
-            <text
-              x="10"
-              y="12.75"
-              textAnchor="middle"
-              fontSize="7.5"
-              fontFamily="var(--font-mono), monospace"
-              fontWeight="600"
-              fill="currentColor"
-              stroke="none"
-              letterSpacing="-0.3"
-            >
-              TM
-            </text>
-          </svg>
+          <span className={styles.tmMark}>™</span>
         </span>
       </>
     ),
