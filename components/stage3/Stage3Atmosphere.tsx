@@ -53,7 +53,7 @@ export default function Stage3Atmosphere() {
   if (!mounted) return null;
 
   return createPortal(
-    <div className={styles.root}>
+    <div className={styles.root} data-stage3-preview>
       <h1 className="vs-sr-only">Stage 3 atmosphere prototype</h1>
       <div className={styles.frame}>
         <AtmosphereField />

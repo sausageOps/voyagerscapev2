@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PreviewShellMask from "@/components/stage3/PreviewShellMask";
 import Stage3Atmosphere from "@/components/stage3/Stage3Atmosphere";
 
 /* =========================================================
@@ -19,5 +20,10 @@ export const metadata: Metadata = {
 };
 
 export default function Stage3AtmospherePage() {
-  return <Stage3Atmosphere />;
+  return (
+    <>
+      <PreviewShellMask />
+      <Stage3Atmosphere />
+    </>
+  );
 }
