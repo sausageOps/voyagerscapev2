@@ -11,7 +11,7 @@ export default function HomeCanvas({ children }: { children: ReactNode }) {
     if (!canvas) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const finePointer = window.matchMedia("(any-pointer: fine)");
     if (reducedMotion.matches || !finePointer.matches) return;
 
     const target = { x: 0, y: 0 };
@@ -21,13 +21,13 @@ export default function HomeCanvas({ children }: { children: ReactNode }) {
     const onMove = (event: PointerEvent) => {
       // Keep the response broad and atmospheric: the field moves a fraction
       // of the pointer distance rather than forming a cursor-sized light.
-      target.x = (event.clientX / window.innerWidth - 0.5) * 150;
-      target.y = (event.clientY / window.innerHeight - 0.5) * 110;
+      target.x = (event.clientX / window.innerWidth - 0.5) * 230;
+      target.y = (event.clientY / window.innerHeight - 0.5) * 170;
     };
 
     const tick = () => {
-      current.x += (target.x - current.x) * 0.028;
-      current.y += (target.y - current.y) * 0.028;
+      current.x += (target.x - current.x) * 0.16;
+      current.y += (target.y - current.y) * 0.16;
       const x = current.x.toFixed(2);
       const y = current.y.toFixed(2);
       canvas.style.setProperty("--pointer-x", `${x}px`);

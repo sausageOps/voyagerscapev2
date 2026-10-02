@@ -23,7 +23,7 @@
     radial-gradient(70% 90% at 15% 86%, rgba(245, 216, 184, .78), transparent 67%),
     linear-gradient(120deg, #f3eadc 0%, #e7e0e5 48%, #e4dded 100%);
   transform: scale(1.04) translate3d(var(--pointer-x), var(--pointer-y), 0);
-  animation: baseDrift 24s ease-in-out infinite alternate;
+  animation: baseDrift 12s ease-in-out infinite alternate;
   will-change: transform;
 }
 
@@ -37,7 +37,7 @@
     radial-gradient(66% 78% at 78% 12%, rgba(216, 204, 255, .66), transparent 64%),
     radial-gradient(58% 70% at 38% 42%, rgba(241, 184, 228, .52), transparent 66%);
   transform: translate3d(var(--pointer-x-soft), var(--pointer-y-soft), 0);
-  animation: lavenderDrift 18s ease-in-out infinite alternate;
+  animation: lavenderDrift 9s ease-in-out infinite alternate;
   will-change: transform;
 }
 
@@ -49,7 +49,7 @@
     radial-gradient(64% 76% at 82% 88%, rgba(190, 184, 190, .18), transparent 66%),
     radial-gradient(62% 72% at 5% 18%, rgba(255, 247, 235, .48), transparent 65%);
   transform: translate3d(var(--pointer-x-counter), var(--pointer-y-counter), 0);
-  animation: ashDrift 27s ease-in-out infinite alternate;
+  animation: ashDrift 14s ease-in-out infinite alternate;
   will-change: transform;
 }
 
@@ -79,6 +79,16 @@
     margin: 8px;
     border-radius: 16px;
   }
+
+  .atmosphere { animation-duration: 14s; }
+  .atmosphere::before { animation-duration: 10s; }
+  .atmosphere::after { animation-duration: 14s; }
+}
+
+@media (min-width: 768px) and (max-width: 1100px) and (any-pointer: coarse) {
+  .atmosphere { animation-duration: 9s; }
+  .atmosphere::before { animation-duration: 6s; }
+  .atmosphere::after { animation-duration: 10s; }
 }
 
 @media (prefers-reduced-motion: reduce) {
