@@ -38,12 +38,12 @@
 .field {
   position: absolute;
   display: block;
-  width: 112%;
-  height: 112%;
+  width: 150%;
+  height: 150%;
   border-radius: 9999px;
   pointer-events: none;
-  opacity: .16;
-  filter: blur(118px);
+  opacity: .24;
+  filter: blur(138px);
   will-change: transform;
 }
 
@@ -51,7 +51,7 @@
   top: -38%;
   left: 48%;
   background: #d8ccff;
-  opacity: .18;
+  opacity: .3;
   transform: translate3d(var(--field-strong-x), var(--field-strong-y), 0) scale(1.06);
   animation: lavenderDrift 16s ease-in-out infinite alternate;
 }
@@ -60,6 +60,8 @@
   top: 24%;
   left: -40%;
   background: #f1b8e4;
+  opacity: .22;
+  filter: blur(148px);
   transform: translate3d(var(--field-opposite-x), var(--field-opposite-y), 0) scale(1.08);
   animation: pinkDrift 21s ease-in-out infinite alternate;
 }
@@ -68,8 +70,8 @@
   top: -34%;
   left: 28%;
   background: #d9def5;
-  opacity: .13;
-  filter: blur(136px);
+  opacity: .22;
+  filter: blur(158px);
   transform: translate3d(var(--field-diagonal-x), var(--field-diagonal-y), 0) scale(1.1);
   animation: blueDrift 27s ease-in-out infinite alternate;
 }
@@ -78,8 +80,8 @@
   top: 42%;
   left: 8%;
   background: #f5d8b8;
-  opacity: .13;
-  filter: blur(142px);
+  opacity: .2;
+  filter: blur(158px);
   transform: translate3d(var(--field-soft-x), var(--field-soft-y), 0) scale(1.12);
   animation: creamDrift 31s ease-in-out infinite alternate;
 }
@@ -122,9 +124,9 @@
   }
 
   .field {
-    width: 125%;
-    height: 125%;
-    filter: blur(100px);
+    width: 150%;
+    height: 150%;
+    filter: blur(120px);
   }
 
   .lavender { animation-duration: 16s; }
