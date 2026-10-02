@@ -1,0 +1,63 @@
+.canvas {
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100svh - 32px);
+  margin: 16px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #e9e1d6;
+}
+
+.canvas::before {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  background:
+    radial-gradient(72% 95% at var(--mouse-x) var(--mouse-y), rgba(241, 184, 228, .46), transparent 58%),
+    radial-gradient(70% 85% at calc(100% - var(--mouse-x)) 12%, rgba(216, 204, 255, .54), transparent 60%),
+    radial-gradient(65% 85% at 8% 100%, rgba(245, 216, 184, .7), transparent 64%),
+    linear-gradient(120deg, #f3eadc 0%, #e7e0e5 48%, #e4dded 100%);
+  transform: scale(1.04);
+  animation: canvasDrift 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.canvas::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(85% 100% at 50% 45%, transparent 48%, rgba(63, 44, 66, .08) 100%);
+  mix-blend-mode: multiply;
+}
+
+@keyframes canvasDrift {
+  from { transform: scale(1.04) translate3d(-1%, -1%, 0); }
+  to { transform: scale(1.08) translate3d(1%, 1%, 0); }
+}
+
+/* Keep the existing homepage geometry; only its surface changes. */
+.canvas > * {
+  position: relative;
+  z-index: 1;
+}
+
+.canvas > header {
+  position: absolute;
+}
+
+@media (max-width: 767px) {
+  .canvas {
+    min-height: calc(100svh - 16px);
+    margin: 8px;
+    border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas::before { animation: none; }
+}

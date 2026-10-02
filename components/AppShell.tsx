@@ -12,6 +12,7 @@ import Cursor from "@/components/Cursor";
 import PageLoader from "@/components/PageLoader";
 import RouteTransition, { RouteTransitionProvider } from "@/components/RouteTransition";
 import SiteFooter from "@/components/SiteFooter";
+import HomeCanvas from "@/components/HomeCanvas";
 
 /**
  * Global frame. Every future route mounts inside this shell, so adding
@@ -23,8 +24,16 @@ import SiteFooter from "@/components/SiteFooter";
  * page-transition layer.
  */
 export default function AppShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const isHome = pathname === "/";
+  const isHome = usePathname() === "/";
+  const content = (
+    <>
+      <SiteHeader />
+      <MobileMenu />
+      <RouteTransition>
+        <main id="main">{children}</main>
+      </RouteTransition>
+    </>
+  );
 
   return (
     <UIProvider>
@@ -33,12 +42,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <RouteTransitionProvider>
             <a className="vs-skip" href="#main">Skip to content</a>
             <PageLoader />
-            {!isHome && <SiteHeader />}
-            {!isHome && <MobileMenu />}
-            <RouteTransition>
-              <main id="main">{children}</main>
-            </RouteTransition>
-            {!isHome && <SiteFooter />}
+            {isHome ? <HomeCanvas>{content}</HomeCanvas> : content}
+            <SiteFooter />
             <CommandTerminal />
             <Cursor />
           </RouteTransitionProvider>
