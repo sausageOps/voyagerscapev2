@@ -13,11 +13,13 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { gsap, prefersReducedMotion } from "@/lib/motion";
 import { ROUTES } from "@/lib/routes";
+import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { useUI } from "@/lib/ui-store";
+import TileCurtain from "./TileCurtain";
 import styles from "./RouteTransition.module.css";
 
 /**
- * GLOBAL PAGE TRANSITION SYSTEM — COORDINATED MASK WIPE
+ * GLOBAL PAGE TRANSITION SYSTEM — VERTICAL TILE CURTAIN
  * =====================================================
  *
  * One route-agnostic transition layer mounted once in AppShell:
@@ -30,19 +32,22 @@ import styles from "./RouteTransition.module.css";
  *     <CommandTerminal />            ← uses useRouteTransition().navigate()
  *   </RouteTransitionProvider>
  *
- * The transition is a quick coordinated mask wipe, not a loading screen:
- * a repeating stripe mask sweeps shut over the current page as ONE
- * surface (~170ms), the destination PAGE NAME (Pixelify Sans, title
- * case, nothing else) settles in the middle while the route commits
- * underneath, then the same mask lifts away to reveal the new page
- * (~180ms). ~450ms end to end. The startup PageLoader is a separate
- * system and is untouched.
+ * The transition is the same Vertical Tiles language as the startup
+ * loader: a curtain of cream tiles (TileCurtain, var(--vs-bg)) sweeps
+ * down over the current page from the top, staggered CENTER-OUT (middle
+ * tiles first, outer tiles following), the destination PAGE NAME
+ * (Pixelify Sans, title case, nothing else — ink on the cream) settles
+ * in the middle while the route commits underneath, then the same tiles
+ * continue downward off the screen to reveal the new page — one
+ * continuous top-to-bottom flow. The startup PageLoader is a separate
+ * system and is untouched apart from sharing the TileCurtain primitive
+ * and the scroll lock.
  *
  * The same controller serves desktop nav, the mobile menu and any future
  * surface: mobile-menu taps are vetted by the same capture handler, the
  * layer stacks above the menu overlay (104 > 100), and an open menu is
  * asked to close the moment a transition begins — so menu close and the
- * mask sweep read as one continuous navigation on a phone.
+ * tile sweep read as one continuous navigation on a phone.
  *
  * How internal navigation is detected (unchanged architecture):
  *   • Link / anchor clicks — one capture-phase listener on `document` vets
@@ -59,7 +64,9 @@ import styles from "./RouteTransition.module.css";
  * Race safety: a single state machine (idle → covering → covered →
  * revealing → idle). While non-idle, further navigations are ignored and
  * the layer swallows pointer events, so double-clicks can't double-fire
- * and layers can never stack.
+ * and layers can never stack. Scrolling is locked while non-idle
+ * (ref-counted body lock, shared with the startup loader) and restored
+ * the moment the machine returns to idle — including every failsafe path.
  *
  * Opt-out per link: `data-transition="off"`.
  */
@@ -89,17 +96,35 @@ export function useRouteTransition(): RouteTransitionContextValue {
   return ctx;
 }
 
-/* ---- Timing budget: ~440ms end to end ---- */
+/* ---- Timing budget ----------------------------------------------------
+   Cover: tiles drop in from the top, center-out (~0.5s to full coverage).
+   Reveal: the same tiles continue downward off screen (~0.8s). End to end
+   ≈ 1.3s on desktop — the cinematic Vertical Tiles language the brief
+   asks for, faster on mobile where the tile count (and so the stagger
+   tail) is small. */
 /** Reveal never begins before this — the name's brief on-screen window. */
-const REVEAL_NOT_BEFORE_MS = 255;
-/** Failsafe: never sit in a transition if a commit never arrives. */
-const COVERED_TIMEOUT_MS = 1600;
+const REVEAL_NOT_BEFORE_MS = 460;
+/** Failsafe: never sit in a transition if a commit never arrives. The
+    tile curtain covers more slowly than the old mask wipe did, so the
+    commit window is nudged up with it. */
+const COVERED_TIMEOUT_MS = 2000;
+/** Extra hold for one re-issued push before the curtain gives up. */
+const COVERED_RETRY_WINDOW_MS = 1500;
 
-/* ---- Mask shape: a repeating stripe surface, animated as ONE mask ----
-   A handful of full-height bars scale in with a tight stagger — a few
-   DOM nodes, transform-only, reads as a single sweeping cover. */
-const BARS_DESKTOP = 10;
-const BARS_MOBILE = 6;
+/* ---- Tile motion (per tile; the stagger is center-out) ---- */
+const TILE_COVER_DURATION = 0.28;
+const TILE_COVER_STAGGER = 0.024;
+const TILE_REVEAL_DURATION = 0.5;
+const TILE_REVEAL_STAGGER = 0.034;
+
+/** Scroll-lock key for this system (ref-counted in lib/scroll-lock). */
+const SCROLL_LOCK_KEY = "route-transition";
+
+/** Full-coverage moment for a curtain of `count` tiles (center-out). */
+function coverEndFor(count: number): number {
+  /* Outermost tile delay = its distance from the center × stagger. */
+  return TILE_COVER_DURATION + Math.ceil((count - 1) / 2) * TILE_COVER_STAGGER;
+}
 
 /** Pathname of a (possibly relative) href, for same-page comparisons. */
 function toPathname(href: string): string {
@@ -170,7 +195,6 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const { mobileMenuOpen, setMobileMenuOpen } = useUI();
 
   const [phase, setPhase] = useState<Phase>("idle");
-  const [barCount, setBarCount] = useState(0);
   const [destName, setDestName] = useState<string | null>(null);
   const [reduced, setReduced] = useState(false);
 
@@ -179,6 +203,8 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const pathnameRef = useRef(pathname);
   const phaseRef = useRef<Phase>(phase);
   const pendingRef = useRef<PendingNav | null>(null);
+  /** True once the covered watchdog has re-issued a dropped push. */
+  const pushRetriedRef = useRef(false);
   const coverStartedAtRef = useRef(0);
   const mobileMenuOpenRef = useRef(mobileMenuOpen);
   mobileMenuOpenRef.current = mobileMenuOpen;
@@ -199,6 +225,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const begin = useCallback(
     (href: string, kind: NavKind) => {
       coverStartedAtRef.current = performance.now();
+      pushRetriedRef.current = false;
       pendingRef.current = { href, kind };
       // Warm the payload NOW — the commit at full coverage (~180ms) then
       // lands with the page ready instead of starting the fetch cold.
@@ -209,9 +236,8 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       }
       setDestName(resolveDestinationName(href));
       setReduced(prefersReducedMotion());
-      setBarCount(window.innerWidth <= 768 ? BARS_MOBILE : BARS_DESKTOP);
       // If the mobile menu is open, its own close animation starts NOW —
-      // alongside the mask sweep — instead of only after the commit.
+      // alongside the tile sweep — instead of only after the commit.
       if (mobileMenuOpenRef.current) setMobileMenuOpenRef.current(false);
       if (phaseRef.current === "idle") setPhaseBoth("covering");
     },
@@ -317,7 +343,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     if (pending.kind === "push") {
       try {
         routerRef.current.push(pending.href);
-      } catch {
+      } catch (e) {
         pendingRef.current = null;
         setPhaseBoth("revealing");
         return;
@@ -328,22 +354,21 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
 
   /* ------------------------------------------------------------------
      4) COVERED CONTINUITY — while the commit lands, never freeze the
-     cover timeline mid-air (the phase switch kills it). Complete the
-     sweep and the name rise cleanly, then hold. The reveal fires the
-     moment the pathname actually commits — no animation deadline, no
-     arbitrary wait.
+     curtain timeline mid-air (the phase switch kills it). Hold the tiles
+     at full coverage cleanly; the reveal fires the moment the pathname
+     actually commits — no animation deadline, no arbitrary wait.
      ------------------------------------------------------------------ */
   useEffect(() => {
     if (phase !== "covered") return;
     const root = layerRef.current;
     if (!root || prefersReducedMotion()) return;
-    const bars = gsap.utils.toArray<HTMLElement>(root.querySelectorAll("[data-bar]"));
+    const tiles = gsap.utils.toArray<HTMLElement>(root.querySelectorAll("[data-tile]"));
     const name = nameRef.current;
     const chars = name
       ? gsap.utils.toArray<HTMLElement>(name.querySelectorAll("[data-char]"))
       : [];
-    if (bars.length > 0) {
-      gsap.to(bars, { scaleY: 1, duration: 0.05, ease: "power1.out", overwrite: "auto" });
+    if (tiles.length > 0) {
+      gsap.to(tiles, { yPercent: 0, duration: 0.05, ease: "power1.out", overwrite: "auto" });
     }
     if (chars.length > 0) {
       gsap.to(chars, {
@@ -354,25 +379,80 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         overwrite: "auto",
       });
     }
-  }, [phase, barCount]);
+  }, [phase]);
 
   /* ------------------------------------------------------------------
-     4b) FAILSAFE — if a commit never lands, peel the mask back open.
+     4b) WALL-CLOCK WATCHDOG — GSAP advances on requestAnimationFrame,
+     which a frozen frame pipeline (background tab, occluded window)
+     can stop entirely. Every phase therefore has a hard wall-clock
+     deadline after which the state machine advances WITHOUT the
+     animation: covering commits whatever is pending and reveals,
+     covered reveals, revealing returns to idle. A transition can stall
+     visually in that degenerate case, but it can never hang.
      ------------------------------------------------------------------ */
   useEffect(() => {
-    if (phase !== "covered") return;
+    if (phase === "idle") return undefined;
+
+    if (phase === "covering") {
+      // The cover never completed (frozen frame pipeline): commit now.
+      const timer = window.setTimeout(() => {
+        if (phaseRef.current !== "covering") return;
+        const pending = pendingRef.current;
+        pendingRef.current = null;
+        if (pending?.kind === "push") {
+          try {
+            routerRef.current.push(pending.href);
+          } catch {
+            /* fall through to the reveal */
+          }
+        }
+        setPhaseBoth("revealing");
+      }, COVERED_TIMEOUT_MS);
+      return () => window.clearTimeout(timer);
+    }
+
+    if (phase === "covered") {
+      // The commit hasn't landed. Next's app router can silently drop a
+      // push that races its prefetch, so the first deadline RE-ISSUES the
+      // push once (idempotent if the original lands late) and holds the
+      // curtain a little longer; the second deadline reveals regardless.
+      const retryTimer = window.setTimeout(() => {
+        if (phaseRef.current !== "covered") return;
+        const pending = pendingRef.current;
+        if (pending?.kind === "push" && !pushRetriedRef.current) {
+          pushRetriedRef.current = true;
+          try {
+            routerRef.current.push(pending.href);
+          } catch {
+            /* the final deadline below still reveals */
+          }
+          return; // stay covered — the retry gets its own window
+        }
+        pendingRef.current = null;
+        setPhaseBoth("revealing");
+      }, COVERED_TIMEOUT_MS);
+      const finalTimer = window.setTimeout(() => {
+        if (phaseRef.current !== "covered") return;
+        pendingRef.current = null;
+        setPhaseBoth("revealing");
+      }, COVERED_TIMEOUT_MS + COVERED_RETRY_WINDOW_MS);
+      return () => {
+        window.clearTimeout(retryTimer);
+        window.clearTimeout(finalTimer);
+      };
+    }
+
+    // revealing: never hang on a frozen reveal animation.
     const timer = window.setTimeout(() => {
-      if (!pendingRef.current) return;
-      pendingRef.current = null;
-      setPhaseBoth((p) => (p === "covered" ? "revealing" : p));
-    }, COVERED_TIMEOUT_MS);
+      if (phaseRef.current === "revealing") setPhaseBoth("idle");
+    }, 2600);
     return () => window.clearTimeout(timer);
   }, [phase, setPhaseBoth]);
 
   /* ------------------------------------------------------------------
-     5) COVER — the repeating stripe mask sweeps shut as ONE surface
-     (~170ms); the name settles as it closes; the route commits at full
-     coverage.
+     5) COVER — the tile curtain drops in from the top, CENTER-OUT
+     (middle tiles first, outer tiles following); the name settles as
+     it closes; the route commits at full coverage.
      ------------------------------------------------------------------ */
   useEffect(() => {
     if (phase !== "covering") return;
@@ -389,60 +469,52 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    const bars = gsap.utils.toArray<HTMLElement>(root.querySelectorAll("[data-bar]"));
+    const tiles = gsap.utils.toArray<HTMLElement>(root.querySelectorAll("[data-tile]"));
     const name = nameRef.current;
     const chars = name
       ? gsap.utils.toArray<HTMLElement>(name.querySelectorAll("[data-char]"))
       : [];
-    const edge = root.querySelector<HTMLElement>("[data-edge]");
-    if (bars.length === 0) return;
+    if (tiles.length === 0) return;
 
     gsap.set(root, { autoAlpha: 1 });
-    gsap.set(bars, { scaleY: 0, transformOrigin: "center top" });
+    gsap.set(tiles, { yPercent: -100 });
     if (name) gsap.set(name, { autoAlpha: 1, y: 0 });
     if (chars.length > 0) gsap.set(chars, { yPercent: 110 });
-    if (edge) gsap.set(edge, { x: 0 });
 
-    const inDur = 0.11 + (bars.length - 1) * 0.008; // full-coverage moment
+    const coverEnd = coverEndFor(tiles.length);
 
     const tl = gsap.timeline();
-    // 1. One coordinated sweep: bars drop in left→right as a soft wave,
-    //    with a thin brand-pink edge riding the leading line.
-    tl.to(bars, {
-      scaleY: 1,
-      duration: 0.11,
-      ease: "power2.inOut",
-      stagger: { each: 0.008, from: "start" },
+    // 1. The curtain arrives: tiles drop in from above, staggered from
+    //    the center outward — transform-only, sine.inOut (the Animata
+    //    ease), no springs, no scale.
+    tl.to(tiles, {
+      yPercent: 0,
+      duration: TILE_COVER_DURATION,
+      ease: "sine.inOut",
+      stagger: { each: TILE_COVER_STAGGER, from: "center" },
     });
-    if (edge) {
-      tl.fromTo(
-        edge,
-        { x: 0 },
-        { x: window.innerWidth + 6, duration: inDur, ease: "power1.inOut" },
-        0,
-      );
-    }
-    // 2. Full coverage → the route commits underneath the closed mask.
-    tl.call(commitPending, [], inDur - 0.005);
+    // 2. Full coverage → the route commits underneath the closed curtain.
+    tl.call(commitPending, [], Math.max(0, coverEnd - 0.005));
     // 3. The destination name rises in, character by character, through a
-    //    masked reveal — a beat before the mask reopens.
+    //    masked reveal — a beat before the curtain continues downward.
     if (chars.length > 0) {
       const gap = Math.min(0.014, 0.08 / chars.length);
       tl.to(
         chars,
         { yPercent: 0, duration: 0.13, ease: "power3.out", stagger: gap },
-        inDur - 0.1,
+        Math.max(0, coverEnd - 0.12),
       );
     }
 
     return () => {
       tl.kill();
     };
-  }, [phase, barCount, commitPending]);
+  }, [phase, commitPending]);
 
   /* ------------------------------------------------------------------
-     6) REVEAL — the name lifts away and the same mask peels back up off
-     the new page (~180ms), same coordinated surface language.
+     6) REVEAL — the name lifts away and the curtain continues downward,
+     off the bottom of the screen, CENTER-OUT again — the same continuous
+     top-to-bottom flow the startup loader exits with.
      ------------------------------------------------------------------ */
   useEffect(() => {
     if (phase !== "revealing") return;
@@ -460,32 +532,20 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    const bars = gsap.utils.toArray<HTMLElement>(root.querySelectorAll("[data-bar]"));
+    const tiles = gsap.utils.toArray<HTMLElement>(root.querySelectorAll("[data-tile]"));
     const name = nameRef.current;
-    const edge = root.querySelector<HTMLElement>("[data-edge]");
-    const outDur = 0.1 + (bars.length - 1) * 0.008;
 
     if (name) tl.to(name, { autoAlpha: 0, y: -6, duration: 0.07, ease: "power2.in" }, 0);
-    if (bars.length > 0) {
-      tl.set(bars, { transformOrigin: "center bottom" }, 0);
+    if (tiles.length > 0) {
       tl.to(
-        bars,
+        tiles,
         {
-          scaleY: 0,
-          duration: 0.1,
-          ease: "power2.inOut",
-          stagger: { each: 0.008, from: "end" },
+          yPercent: 100,
+          duration: TILE_REVEAL_DURATION,
+          ease: "sine.inOut",
+          stagger: { each: TILE_REVEAL_STAGGER, from: "center" },
+          overwrite: "auto", // a watchdog-reveal may interrupt mid-flight
         },
-        0.015,
-      );
-    }
-    // The pink edge rides back across right→left with the lifting surface.
-    if (edge) {
-      tl.set(edge, { left: "auto", right: "-2px", x: 0 }, 0);
-      tl.fromTo(
-        edge,
-        { x: 0 },
-        { x: -(window.innerWidth + 6), duration: outDur, ease: "power1.inOut" },
         0.015,
       );
     }
@@ -493,7 +553,20 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     return () => {
       tl.kill();
     };
-  }, [phase, barCount, setPhaseBoth]);
+  }, [phase, setPhaseBoth]);
+
+  /* ------------------------------------------------------------------
+     7) SCROLL LOCK — while any transition phase is active the page
+     beneath is inert: the layer swallows pointer events (below) and the
+     body is locked (ref-counted, shared with the startup loader). Every
+     path back to idle — including the failsafes and unmount — releases.
+     ------------------------------------------------------------------ */
+  useEffect(() => {
+    if (phase !== "idle") lockScroll(SCROLL_LOCK_KEY);
+    else unlockScroll(SCROLL_LOCK_KEY);
+  }, [phase]);
+
+  useEffect(() => () => unlockScroll(SCROLL_LOCK_KEY), []);
 
   const contextValue = useMemo<RouteTransitionContextValue>(
     () => ({ navigate, transitioning: phase !== "idle", phase }),
@@ -505,14 +578,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       {children}
       {phase !== "idle" ? (
         <div ref={layerRef} className={styles.root} aria-hidden="true" data-transition-layer>
-          {!reduced && barCount > 0 ? (
-            <div className={styles.mask}>
-              {Array.from({ length: barCount }, (_, i) => (
-                <span key={i} data-bar className={styles.bar} />
-              ))}
-            </div>
-          ) : null}
-          {!reduced && barCount > 0 ? <span data-edge className={styles.edge} /> : null}
+          {!reduced ? <TileCurtain /> : null}
           {!reduced && destName ? (
             <span ref={nameRef} className={styles.name} data-name>
               {destName.split("").map((ch, i) => (

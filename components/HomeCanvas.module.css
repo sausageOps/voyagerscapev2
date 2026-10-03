@@ -88,12 +88,14 @@
   transform: translate3d(var(--field-soft-x), var(--field-soft-y), 0);
 }
 
-/* --- Mesh Gradient atmosphere (WebGPU) ------------------------------------
+/* --- Pattern Waves atmosphere (WebGL2 / OGL) --------------------------------
    Mounted by HomeAtmosphere above the static fields, inside .atmosphere,
    so it inherits the frame's clip (overflow hidden + radius) and stays
-   below the page content (z-index relationships unchanged). Fully
-   transparent until the shader's first frame is on screen, then faded in
-   over the fields so the renderer swap never pops. */
+   below the page content (z-index relationships unchanged). The canvas is
+   transparent wherever no marks are drawn: the pastel fields remain the
+   atmosphere's colour base and its no-WebGL fallback, and Pattern Waves
+   introduces its marks with the component's own intro (centre-out fade,
+   surface rise) in place of the old shader crossfade. */
 
 .shader {
   position: absolute;
@@ -102,12 +104,6 @@
   overflow: hidden;
   border-radius: inherit;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 1100ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.shaderReady {
-  opacity: 1;
 }
 
 /* The atmosphere is decorative: neither the host wrapper nor the canvas
@@ -152,9 +148,7 @@
     transition: none;
   }
 
-  /* Reduced motion: ShaderCanvas holds a still frame; the crossfade into it
-     is instant rather than animated. */
-  .shader {
-    transition: none;
-  }
+  /* Reduced motion: Pattern Waves freezes the surface itself (time stops
+     advancing inside the component and the cursor ripples are disabled),
+     holding a single still frame over the static fields. */
 }

@@ -1,48 +1,65 @@
+/* =========================================================
+   STARTUP LOADER — Voyagerscape shimmer intro
+   The surface is TileCurtain (cream tiles, var(--vs-bg)); this
+   layer's only content is the centered "Voyagerscape" wordmark
+   (Pixelify Sans, the existing display role). Characters rest at
+   --vs-ink-soft and the GSAP wave ripples them to --vs-ink with a
+   tiny 3D lift, center-out. A pure-CSS failsafe guarantees the
+   curtain can never permanently cover the site.
+   ========================================================= */
+
 .root {
   position: fixed;
   inset: 0;
   z-index: var(--z-loader);
   display: grid;
   place-items: center;
-  background: var(--vs-bg);
-  will-change: transform;
+  /* The tiles are the surface — the root itself adds no colour. */
+  background: transparent;
+  /* CSS-only failsafe: if scripts never run (or die before the exit),
+     the curtain removes itself after 6s — visibility, so no reflow.
+     Normal loads unmount the loader long before this fires. */
+  animation: vs-loader-failsafe 0.01s 6s forwards;
 }
 
-.inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 0 24px;
-  width: min(360px, 82vw);
+@keyframes vs-loader-failsafe {
+  to {
+    visibility: hidden;
+  }
 }
 
+/* The wordmark — Pixelify Sans on the cream, centered by the root's
+   grid, independent of the page beneath. Base colour is the soft ink;
+   the wave brightens each character to full ink as it passes. */
 .word {
+  position: relative;
+  padding: 0 24px;
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 4.4vw, 2.2rem);
+  font-size: clamp(1.6rem, 4.8vw, 2.4rem);
   font-weight: 400;
   letter-spacing: -0.04em;
+  line-height: 1.2;
+  color: var(--vs-ink-soft);
+  /* Gives the wave's tiny rotateY/z lift its depth. */
+  perspective: 700px;
+  will-change: transform, opacity;
 }
 
-.meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  color: var(--vs-ink-faint);
+.chars {
+  display: inline;
+  white-space: nowrap;
 }
 
-.track {
-  flex: 1 1 auto;
-  height: 1px;
-  background: var(--vs-line);
-  overflow: hidden;
+/* Each character is its own inline-block so GSAP can translate, scale,
+   rotate and recolour it independently; letter-spacing between the
+   atomic inline boxes keeps the display tracking intact. */
+.char {
+  display: inline-block;
+  transform-origin: 50% 50%;
+  transform-style: preserve-3d;
+  will-change: transform, color;
 }
 
-.fill {
-  display: block;
-  height: 100%;
-  background: var(--vs-ink);
-  transform-origin: 0 50%;
-  transition: transform 0.4s var(--e-out);
-}
+/* Reduced motion: the failsafe animation above is a visibility toggle,
+   not motion, so it stays; the wave itself is skipped in JS (the word
+   renders as a still, fully-ink wordmark). */
