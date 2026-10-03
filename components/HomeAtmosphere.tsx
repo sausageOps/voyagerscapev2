@@ -1,104 +1,114 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { ShaderCanvas } from "shadertown/react";
-import type { RendererStatus } from "shadertown";
+import { Component, type ReactNode } from "react";
+import PatternWaves from "./PatternWaves";
 import styles from "./HomeCanvas.module.css";
 
 /**
- * HOMEPAGE ATMOSPHERE — ShaderTown "Mesh Gradient" (WebGPU)
- * =========================================================
+ * HOMEPAGE ATMOSPHERE — React Bits "Pattern Waves" (WebGL2 / OGL)
+ * ==============================================================
  *
  * The homepage's living background, mounted inside `.atmosphere` in
- * HomeCanvas. It replaces the old pointer/sine-driven blurred DOM fields as
- * the *renderer*. The four static field spans stay in the markup directly
- * beneath this layer: they are the base the shader covers when it is ready,
- * and the whole atmosphere when it is not (no WebGPU, pipeline error, or
- * JavaScript disabled) — so the no-WebGPU fallback is the existing soft
+ * HomeCanvas. It is a renderer swap and nothing more: the ShaderTown Mesh
+ * Gradient is gone, and in its place the React Bits Pattern Waves surface
+ * (vendored verbatim in ./PatternWaves.tsx) prints its procedural wave
+ * field inside the same layer.
+ *
+ * Current look — the React Bits "lines" preset, exactly as configured in
+ * the demo (reactbits.dev/backgrounds/pattern-waves?preset=lines&…):
+ * flowing contour LINES tracing a RIPPLE surface — rings travelling in
+ * from off screen — printed in near-black ink (#18181b, the demo's mark
+ * colour) over an opaque base of #fffdf9, the frame's warm-white paper
+ * (BLACK + #FFFDF9). Every value not passed below is deliberately left
+ * at its preset/component default (light 0°, contrast 1.2, scale 1,
+ * opacity 1, fade edges/0.5, cursor 50px/0.6, intro on) so the frame
+ * shows the exact reference look.
+ *
+ * NOTE: this #fffdf9 is intentionally NOT the global --vs-bg cream
+ * (#f5f0e8) — that token is shared with the tile curtain (loader +
+ * route transitions), the mobile menu, the outer page background and
+ * several text colours, none of which may shift. The frame's paper is
+ * this layer's own value.
+ *
+ * The four static field spans stay in the markup directly beneath this
+ * layer. With the opaque cream base they are no longer the visible
+ * colour — they are the FALLBACK: the whole atmosphere when the canvas
+ * cannot run (no WebGL2, OGL/WebGL failure — see AtmosphereBoundary — or
+ * JavaScript disabled), so a renderer failure lands on the existing soft
  * static atmosphere, never a blank rectangle.
  *
- * Palette — the three colours are the existing atmosphere's rendered blooms
- * (each field composited over the cream base at its own CSS opacity), so the
- * shader surfaces the palette the page already had:
+ * Motion — the surface moves continuously under Pattern Waves' own
+ * requestAnimationFrame loop, which sleeps while the frame is off screen
+ * and wakes for resize/settings changes; no second animation system is
+ * added here and no React state changes per frame (settings flow through
+ * a ref). The cursor may stir a wake of ripples: the listeners are
+ * window-level and passive, nothing is intercepted, and the canvas host
+ * is pointer-events: none (HomeCanvas.module.css) so the CRT keeps the
+ * page's pointer interaction, exactly as before.
  *
- *   colorA  #e0e4da  pale sage wash    — worn by two of the four spots
- *   colorB  #dcd2f0  pale lavender wash
- *   colorC  #f2dcc0  subtle warm peach wash
+ * Entrance — the component's built-in intro fades the marks in from the
+ * centre and raises the surface over ~2s on a solid cream canvas, so the
+ * layer never pops and needs no readiness plumbing.
  *
- * Mesh Gradient blends its spots in OKLab, so every blend is a perceptual
- * mix of these three: pale in, pale out — the surface can never become more
- * saturated than its inputs. The cream/sage/lavender/peach balance matches
- * the static baseline (mean lightness ≈ 0.90, chroma ≤ 0.04).
- *
- * Motion — four spots drift on slow Lissajous orbits (roughly a minute to
- * a minute and a half per component cycle, so no perceptible loop) over a
- * gentle simplex bend and a central swirl that decays toward the frame
- * edges. The atmosphere is autonomous: `trackPointer` stays off, and the
- * CRT keeps the page's pointer interaction untouched.
- *
- * Quality — Mesh Gradient is a light shader, but this is a fullscreen
- * surface, so the pixel ratio is capped at 1.5 and the frame rate at 30
- * (invisible on a slow drift). The tier is pinned to `high` deliberately:
- * pinning skips the runtime's auto-tier device probing, which would
- * otherwise fetch benchmark tables from a CDN — this keeps the atmosphere
- * fully self-hosted. ShaderTown owns the render loop; nothing here adds a
- * second one, and `play="visible"` stops it entirely off screen.
- *
- * Reduced motion — ShaderCanvas reads `prefers-reduced-motion` itself and
- * holds a single still frame rather than animating; the CSS in
- * HomeCanvas.module.css additionally disables this layer's fade-in under
- * that preference.
+ * Reduced motion — Pattern Waves reads `prefers-reduced-motion` itself:
+ * surface time stops (a single still frame is drawn) and the cursor
+ * ripples are disabled. The CSS in HomeCanvas.module.css additionally
+ * keeps the field layer static under the same preference.
  */
 
-/** Palette and motion, tuned against the existing field colours (see above). */
-const MESH_PARAMS = {
-  colorA: "#e0e4da",
-  colorB: "#dcd2f0",
-  colorC: "#f2dcc0",
-  speed: 0.75,
-  scale: 1,
-  intensity: 1,
-  vibrancy: 1,
-  grain: 0.02,
-  vignette: 0,
-  warp: 0.55,
-  swirl: 0.55,
-} as const;
-
-const MESH_QUALITY = {
-  dpr: [1, 1.5] as const,
-  fps: 30,
-  tier: "high",
+/**
+ * The exact React Bits "lines" preset configuration. Explicit values the
+ * preset already carries are passed anyway (per the reference URL) so the
+ * intent stays legible if the preset base ever drifts upstream.
+ */
+const PATTERN_WAVES_PROPS = {
+  /** The contour-line look: line marks, 12px spacing, markSize 0.4. */
+  preset: "lines",
+  pattern: "line",
+  spacing: 12,
+  markSize: 0.4,
+  /** Ripple: rings travelling in from off screen. */
+  wave: "ripple",
+  /** The demo's near-black mark colour — visibly darker ink on the cream. */
+  color: "#18181b",
+  /** Surface height and glint strength. */
+  depth: 0.9,
+  shine: 0.6,
+  /** Travel direction, 30° off the preset's 20°. */
+  direction: 30,
+  /** Slow drift. */
+  speed: 0.3,
+  /** The frame's warm-white paper base — BLACK + #FFFDF9 (see header). */
+  backgroundColor: "#fffdf9",
 } as const;
 
 /**
- * `pending` until the renderer reports itself, `ready` once the first frame
- * is on screen (drives the fade-in), `failed` when WebGPU is missing or the
- * pipeline errored — the layer unmounts and the static fields remain.
+ * WebGL/OGL failures (context creation, shader compile, extension probe)
+ * must never take the homepage down: this boundary catches them, drops
+ * the canvas layer, and leaves the static field washes as the atmosphere
+ * — the same pale fallback the no-WebGL2 path already lands on.
  */
-type AtmosphereState = "pending" | "ready" | "failed";
+class AtmosphereBoundary extends Component<
+  { children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 export default function HomeAtmosphere() {
-  const [state, setState] = useState<AtmosphereState>("pending");
-
-  const onStatusChange = useCallback((status: RendererStatus) => {
-    if (status === "ready") setState("ready");
-    else if (status === "unsupported" || status === "error") setState("failed");
-  }, []);
-
-  if (state === "failed") return null;
-
   return (
-    <div className={state === "ready" ? `${styles.shader} ${styles.shaderReady}` : styles.shader}>
-      <ShaderCanvas
-        shader="mesh-gradient"
-        params={MESH_PARAMS}
-        quality={MESH_QUALITY}
-        play="visible"
-        badge={false}
-        className={styles.shaderHost}
-        onStatusChange={onStatusChange}
-      />
+    <div className={styles.shader}>
+      <AtmosphereBoundary>
+        <PatternWaves {...PATTERN_WAVES_PROPS} className={styles.shaderHost} />
+      </AtmosphereBoundary>
     </div>
   );
 }

@@ -10,15 +10,16 @@ import HomeAtmosphere from "./HomeAtmosphere";
  * The atmosphere stack, back to front:
  *
  *   .atmosphere        → cream base + the four static field washes. This is
- *                        the server-rendered markup, the no-WebGPU fallback,
- *                        and the layer the shader covers when it is ready.
- *   <HomeAtmosphere /> → the ShaderTown Mesh Gradient (WebGPU), faded in
- *                        over the fields once its first frame is drawn.
+ *                        the server-rendered markup, the no-WebGL fallback,
+ *                        and the colour base the wave print draws over.
+ *   <HomeAtmosphere /> → the React Bits Pattern Waves surface (WebGL2/OGL),
+ *                        its marks printed over the fields and introduced by
+ *                        the component's own intro (centre-out fade + rise).
  *
- * The atmosphere is autonomous: the old pointer-driven field animation was
- * removed with the renderer swap, and no pointer reactivity was added in its
- * place. The CRT remains the page's only pointer-reactive object, exactly as
- * before.
+ * The atmosphere's only pointer reactivity is the subtle wake of ripples
+ * Pattern Waves stirs (window-level, passive listeners; nothing is
+ * intercepted). The CRT remains the page's only interactive object,
+ * exactly as before.
  */
 export default function HomeCanvas({ children }: { children: ReactNode }) {
   return (
