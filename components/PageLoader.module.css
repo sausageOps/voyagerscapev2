@@ -1,29 +1,58 @@
+/* =========================================================
+   STARTUP LOADER — vertical tile curtain
+   The surface is TileCurtain (cream tiles, var(--vs-bg));
+   this layer only adds the centered Voyagerscape boot
+   identity in the existing type roles and existing colors:
+   ink text on cream (the identity's original palette —
+   Pixelify Sans wordmark, JetBrains Mono technical labels).
+   A pure-CSS failsafe guarantees the curtain can never
+   permanently cover the site.
+   ========================================================= */
+
 .root {
   position: fixed;
   inset: 0;
   z-index: var(--z-loader);
   display: grid;
   place-items: center;
-  background: var(--vs-bg);
-  will-change: transform;
+  /* The tiles are the surface — the root itself adds no colour. */
+  background: transparent;
+  /* CSS-only failsafe: if scripts never run (or die before the exit),
+     the curtain removes itself after 6s — visibility, so no reflow.
+     Normal loads unmount the loader long before this fires. */
+  animation: vs-loader-failsafe 0.01s 6s forwards;
+}
+
+@keyframes vs-loader-failsafe {
+  to {
+    visibility: hidden;
+  }
 }
 
 .inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   padding: 0 24px;
   width: min(360px, 82vw);
 }
 
+/* Top of the identity stack — the technical boot tag. */
+.tag {
+  color: var(--vs-ink-faint);
+}
+
+/* The wordmark — Pixelify Sans, the existing display role. */
 .word {
   font-family: var(--font-display);
   font-size: clamp(1.5rem, 4.4vw, 2.2rem);
   font-weight: 400;
   letter-spacing: -0.04em;
+  color: var(--vs-ink);
 }
 
+/* Bottom of the identity stack — the BOOT → LINK → READY stage row. */
 .meta {
   display: flex;
   align-items: center;
@@ -46,3 +75,6 @@
   transform-origin: 0 50%;
   transition: transform 0.4s var(--e-out);
 }
+
+/* Reduced motion: the failsafe animation is a visibility toggle, not
+   motion, so it stays; the tile exit itself is skipped in JS. */
