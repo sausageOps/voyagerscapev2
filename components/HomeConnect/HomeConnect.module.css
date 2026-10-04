@@ -31,17 +31,8 @@
 /* ---------------- Say hi (top-left) ---------------- */
 .sayHi {
   position: absolute;
-  /* Lower-right of the hero. Sits on the same bottom rhythm as .inner's
-     own bottom padding, so the row keeps the frame's spacing system. */
-  bottom: clamp(18px, 3.2svh, 38px);
-  /* Same escape as .controls: .inner is capped at 1440px and centred,
-     while the fixed header only ever applies var(--gutter), so `right: 0`
-     would sit inboard of the header's right edge on wide screens. Pull
-     the row back out by exactly what .inner's centring added so it lands
-     on the header's own gutter-from-viewport edge. --vs-scrollbar-w
-     corrects `100vw` to the real, scrollbar-excluded viewport width that
-     centring is computed from, so it lines up exactly, not "close". */
-  right: calc(-1 * max(0px, (100vw - var(--vs-scrollbar-w) - 1440px - 2 * var(--gutter)) / 2));
+  inset-inline-end: var(--frame-corner-space);
+  inset-block-end: var(--frame-corner-space);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -53,6 +44,11 @@
 }
 
 .sayHiText {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: clamp(4px, 0.08em, 6px);
+  background-color: #f7f5f0;
   font-family: var(--font-mono);
   font-size: var(--fs-micro);
   letter-spacing: var(--tracking-tight);
@@ -186,7 +182,7 @@
     flex-direction: column;
     align-items: center;
     gap: clamp(14px, 2svh, 28px);
-    min-height: auto;
+    min-height: calc(100svh - 32px);
     padding-bottom: clamp(36px, 6svh, 64px);
   }
   .composition {
@@ -202,19 +198,6 @@
     justify-items: center;
     align-items: start;
     width: 100%;
-  }
-  .sayHi {
-    position: relative;
-    top: auto;
-    left: auto;
-    bottom: auto;
-    right: auto;
-    /* Same intent as desktop — last in the column, hugging the right
-       edge — but in normal flow, so it can never overlap the type. */
-    align-self: flex-end;
-    order: 5;
-    margin-bottom: 0;
-    margin-top: clamp(10px, 2svh, 20px);
   }
   .stage {
     position: relative;
@@ -270,23 +253,13 @@
 /* Mobile (<768px) */
 @media (max-width: 767px) {
   .inner {
+    min-height: calc(100svh - 16px);
     padding-top: calc(48px + 16px);
     padding-bottom: 40px;
     gap: 12px;
   }
   .composition {
     --crt-compose-w: min(70vw, 34svh, 320px);
-  }
-  .sayHi {
-    position: relative;
-    top: auto;
-    left: auto;
-    bottom: auto;
-    right: auto;
-    align-self: flex-end;
-    order: 5;
-    margin-bottom: 0;
-    margin-top: 10px;
   }
   .stage {
     position: relative;
@@ -354,10 +327,5 @@
   .head {
     top: calc(48% + clamp(50px, 6vw, 82px));
     z-index: 3;
-  }
-  /* Short viewports: the headline's second row reaches further down, so
-     the hello row tucks closer to the edge rather than meeting it. */
-  .sayHi {
-    bottom: 12px;
   }
 }

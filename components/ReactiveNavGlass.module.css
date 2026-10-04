@@ -1,0 +1,44 @@
+.tracker {
+  --nav-light-x: 50%;
+  --nav-light-y: 50%;
+  --nav-light-opacity: 0;
+}
+
+/* Shared optical response for both the full nav and its compact mobile form. */
+.surface::before,
+.surface::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--nav-light-opacity);
+  transition: opacity 220ms ease-out;
+}
+
+.surface::before {
+  background: radial-gradient(
+    140px circle at var(--nav-light-x) var(--nav-light-y),
+    rgba(255, 255, 255, 0.24),
+    rgba(255, 255, 255, 0.08) 35%,
+    transparent 72%
+  );
+}
+
+.surface::after {
+  background: radial-gradient(
+    92px 7px at var(--nav-light-x) 1px,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.055) 42%,
+    transparent 76%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface::before,
+  .surface::after {
+    opacity: 0;
+    transition: none;
+  }
+}

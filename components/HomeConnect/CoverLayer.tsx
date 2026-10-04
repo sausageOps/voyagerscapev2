@@ -37,9 +37,9 @@
  * "Explore" and the whole second row are structurally excluded; no
  * coordinate, word list or index is hardcoded anywhere.
  *
- * Failure, reduced motion and touch are all no-ops: the layer either
- * never builds or never activates, and the hero is left exactly as it
- * was.
+ * Failure leaves the hero exactly as it was, and reduced motion keeps
+ * the existing static treatment. Touch/coarse devices still build the
+ * resting visual layer; only hover/proximity activation is omitted.
  */
 
 import { useEffect } from "react";
@@ -64,10 +64,11 @@ export default function CoverLayer({ targetRef }: CoverLayerProps) {
     const host = target?.parentElement;
     if (!target || !host) return undefined;
 
-    // Pointer-less devices get nothing at all: no layer, no listeners.
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-      return undefined;
-    }
+    // Pointer capability controls only hover/proximity interaction. The
+    // resting Cover visual is available on touch/coarse devices as well.
+    const hasPointerInteraction = window.matchMedia(
+      "(hover: hover) and (pointer: fine)",
+    ).matches;
 
     let below: HTMLDivElement | null = null;
     let above: HTMLDivElement | null = null;
@@ -337,10 +338,12 @@ export default function CoverLayer({ targetRef }: CoverLayerProps) {
 
     const onLeave = (): void => setActive(false);
 
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    window.addEventListener("blur", onLeave);
-    document.addEventListener("pointerleave", onLeave);
-    document.addEventListener("visibilitychange", onLeave);
+    if (hasPointerInteraction) {
+      window.addEventListener("pointermove", onPointerMove, { passive: true });
+      window.addEventListener("blur", onLeave);
+      document.addEventListener("pointerleave", onLeave);
+      document.addEventListener("visibilitychange", onLeave);
+    }
 
     // Layout changes while idle are picked up here; while active the
     // follow loop is already re-reading every frame.
@@ -372,10 +375,12 @@ export default function CoverLayer({ targetRef }: CoverLayerProps) {
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
       if (moveRaf) cancelAnimationFrame(moveRaf);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("blur", onLeave);
-      document.removeEventListener("pointerleave", onLeave);
-      document.removeEventListener("visibilitychange", onLeave);
+      if (hasPointerInteraction) {
+        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("blur", onLeave);
+        document.removeEventListener("pointerleave", onLeave);
+        document.removeEventListener("visibilitychange", onLeave);
+      }
       window.removeEventListener("resize", onResize);
       window.clearTimeout(settle);
       window.clearTimeout(settleLate);

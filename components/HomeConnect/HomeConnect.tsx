@@ -279,13 +279,13 @@ export default function HomeConnect() {
 
   return (
     <div className={styles.hero} ref={rootRef}>
-      <div className={styles.inner}>
-        {/* ---- Say Hi, top-left ---- */}
-        <div className={styles.sayHi} data-hero-fade>
-          <GreetingPill />
-          <span className={styles.sayHiText}>{GENERAL_EMAIL}</span>
-        </div>
+      {/* Frame-anchored greeting: independent of the inner hero column. */}
+      <div className={styles.sayHi} data-hero-fade>
+        <GreetingPill />
+        <span className={styles.sayHiText}>{GENERAL_EMAIL}</span>
+      </div>
 
+      <div className={styles.inner}>
         {/* ---- Floating control, top-right ---- */}
         <div className={styles.controls} data-hero-cta>
           {recorderOpen ? (

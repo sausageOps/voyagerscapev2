@@ -53,9 +53,17 @@ const initialState: UIState = {
 function reducer(state: UIState, action: Action): UIState {
   switch (action.type) {
     case "terminal":
-      return { ...state, terminalOpen: action.open };
+      return {
+        ...state,
+        terminalOpen: action.open,
+        mobileMenuOpen: action.open ? false : state.mobileMenuOpen,
+      };
     case "mobileMenu":
-      return { ...state, mobileMenuOpen: action.open };
+      return {
+        ...state,
+        mobileMenuOpen: action.open,
+        terminalOpen: action.open ? false : state.terminalOpen,
+      };
     case "visualMode":
       return { ...state, visualMode: action.mode };
     case "recorder":
