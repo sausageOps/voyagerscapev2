@@ -7,15 +7,21 @@
    ========================================================= */
 
 .pill {
-  /* Ground: the footer's "General Enquiries" tag, not a copy of it. The
-     footer composes the very same rule (see .metaLabelEnquiries in
-     SiteFooter.module.css), so the two chips are literally painted by one
-     declaration and can never drift apart. No background is declared here —
-     the composed class is the single source of truth for this yellow. */
-  composes: footLabelEnquiries from "../MobileMenu.module.css";
+  /* Ground: pure yellow, scoped to this chip alone. The global
+     --vs-yellow token (#F3E5B5) is deliberately NOT touched and NOT used
+     here — it reads as pale cream at this size. Everything else that uses
+     the token keeps it unchanged: the footer's "General Enquiries" tag,
+     the mobile menu label and the hero's lead pill all still paint the
+     token at 50% over the page ground. Declared rather than composed so
+     this value cannot lose to cross-file source order. */
+  background: #ffff00;
   display: inline-flex;
   align-items: center;
-  padding: 4px 11px;
+  /* Hugging the greeting: internal space only. Font, size, weight,
+     tracking, line-height, radius and the GSAP width animation are
+     untouched — the animated clip window sits inside this padding, so the
+     pill still sizes itself to HOLA, CIAO or こんにちは exactly as before. */
+  padding: 2px 6px;
   border-radius: clamp(4px, 0.08em, 6px);
   font-family: var(--font-mono);
   font-size: var(--fs-nano);

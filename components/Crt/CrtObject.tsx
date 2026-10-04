@@ -7,8 +7,8 @@ import { prefersReducedMotion } from "@/lib/motion";
 import CrtStatic from "./CrtStatic";
 
 /**
- * HERO OBJECT — renderer selector
- * ===============================
+ * CRT OBJECT — renderer selector
+ * ==============================
  *
  * Decides between the WebGL monitor and the static SVG monitor, and is the
  * only place that decision is made.
@@ -17,7 +17,7 @@ import CrtStatic from "./CrtStatic";
  * downloads three.js at all — the chunk is requested from inside the render
  * path, not at module scope.
  *
- * `components/HomeConnect/CrtStatic.tsx` is the production fallback. It is
+ * `components/Crt/CrtStatic.tsx` is the production fallback. It is
  * never removed: it covers no-WebGL, reduced motion, data saver, very
  * low-end hardware, the server render, and runtime context loss. It is
  * built to the same proportions and the same box as the 3D object, so the
@@ -30,7 +30,7 @@ const Crt3D = dynamic(() => import("./Crt3D"), {
   loading: () => null,
 });
 
-export interface HeroObjectProps {
+export interface CrtObjectProps {
   recordingState: RecordingState;
   playbackState: AudioPlaybackState;
   level: number;
@@ -79,7 +79,7 @@ function canRun3D(): boolean {
   return hasWebGL();
 }
 
-export default function HeroObject(props: HeroObjectProps) {
+export default function CrtObject(props: CrtObjectProps) {
   /* Always false on the first client render so the markup matches the SVG the
      server produced; the upgrade happens in an effect, after hydration. */
   const [use3D, setUse3D] = useState(false);
