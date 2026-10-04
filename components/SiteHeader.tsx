@@ -65,11 +65,7 @@ export default function SiteHeader() {
       gsap.killTweensOf(header);
 
       if (reduced || immediate) {
-        gsap.set(header, {
-          yPercent: 0,
-          y: 0,
-          clearProps: "transform,transformOrigin,willChange",
-        });
+        gsap.set(header, { "--header-y": "0px" } as any);
         return;
       }
 
@@ -77,19 +73,16 @@ export default function SiteHeader() {
       gsap
         .timeline({ onComplete: clearWillChange })
         .to(header, {
-          yPercent: 0,
-          y: 3,
-          transformOrigin: "50% 0%",
+          "--header-y": "3px",
           duration: 0.44,
           ease: EASE.soft,
           overwrite: true,
-        })
+        } as any)
         .to(header, {
-          y: 0,
+          "--header-y": "0px",
           duration: 0.08,
           ease: "power1.out",
-          clearProps: "transform,transformOrigin",
-        });
+        } as any);
     };
 
     const hide = () => {
@@ -99,20 +92,18 @@ export default function SiteHeader() {
 
       const y = hiddenOffset();
       if (reduced) {
-        gsap.set(header, { yPercent: 0, y });
+        gsap.set(header, { "--header-y": `${y}px` } as any);
         return;
       }
 
       header.style.willChange = "transform";
       gsap.to(header, {
-        yPercent: 0,
-        y,
-        transformOrigin: "50% 0%",
+        "--header-y": `${y}px`,
         duration: 0.38,
         ease: "power2.inOut",
         overwrite: true,
         onComplete: clearWillChange,
-      });
+      } as any);
     };
 
     const update = () => {
@@ -168,7 +159,7 @@ export default function SiteHeader() {
       window.removeEventListener("scroll", onScroll);
       if (frame) window.cancelAnimationFrame(frame);
       gsap.killTweensOf(header);
-      gsap.set(header, { clearProps: "transform,transformOrigin,willChange" });
+      gsap.set(header, { "--header-y": "0px", clearProps: "willChange" } as any);
     };
   }, [mobileMenuOpen, terminalOpen]);
 
