@@ -47,6 +47,13 @@
 
   --gutter: clamp(16px, 3.2vw, 40px);
   --header-h: 64px;
+  /* One frame rhythm: the header row starts 28px below the frame top and
+     outer controls sit 28px in from its side edges. */
+  --frame-edge-inset: 16px;
+  --header-frame-space: 28px;
+  --header-control-height: 44px;
+  --header-control-font-size: var(--fs-micro);
+  --frame-corner-space: 28px;
 
   /* ---- Spacing scale ---- */
   --space-1: 4px;
@@ -76,6 +83,15 @@
   --z-terminal: 90;
   --z-header: 70;
   --z-float: 40;
+}
+
+@media (max-width: 767px) {
+  :root {
+    /* The approved phone frame is 8px tighter, so its shared rhythm is 20px. */
+    --frame-edge-inset: 8px;
+    --header-frame-space: 20px;
+    --frame-corner-space: 24px;
+  }
 }
 
 /* ---------- Reset ---------- */

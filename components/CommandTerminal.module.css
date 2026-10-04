@@ -4,43 +4,57 @@
   right: 0;
   bottom: 0;
   z-index: var(--z-terminal);
-  display: flex;
-  align-items: stretch;
-  padding: clamp(10px, 1.2vw, 16px);
+  width: var(--terminal-panel-w, clamp(320px, 24vw, 380px));
+  visibility: hidden;
   pointer-events: none;
+  transform: translate3d(100%, 0, 0);
+  transition:
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 620ms;
+  will-change: transform;
 }
 
 .layer[data-open="true"] {
+  visibility: visible;
   pointer-events: auto;
-}
-
-.layer[data-open="false"] .panel {
-  visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  transition-delay: 0s;
 }
 
 .panel {
   position: relative;
-  width: clamp(360px, 27vw, 430px);
   display: flex;
   flex-direction: column;
-  border-radius: 24px;
-  padding: 18px 18px 16px;
-  opacity: 0;
-  will-change: transform, opacity, filter;
+  width: 100%;
+  height: 100%;
+  padding:
+    max(32px, env(safe-area-inset-top))
+    max(20px, env(safe-area-inset-right))
+    max(18px, env(safe-area-inset-bottom))
+    20px;
+  overflow: hidden;
+  border: 0;
+  border-left: 1px solid rgba(17, 17, 17, 0.12);
+  border-radius: 22px 0 0 22px;
+  background: #fffdf9;
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.92),
+    -18px 0 48px rgba(20, 18, 15, 0.12),
+    -4px 0 14px rgba(20, 18, 15, 0.07);
 }
 
 .panel > * {
   position: relative;
-  z-index: 3;
+  z-index: 1;
 }
 
 /* ---- Head ---- */
 .head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 14px;
+  gap: 16px;
+  padding: 1px 1px 20px;
 }
 
 .headText {
@@ -49,57 +63,101 @@
   gap: 5px;
 }
 
-.system {
-  color: var(--vs-ink-faint);
-}
-
 .title {
   color: var(--vs-ink);
-  font-size: var(--fs-micro);
+  font-size: 1.0625rem;
+  text-transform: uppercase;
 }
 
 .close {
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
   border-radius: 50%;
-  font-size: 16px;
-  line-height: 1;
+  background: rgba(17, 17, 17, 0.035);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
   color: var(--vs-ink);
+  font-size: 18px;
+  line-height: 1;
+  transition:
+    transform 180ms var(--e-out),
+    background-color 180ms var(--e-out),
+    border-color 180ms var(--e-out);
 }
 
-.close > span {
+.closeGlyph {
   position: relative;
-  z-index: 3;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+  animation: closeGlyphBlink 1.65s ease-in-out infinite;
+}
+
+@keyframes closeGlyphBlink {
+  0%,
+  38%,
+  100% {
+    opacity: 1;
+  }
+
+  55% {
+    opacity: 0.32;
+  }
 }
 
 .close:hover {
-  transform: translateY(-1px) scale(1.04);
+  transform: translateY(-1px);
+  border-color: rgba(17, 17, 17, 0.14);
+  background: rgba(17, 17, 17, 0.06);
 }
 
-.close:active {
-  transform: scale(0.94);
-  transition-duration: 0.08s;
+.close:focus-visible {
+  outline: 2px solid rgba(17, 17, 17, 0.72);
+  outline-offset: 2px;
 }
 
 /* ---- Body ---- */
 .body {
-  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: 14px;
-  padding-top: 16px;
+  gap: 15px;
+  padding-top: 0;
+  overflow: hidden;
+}
+
+.inputShell {
+  flex: 0 0 auto;
+}
+
+.scrollArea {
+  min-height: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
+  overflow-x: hidden;
   overflow-y: auto;
+  padding-right: 3px;
   overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 17, 17, 0.18) transparent;
 }
 
 .intro {
-  font-size: 0.8125rem;
-  line-height: 1.5;
+  max-width: none;
   color: var(--vs-ink-soft);
-  max-width: 34ch;
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 .log {
@@ -107,17 +165,18 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
+  border: 1px solid rgba(17, 17, 17, 0.055);
   border-radius: var(--r-md);
-  background: rgba(17, 17, 17, 0.04);
+  background: rgba(17, 17, 17, 0.035);
 }
 
 .logLine {
   display: flex;
   gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  line-height: 1.5;
   color: var(--vs-ink-soft);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
   word-break: break-word;
 }
 
@@ -126,7 +185,7 @@
 }
 
 .logLine[data-kind="err"] {
-  color: #b23a3a;
+  color: #9c3535;
 }
 
 .logGlyph {
@@ -134,43 +193,107 @@
   opacity: 0.5;
 }
 
-/* ---- Prompts ---- */
+.commandHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1px 3px 0;
+  color: var(--vs-ink-faint);
+}
+
+.commandMeta {
+  font-size: 0.75rem;
+}
+
+/* ---- Commands ---- */
 .prompts {
   display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding-top: 2px;
+  flex-direction: column;
+  gap: 3px;
+  margin: 20px 0 0;
+  padding: 0 0 2px;
+  list-style: none;
 }
 
 .prompt {
-  display: inline-flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(76px, 0.7fr) minmax(0, 1.6fr) 18px;
   align-items: center;
-  height: 28px;
-  padding: 0 12px;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.5);
-  font-family: var(--font-mono);
-  font-size: var(--fs-nano);
-  letter-spacing: var(--tracking-tech);
-  text-transform: uppercase;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
   color: var(--vs-ink-soft);
-  transition: transform var(--t-fast) var(--e-out), background var(--t-fast) var(--e-out),
-    color var(--t-fast) var(--e-out);
+  text-align: left;
+  transition:
+    background-color 100ms ease-out,
+    border-color 100ms ease-out,
+    color 100ms ease-out;
 }
 
-.prompt:hover {
-  transform: translateY(-1px);
-  background: #fffdf8;
+.prompt::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--vs-ink);
+  opacity: 0;
+}
+
+.prompt:hover,
+.prompt:focus-visible,
+.prompt[data-active="true"] {
+  border-color: rgba(17, 17, 17, 0.065);
+  background: rgba(17, 17, 17, 0.045);
   color: var(--vs-ink);
 }
 
-.prompt:active {
-  transform: scale(0.96);
+.prompt:hover::before,
+.prompt:focus-visible::before,
+.prompt[data-active="true"]::before {
+  opacity: 0.58;
 }
 
-.prompt[data-active="true"] {
-  background: var(--vs-ink);
-  color: var(--vs-bg);
+.prompt:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.1);
+}
+
+.sequence,
+.commandArrow {
+  color: var(--vs-ink-faint);
+  font-family: var(--font-mono);
+  font-size: 9.75px;
+  letter-spacing: 0.04em;
+}
+
+.commandName {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+}
+
+.commandDescription {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--vs-ink-faint);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commandArrow {
+  justify-self: end;
+  opacity: 0.48;
 }
 
 /* ---- Foot ---- */
@@ -178,34 +301,62 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex: 0 0 auto;
   gap: 10px;
-  margin-top: auto;
-  padding-top: 12px;
+  margin-top: 14px;
+  padding: 12px 2px 0;
   color: var(--vs-ink-faint);
+}
+
+.escapeHint,
+.mode {
+  font-size: 0.75rem;
 }
 
 .mode {
   text-transform: uppercase;
 }
 
-/* ---- Responsive ---- */
-@media (max-width: 767px) {
-  .layer {
-    padding: 8px;
+.adminSignal {
+  animation: adminSignalBlink 1.35s ease-in-out infinite;
+}
+
+@keyframes adminSignalBlink {
+  0%,
+  42%,
+  100% {
+    opacity: 1;
   }
-  .panel {
-    width: calc(100vw - 16px);
-    max-width: 440px;
-    border-radius: 22px;
-    padding: 16px 15px 14px;
-  }
-  .intro {
-    max-width: none;
+
+  58% {
+    opacity: 0.08;
   }
 }
 
-@media (max-width: 380px) {
-  .panel {
-    padding: 14px 13px 12px;
+@media (max-width: 1099px) {
+  .layer {
+    touch-action: pan-y;
+  }
+
+  .escapeHint {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer,
+  .close,
+  .prompt {
+    transition-duration: 0.01ms;
+  }
+
+  .close:hover {
+    transform: none;
+  }
+
+  .closeGlyph,
+  .adminSignal {
+    animation: none;
+    opacity: 1;
   }
 }

@@ -44,7 +44,6 @@ const GREETINGS: Greeting[] = [
   { text: "Hej" },
   { text: "Salut" },
   { text: "Cześć", lang: "pl" },
-  { text: "Привет", lang: "ru" },
 ];
 
 /** How long each greeting rests fully in view. */

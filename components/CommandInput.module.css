@@ -2,22 +2,37 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 9px;
-  height: 46px;
-  padding: 0 14px;
-  border-radius: var(--r-md);
-  background: rgba(17, 17, 17, 0.045);
-  transition: background var(--t-fast) var(--e-out);
+  gap: 11px;
+  height: 56px;
+  padding: 0 16px;
+  border: 1px solid rgba(17, 17, 17, 0.09);
+  border-radius: 13px;
+  background: rgba(17, 17, 17, 0.04);
+  box-shadow:
+    inset 0 1px 2px rgba(17, 17, 17, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out;
 }
 
 .form:focus-within {
-  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(17, 17, 17, 0.2);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 0 1px 2px rgba(17, 17, 17, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 3px rgba(17, 17, 17, 0.035);
 }
 
 .glyph {
+  flex: 0 0 auto;
+  color: var(--vs-ink);
   font-family: var(--font-mono);
-  font-size: var(--fs-micro);
-  color: var(--vs-ink-faint);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
 }
 
 .input {
@@ -25,29 +40,30 @@
   min-width: 0;
   height: 100%;
   border: 0;
-  background: none;
   outline: none;
-  font-family: var(--font-mono);
-  font-size: var(--fs-small);
-  letter-spacing: 0.02em;
+  background: none;
   color: var(--vs-ink);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  letter-spacing: 0.015em;
 }
 
 .input::placeholder {
-  color: var(--vs-ink-faint);
+  color: rgba(17, 17, 17, 0.42);
 }
 
 .caret {
+  flex: 0 0 auto;
   width: 6px;
-  height: 14px;
+  height: 18px;
   background: var(--vs-ink);
-  opacity: 0.25;
-  transition: opacity var(--t-fast) var(--e-out);
+  opacity: 0.28;
+  transition: opacity 120ms ease-out;
 }
 
 .form:focus-within .caret {
-  opacity: 0.8;
-  animation: blink 1.15s steps(1, end) infinite;
+  opacity: 0.82;
+  animation: blink 0.9s steps(1, end) infinite;
 }
 
 .caret[data-filled="true"] {
@@ -56,22 +72,36 @@
 
 @keyframes blink {
   0%,
-  55% {
-    opacity: 0.8;
+  52% {
+    opacity: 0.82;
   }
-  56%,
+
+  53%,
   100% {
-    opacity: 0.1;
+    opacity: 0.08;
+  }
+}
+
+/* The form owns the focus treatment, avoiding a doubled input ring. */
+.input:focus-visible {
+  outline: none;
+}
+
+@media (max-width: 767px) {
+  .form {
+    height: 52px;
+    padding-inline: 13px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .form,
+  .caret {
+    transition-duration: 0.01ms;
+  }
+
   .form:focus-within .caret {
     animation: none;
+    opacity: 0.82;
   }
-}
-
-/* The form carries the focus indicator, so suppress the doubled ring */
-.input:focus-visible {
-  outline: none;
 }

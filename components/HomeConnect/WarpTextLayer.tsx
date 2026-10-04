@@ -46,10 +46,11 @@ import styles from "./WarpTextLayer.module.css";
  *    so the same two handlers are fed from window listeners and mapped
  *    through the canvas rect. Touch is ignored exactly as upstream.
  *
- * 4. MOUNT GUARDS. No fine pointer, or reduced motion, and the layer
- *    does not mount at all: the DOM text is left alone. Same if the
- *    Renderer throws — upstream warns and returns, and here that also
- *    means the hero is simply never mirrored.
+ * 4. MOUNT GUARDS. Reduced motion leaves the DOM text alone. Pointer
+ *    capability is separate: coarse/touch devices still get the visual
+ *    renderer, but not the pointer lens listeners. If the Renderer
+ *    throws, upstream warns and returns, and here that also means the
+ *    hero is simply never mirrored.
  */
 
 export interface WarpTextLayerProps {
@@ -414,10 +415,11 @@ export default function WarpTextLayer({
   useEffect(() => {
     const target = targetRef.current;
     if (!target || typeof window === "undefined") return undefined;
-    // No fine pointer (touch) or reduced motion: never mount, never
-    // mirror — the hero stays plain Geist Pixel DOM text.
-    if (!window.matchMedia("(pointer: fine)").matches) return undefined;
+    // Reduced motion keeps the existing DOM fallback. Pointer capability
+    // only controls the interactive lens; it must not gate the visual
+    // renderer on touch/coarse devices.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+    const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
 
     const host = target.parentElement;
     if (!host) return undefined;
@@ -729,7 +731,11 @@ export default function WarpTextLayer({
 
       program.uniforms.uPointer.value[0] = pointer.x;
       program.uniforms.uPointer.value[1] = pointer.y;
-      program.uniforms.uPointerActive.value = reduceMotion ? pointer.active * 0.35 : pointer.active;
+      program.uniforms.uPointerActive.value = hasFinePointer
+        ? reduceMotion
+          ? pointer.active * 0.35
+          : pointer.active
+        : 0;
       program.uniforms.uTime.value = reduceMotion ? 0 : elapsed;
 
       // The rotation engine owns the words; this only notices that they
@@ -773,8 +779,10 @@ export default function WarpTextLayer({
     );
     intersectionObserver.observe(container);
 
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    window.addEventListener("blur", onPointerLeave);
+    if (hasFinePointer) {
+      window.addEventListener("pointermove", onPointerMove, { passive: true });
+      window.addEventListener("blur", onPointerLeave);
+    }
     canvas.addEventListener("webglcontextlost", onContextLost, false);
     document.addEventListener("visibilitychange", onVisibility);
     mediaQuery.addEventListener("change", onReducedMotion);
@@ -813,8 +821,10 @@ export default function WarpTextLayer({
       if (raf) cancelAnimationFrame(raf);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("blur", onPointerLeave);
+      if (hasFinePointer) {
+        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("blur", onPointerLeave);
+      }
       canvas.removeEventListener("webglcontextlost", onContextLost);
       document.removeEventListener("visibilitychange", onVisibility);
       mediaQuery.removeEventListener("change", onReducedMotion);

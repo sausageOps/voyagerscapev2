@@ -1,0 +1,112 @@
+.signal {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 1em;
+  width: 1em;
+  height: 1em;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.state,
+.close {
+  grid-area: 1 / 1;
+  transition: opacity 180ms ease-out;
+}
+
+.state {
+  opacity: 0;
+  animation-duration: 2.7s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.prompt {
+  animation-name: signalPrompt;
+}
+
+.cursor {
+  animation-name: signalCursor;
+}
+
+.query {
+  animation-name: signalQuery;
+}
+
+.close {
+  opacity: 0;
+}
+
+.signal[data-open="true"] .state {
+  animation: none;
+  opacity: 0;
+}
+
+.signal[data-open="true"] .close {
+  opacity: 1;
+}
+
+@keyframes signalPrompt {
+  0%,
+  29% {
+    opacity: 1;
+  }
+
+  33%,
+  96% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes signalCursor {
+  0%,
+  29% {
+    opacity: 0;
+  }
+
+  33%,
+  62% {
+    opacity: 1;
+  }
+
+  66%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes signalQuery {
+  0%,
+  62% {
+    opacity: 0;
+  }
+
+  66%,
+  96% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state {
+    animation: none;
+    opacity: 0;
+  }
+
+  .prompt {
+    opacity: 1;
+  }
+
+  .signal[data-open="true"] .prompt {
+    opacity: 0;
+  }
+}

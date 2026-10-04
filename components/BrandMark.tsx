@@ -2,102 +2,81 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import NavGlassSurface from "./NavGlassSurface";
 import styles from "./BrandMark.module.css";
 
+const BRAND_NAME = "Voyagerscape";
+
 /**
- * Original Voyagerscape terminal glyph: V:/ inside a soft black chip.
- *
- * On hover (fine pointers only) the same chip widens from its fixed left
- * anchor and the mark resolves into the full wordmark: the V stays put, the
- * ":/" tail collapses away and "OYAGERSCAPE" is revealed from behind a
- * horizontal mask. One object transforming, never a second button.
- *
- * Zero reflow: the interactive chip is absolutely positioned over an
- * invisible in-flow ghost of the compact state, so the header row — and the
- * greeting row beneath it — only ever sees the resting V:/ silhouette, at
- * every breakpoint.
+ * Top-left identity control: one React Bits Glass Surface that expands from
+ * the compact V:/ mark into the full site name. The in-flow ghost reserves
+ * only the resting footprint, so the header layout never moves.
  */
-
-/** Everything after the shared leading "V" of V:/ → VOYAGERSCAPE. */
-const WORD_TAIL = "OYAGERSCAPE";
-
 export default function BrandMark({ compact }: { compact?: boolean }) {
   const rootRef = useRef<HTMLSpanElement | null>(null);
 
-  /* The reveal animates real pixel widths (auto is not interpolable), so the
-     two travel distances are measured from the live, rendered type — the
-     natural ":/" tail on the ghost and the natural wordmark inside the mask.
-     Until they are measured the custom properties are simply absent, which
-     leaves the resting chip at its natural width: no clipping pre-hydration,
-     no JS-dependent resting state. */
   useEffect(() => {
     const root = rootRef.current;
-    if (!root) return;
+    if (!root) return undefined;
 
     let cancelled = false;
-
     const measure = () => {
       if (cancelled) return;
-      const tail = root.querySelector<HTMLElement>("[data-mark-tail]");
-      const word = root.querySelector<HTMLElement>("[data-mark-word]");
-      if (!tail || !word) return;
-      root.style.setProperty("--mark-tail-w", `${tail.getBoundingClientRect().width.toFixed(2)}px`);
-      // +1px device-pixel guard so the final glyph can never be shaved.
+      const name = root.querySelector<HTMLElement>("[data-brand-name]");
+      if (!name) return;
       root.style.setProperty(
-        "--mark-word-w",
-        `${(word.getBoundingClientRect().width + 1).toFixed(2)}px`,
+        "--brand-expanded-w",
+        `${Math.ceil(name.getBoundingClientRect().width + 20)}px`,
       );
     };
 
     measure();
     if (document.fonts?.status !== "loaded") void document.fonts?.ready.then(measure);
+    window.addEventListener("resize", measure, { passive: true });
 
     return () => {
       cancelled = true;
+      window.removeEventListener("resize", measure);
     };
   }, []);
 
-  const chip = (extra: string) =>
-    [styles.chip, compact ? styles.compact : "", extra].filter(Boolean).join(" ");
-
   return (
-    <span className={styles.root} ref={rootRef}>
-      {/* In-flow ghost of the compact chip: reserves the V:/ footprint so the
-          expansion can never push the header around. */}
-      <span className={chip(styles.ghost)} aria-hidden="true">
-        <span className={styles.glyph}>
-          <span className={styles.v}>V</span>
-          <span className={styles.tailNatural} data-mark-tail>
-            <span className={styles.colon}>:</span>
-            <span className={styles.slash}>/</span>
-          </span>
-        </span>
-        <span className={styles.caret} />
-      </span>
-
+    <span
+      className={[styles.root, compact ? styles.compact : ""].filter(Boolean).join(" ")}
+      ref={rootRef}
+    >
+      <span className={styles.ghost} aria-hidden="true" />
       <Link
         href="/"
-        className={chip(styles.mark)}
+        className={styles.mark}
         aria-label="Voyagerscape — home"
         data-cursor="link"
         data-cursor-label="Home"
-        data-magnetic
       >
-        <span className={styles.glyph} aria-hidden="true">
-          <span className={styles.v}>V</span>
-          <span className={styles.tail}>
-            <span className={styles.tailInner}>
-              <span className={styles.colon}>:</span>
-              <span className={styles.slash}>/</span>
+        <NavGlassSurface
+          width="var(--brand-width)"
+          height="var(--brand-height)"
+          borderRadius={9999}
+          borderWidth={0.08}
+          brightness={62}
+          opacity={0.9}
+          blur={8}
+          displace={0.2}
+          backgroundOpacity={0.14}
+          saturation={1.08}
+          distortionScale={-76}
+          redOffset={0}
+          greenOffset={0}
+          blueOffset={0}
+          className={styles.surface}
+        >
+          <span className={styles.content} aria-hidden="true">
+            <span className={styles.rest}><span className={styles.restPrefix}>V:</span><span className={styles.restCaret}>/</span></span>
+            <span className={styles.name} data-brand-name>
+              {BRAND_NAME}
             </span>
           </span>
-          <span className={styles.word}>
-            <span className={styles.wordInner} data-mark-word>
-              {WORD_TAIL}
-            </span>
-          </span>
-        </span>
-        <span className={styles.caret} aria-hidden="true" />
+        </NavGlassSurface>
       </Link>
     </span>
   );

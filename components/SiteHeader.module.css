@@ -1,37 +1,47 @@
 .header {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: var(--frame-edge-inset);
+  left: var(--frame-edge-inset);
+  right: var(--frame-edge-inset);
   z-index: var(--z-header);
   pointer-events: none;
-  padding: clamp(14px, 1.7vw, 22px) var(--gutter) 0;
+  padding-block-start: var(--header-frame-space);
+  padding-inline: var(--header-frame-space);
 }
 
+/* One viewport-wide coordinate system: equal outer tracks keep the middle
+   mathematically centred regardless of the left/right control widths. */
 .row {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  min-height: var(--header-h);
+  min-height: var(--header-control-height);
 }
 
 .left,
+.center,
 .right,
 .mobileRight {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
-/* Nav is optically centred against the viewport, not the flex row */
+.left {
+  grid-column: 1;
+  justify-self: start;
+}
+
 .center {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: auto;
+  grid-column: 2;
+  justify-self: center;
+}
+
+.right,
+.mobileRight {
+  grid-column: 3;
+  justify-self: end;
 }
 
 .right {
@@ -42,7 +52,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 2px;
+  height: var(--header-control-height);
+  padding: 0 2px;
   transition: opacity var(--t-fast) var(--e-out);
 }
 
@@ -70,33 +81,76 @@
   background: rgba(255, 255, 255, 0.85);
 }
 
+.forVisual {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
 .mobileRight {
   display: none;
 }
 
-.slashBtn {
-  min-width: 30px;
+.mobileControls {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.mobileControl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 11px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--vs-ink);
+  font-family: var(--font-mono);
+  font-size: var(--header-control-font-size);
+  line-height: 1;
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0.84;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 220ms var(--e-out),
+    color 200ms var(--e-out),
+    opacity 200ms var(--e-out);
+}
+
+.mobileControl[aria-expanded="true"] {
+  color: #080808;
+  opacity: 1;
+}
+
+.mobileControl:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: -3px;
+  border-radius: var(--r-pill);
+}
+
+.terminalControl {
+  min-width: 38px;
+  padding-inline: 10px;
+  border-left: 1px solid rgba(17, 17, 17, 0.1);
   font-size: 12px;
 }
 
-/* ---------- Breakpoints ---------- */
-@media (max-width: 1023px) {
-  .center {
-    position: static;
-    transform: none;
-  }
-  .row {
-    gap: 10px;
+@media (hover: hover) and (pointer: fine) {
+  .mobileControl:hover {
+    color: #080808;
+    opacity: 1;
+    transform: translateY(-1px) scale(1.01);
   }
 }
 
+/* Phone swaps only the middle/right content; the grid and insets stay shared. */
 @media (max-width: 767px) {
-  .header {
-    padding-top: 12px;
-  }
-  .row {
-    min-height: 48px;
-  }
   .center,
   .right {
     display: none;
@@ -104,4 +158,15 @@
   .mobileRight {
     display: flex;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobileControl {
+    transition-duration: 0.01ms;
+  }
+
+  .mobileControl:hover {
+    transform: none;
+  }
+
 }

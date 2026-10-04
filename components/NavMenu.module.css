@@ -1,157 +1,104 @@
+/* NavGlassSurface remains the single material; links are unsegmented text
+   targets inside that shared surface. */
 .nav {
   pointer-events: auto;
 }
 
 .list {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list > li {
+  display: flex;
+  flex: 0 0 auto;
 }
 
 .item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--vs-ink);
+  font-family: var(--font-mono);
+  font-size: var(--header-control-font-size);
+  line-height: 1;
+  letter-spacing: var(--tracking-tech);
   text-decoration: none;
-  transition: transform var(--t-fast) var(--e-out), background-color var(--t-fast) var(--e-out);
+  text-transform: uppercase;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 220ms var(--e-out);
 }
 
-/* Compact desktop counterparts to the mobile menu's four-shape language. */
+/* Existing target geometry is preserved without retaining the old individual
+   silhouettes. Future items inherit the same clean base item automatically. */
 .list > li:nth-child(1) .item {
   width: 58px;
-  padding-inline: 0;
-  border-radius: 12px;
 }
 
 .list > li:nth-child(2) .item {
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
 }
 
 .list > li:nth-child(3) .item {
-  width: 84px;
-  padding-inline: 0;
-  border-radius: var(--r-pill);
+  width: 86px;
 }
 
 .list > li:nth-child(4) .item {
-  width: 70px;
-  padding-inline: 0;
-  border-radius: 7px;
+  width: 68px;
 }
 
-/* The control itself carries an inline transform from the cursor magnet, so the
-   growth lives on the list item — the one box nothing else writes to. */
-.list > li {
-  transform-origin: center;
-  transition: transform var(--t-fast) var(--e-out);
-}
-
-.list > li:hover {
-  transform: scale(1.045);
-}
-
-.list > li:active {
-  transform: scale(0.985);
-}
-
-/* adjacent pills lean in a fraction — a small ripple, not a wave */
-.list > li:hover + li,
-.list > li:has(+ li:hover) {
-  transform: scale(1.018);
-}
-
-/* Microscopic text shift on hover */
 .label {
+  position: relative;
+  z-index: 2;
   display: inline-block;
-  transition: transform var(--t-fast) var(--e-out), letter-spacing var(--t-fast) var(--e-out);
+  opacity: 0.84;
+  transition:
+    transform 220ms var(--e-out),
+    color 200ms var(--e-out),
+    opacity 200ms var(--e-out);
 }
 
-.item:hover .label {
-  transform: translateY(-0.5px);
-  letter-spacing: calc(var(--tracking-tech) + 0.01em);
-}
-
-@media (max-width: 767px) {
-  .list {
-    gap: 3px;
+@media (hover: hover) and (pointer: fine) {
+  .item:hover {
+    transform: translateY(-1px) scale(1.01);
   }
+
+  .item:hover .label {
+    color: #080808;
+    opacity: 1;
+    transform: translateY(-0.35px);
+  }
+}
+
+/* aria-current remains semantic only; it deliberately has no visual selector.
+   Keyboard focus is the sole persistent outline-capable state. */
+.item:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .list > li,
-  .list > li:hover,
-  .list > li:hover + li,
-  .list > li:has(+ li:hover) {
-    transform: none;
-    transition: none;
+  .item,
+  .label {
+    transition-duration: 0.01ms;
   }
-}
 
-/* =========================================================
-   CONTEXT-AWARE PILL SURFACE
-   The primary navigation pills flip between two flat
-   treatments depending on the surface currently beneath the
-   fixed header. Over light sections (the default) they are
-   near-black with off-white ink; while a section marked
-   [data-nav-surface="dark"] sits under the header band
-   (published on <html> by useNavSurface) they are off-white
-   with near-black ink. Only the fill and the ink swap
-   (≈200ms, color only) — geometry, typography and spacing
-   are untouched, and both states stay perfectly flat:
-   no border, no shadow, no gradient, no glass.
-   The current-route pill reads as the fully opaque tier of
-   whichever treatment is active; hover is a subtle fill
-   lift inside the same treatment.
-   ========================================================= */
-
-/* Light surface beneath (default) → dark pills */
-.list .item {
-  --nav-bg: rgba(17, 17, 17, 0.84);
-  --nav-ink: #f7f3ec;
-}
-
-.list .item[data-active="true"] {
-  --nav-bg: rgba(17, 17, 17, 1);
-}
-
-.list .item:not(.inert):hover {
-  --nav-bg: rgba(17, 17, 17, 0.92);
-}
-
-/* Dark surface beneath → light pills */
-:global(html[data-nav-surface="dark"]) .list .item {
-  --nav-bg: rgba(247, 243, 236, 0.84);
-  --nav-ink: var(--vs-ink);
-}
-
-:global(html[data-nav-surface="dark"]) .list .item[data-active="true"] {
-  --nav-bg: rgba(247, 243, 236, 1);
-}
-
-:global(html[data-nav-surface="dark"]) .list .item:not(.inert):hover {
-  --nav-bg: rgba(247, 243, 236, 0.92);
-}
-
-/* The flat fill + ink. Selector weights are chosen to win
-   order-independently over the material (.vs-glass) and the
-   primitive's active state (.control.active). */
-.list .item,
-.list .item[data-active="true"] {
-  background-color: var(--nav-bg);
-  color: var(--nav-ink);
-  transition:
-    background-color 200ms var(--e-out),
-    color 200ms var(--e-out),
-    transform var(--t-fast) var(--e-out);
-}
-
-/* Keyboard focus stays visible in both treatments: the ring sits outside
-   the pill, so it contrasts against the page surface — dark ink over light
-   pages (the global default), off-white over dark ones. */
-.list .item:focus-visible {
-  outline-color: var(--vs-ink);
-}
-
-:global(html[data-nav-surface="dark"]) .list .item:focus-visible {
-  outline-color: #f7f3ec;
+  .item:hover,
+  .item:hover .label {
+    transform: none;
+  }
 }

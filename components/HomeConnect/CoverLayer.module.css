@@ -328,14 +328,6 @@
   }
 }
 
-/* Touch-only devices never see it: the interaction has no meaning
-   without a pointer, and the JS bails out before building anything. */
-@media (hover: none), (pointer: coarse) {
-  .layer {
-    display: none;
-  }
-}
-
 /* ---------- reduced motion ---------- */
 
 /* Both surfaces still cross-fade — that is the interaction, not
