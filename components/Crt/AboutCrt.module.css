@@ -1,0 +1,13 @@
+/* Temporary placement box for the archive monitor on About.
+   Centres the existing CRT; the object sizes itself (see
+   Crt3D.module.css / CrtStatic.module.css), so nothing here constrains
+   its responsive behaviour. */
+.wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  /* The GL drawing surface overhangs its layout box by 6%; keep that
+     overhang from ever producing a horizontal scrollbar. */
+  overflow-x: clip;
+}

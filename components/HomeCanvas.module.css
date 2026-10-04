@@ -1,12 +1,4 @@
 .canvas {
-  --field-strong-x: 0px;
-  --field-strong-y: 0px;
-  --field-opposite-x: 0px;
-  --field-opposite-y: 0px;
-  --field-diagonal-x: 0px;
-  --field-diagonal-y: 0px;
-  --field-soft-x: 0px;
-  --field-soft-y: 0px;
   position: relative;
   width: calc(100% - 32px);
   max-width: calc(100% - 32px);
@@ -17,9 +9,13 @@
   overflow: hidden;
   isolation: isolate;
   border-radius: 18px;
-  background: #e9e1d6;
+  background: #fffdf9;
 }
 
+/* The atmosphere is now a single layer: the frame's paper colour plus the
+   Pattern Waves canvas. The colour matches the component's own
+   backgroundColor (#fffdf9), so the canvas cannot seam against it and a
+   renderer failure lands on the same paper instead of a blank rectangle. */
 .atmosphere {
   position: absolute;
   inset: 0;
@@ -30,72 +26,13 @@
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  background: #e9e1d6;
-}
-
-.field {
-  position: absolute;
-  display: block;
-  width: 78%;
-  height: 78%;
-  border-radius: 9999px;
-  pointer-events: none;
-  opacity: .52;
-  filter: blur(28px);
-  will-change: transform;
-}
-
-.lavender {
-  top: -12%;
-  left: 62%;
-  width: 76%;
-  height: 76%;
-  background: #d8ccff;
-  opacity: .58;
-  transform: translate3d(var(--field-strong-x), var(--field-strong-y), 0);
-}
-
-.pink {
-  top: 42%;
-  left: -20%;
-  width: 84%;
-  height: 84%;
-  background: #d8e6de;
-  opacity: .52;
-  filter: blur(34px);
-  transform: translate3d(var(--field-opposite-x), var(--field-opposite-y), 0);
-}
-
-.blue {
-  top: -18%;
-  left: 18%;
-  width: 68%;
-  height: 68%;
-  background: #d9def5;
-  opacity: .46;
-  filter: blur(24px);
-  transform: translate3d(var(--field-diagonal-x), var(--field-diagonal-y), 0);
-}
-
-.cream {
-  top: 54%;
-  left: 48%;
-  width: 72%;
-  height: 72%;
-  background: #f5d8b8;
-  opacity: .5;
-  filter: blur(30px);
-  transform: translate3d(var(--field-soft-x), var(--field-soft-y), 0);
+  background: #fffdf9;
 }
 
 /* --- Pattern Waves atmosphere (WebGL2 / OGL) --------------------------------
-   Mounted by HomeAtmosphere above the static fields, inside .atmosphere,
-   so it inherits the frame's clip (overflow hidden + radius) and stays
-   below the page content (z-index relationships unchanged). The canvas is
-   transparent wherever no marks are drawn: the pastel fields remain the
-   atmosphere's colour base and its no-WebGL fallback, and Pattern Waves
-   introduces its marks with the component's own intro (centre-out fade,
-   surface rise) in place of the old shader crossfade. */
+   Mounted by HomeAtmosphere inside .atmosphere, so it inherits the frame's
+   clip (overflow hidden + radius) and stays below the page content (z-index
+   relationships unchanged). It is the only visual frame background. */
 
 .shader {
   position: absolute;
@@ -128,27 +65,10 @@
     margin: 8px;
     border-radius: 16px;
   }
-
-  .field {
-    width: 82%;
-    height: 82%;
-    filter: blur(28px);
-  }
-
-  .pink { filter: blur(34px); }
-  .blue { filter: blur(24px); }
-  .cream { filter: blur(30px); }
-}
-
-@media (min-width: 768px) and (max-width: 1100px) and (any-pointer: coarse) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .field {
-    transition: none;
-  }
-
   /* Reduced motion: Pattern Waves freezes the surface itself (time stops
      advancing inside the component and the cursor ripples are disabled),
-     holding a single still frame over the static fields. */
+     holding a single still frame. */
 }

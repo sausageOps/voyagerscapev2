@@ -31,17 +31,22 @@
 /* ---------------- Say hi (top-left) ---------------- */
 .sayHi {
   position: absolute;
-  top: calc(clamp(14px, 1.7vw, 22px) + 59px);
-  /* .inner is capped on wide screens, while the fixed header (BrandMark's
-     anchor) is not — it only ever applies `var(--gutter)` as padding. Pull
-     this row back out by exactly the amount .inner's centring added, so it
-     lands on that same gutter-from-viewport edge. --vs-scrollbar-w corrects
-     `100vw` to the real, scrollbar-excluded viewport width this centring
-     is actually computed from, so the row lines up exactly, not "close". */
-  left: calc(-1 * max(0px, (100vw - var(--vs-scrollbar-w) - 1440px - 2 * var(--gutter)) / 2));
+  /* Lower-right of the hero. Sits on the same bottom rhythm as .inner's
+     own bottom padding, so the row keeps the frame's spacing system. */
+  bottom: clamp(18px, 3.2svh, 38px);
+  /* Same escape as .controls: .inner is capped at 1440px and centred,
+     while the fixed header only ever applies var(--gutter), so `right: 0`
+     would sit inboard of the header's right edge on wide screens. Pull
+     the row back out by exactly what .inner's centring added so it lands
+     on the header's own gutter-from-viewport edge. --vs-scrollbar-w
+     corrects `100vw` to the real, scrollbar-excluded viewport width that
+     centring is computed from, so it lines up exactly, not "close". */
+  right: calc(-1 * max(0px, (100vw - var(--vs-scrollbar-w) - 1440px - 2 * var(--gutter)) / 2));
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  text-align: right;
   gap: 6px 10px;
   opacity: 0;
   z-index: 5;
@@ -131,7 +136,16 @@
   align-items: center;
   justify-content: center;
   vertical-align: top;
-  margin-left: 0.10em;
+  /* Handjet is a pixel face: measured with fontTools, both "e" and "™"
+     have ZERO side bearings — their ink fills the advance. So the whole
+     visible gap was this margin (0.10em) plus the trailing 0.02em of
+     hero letter-spacing that lands after the final glyph: 0.12em, about
+     11px at desktop size. Pulling the margin to -0.01em cancels the
+     margin and most of that trailing track, leaving ~0.01em of air so
+     the mark sits against the "e" the way normal typography would set
+     it. Letter-spacing itself is untouched, and this margin belongs to
+     the ™ badge alone — no other hero gap can see it. */
+  margin-left: -0.01em;
   transform: translateY(-0.18em);
   line-height: 1;
   pointer-events: none;
@@ -145,7 +159,16 @@
    holding the mark in its established spot above the x-height. */
 .tmMark {
   font-size: 0.38em;
-  line-height: 1;
+  /* Handjet's font box is 1.1176em (hhea 7200/-1920 over upm 8160).
+     As a flex item this span is blockified, so with line-height 1 its
+     border box is 1em and the glyph's font box overhangs it by half the
+     difference — which the warp rasteriser, reading the box top and
+     adding the font ascent, would turn into a ~2px drop on canvas only.
+     Matching the line-height to the font box removes the half-leading,
+     and the equal negative shift puts the box back exactly where it was,
+     so DOM and texture agree and the mark does not move. */
+  line-height: 1.1176;
+  transform: translateY(-0.0588em);
 }
 
 .head * {
@@ -184,8 +207,14 @@
     position: relative;
     top: auto;
     left: auto;
-    align-self: flex-start;
-    margin-bottom: 4px;
+    bottom: auto;
+    right: auto;
+    /* Same intent as desktop — last in the column, hugging the right
+       edge — but in normal flow, so it can never overlap the type. */
+    align-self: flex-end;
+    order: 5;
+    margin-bottom: 0;
+    margin-top: clamp(10px, 2svh, 20px);
   }
   .stage {
     position: relative;
@@ -252,9 +281,12 @@
     position: relative;
     top: auto;
     left: auto;
-    align-self: flex-start;
-    order: 1;
+    bottom: auto;
+    right: auto;
+    align-self: flex-end;
+    order: 5;
     margin-bottom: 0;
+    margin-top: 10px;
   }
   .stage {
     position: relative;
@@ -322,5 +354,10 @@
   .head {
     top: calc(48% + clamp(50px, 6vw, 82px));
     z-index: 3;
+  }
+  /* Short viewports: the headline's second row reaches further down, so
+     the hello row tucks closer to the edge rather than meeting it. */
+  .sayHi {
+    bottom: 12px;
   }
 }

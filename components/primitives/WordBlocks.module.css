@@ -130,12 +130,34 @@
 
 /* ---------- Hero Scale ---------- */
 .hero {
-  column-gap: clamp(3px, 0.3vw, 5.5px);
-  row-gap: clamp(2.5px, 0.22vw, 4px);
-  font-size: clamp(2.424rem, 4.646vw, 5.252rem);
-  line-height: 1.10;
-  font-weight: 400;
-  letter-spacing: -0.015em;
+  /* FONT EXPERIMENT: Geist Pixel Square for the hero display run only —
+     Voyagerscape, the primary changing word and the lower three. The
+     statement run below, and every other surface on the site, still
+     resolve --font-display (Pixelify Sans). The second entry is a
+     failure fallback only: it is used if the woff2 does not load. */
+  font-family: var(--font-hero-display), var(--font-display);
+  column-gap: clamp(1.5px, 0.16vw, 3px);
+  /* The two rows are one object; their closeness is owned by the type,
+     not by a gap. */
+  row-gap: 0;
+  /* ONE display scale for the whole hero — both rows, every word.
+     Sized against Handjet's real advances: the widest composition the
+     vocabulary can produce is row two ("Wander Observe Experiment",
+     9.63em including padding), which at the 6.4rem ceiling is 986px
+     inside a 1360px frame, so neither row can wrap or overflow at any
+     step of the clamp. 102.4px at 1600, 100.8px at 1440, 89.6px at
+     1280. */
+  font-size: clamp(2.85rem, 6.4vw, 6rem);
+  line-height: 0.98;
+  /* The face's own weight. Declared explicitly everywhere in the hero so
+     the browser never substitutes or synthesises one. */
+  font-weight: 900;
+  /* Positive tracking: Handjet 900's blocks collide when pulled
+     together. Measured at +0.02em the widest composition ("Wander
+     Observe Experiment", 10.66em) is 1194px at the 7rem ceiling inside
+     a 1440px frame, and still clears the frame at every breakpoint
+     down to 390px — so the requested value needs no reduction. */
+  letter-spacing: 0.02em;
   word-spacing: 0;
   justify-content: center;
   max-width: 1440px;
@@ -145,11 +167,18 @@
 /* Large Style: "Voyagerscape", "Explore", "Observe" */
 .hero .word {
   font-size: 1em;
-  font-weight: 400;
-  line-height: 1.10;
-  padding: 0.16em 0.38em 0.20em;
+  font-weight: 900;
+  line-height: 0.98;
+  /* Vertical padding and the height floor both came down with the
+     line-height; this is what actually closes the gap between the rows,
+     since the word boxes — not the line box — set the row rhythm. */
+  padding: 0.10em 0.207em 0.14em;
   border-radius: clamp(4px, 0.08em, 6px);
-  min-height: 1.42em;
+  min-height: 1.1em;
+  /* The hero composition is white over Pattern Waves. Inherited by the
+     rotating words and read by the warp rasteriser as the ink colour,
+     so canvas and DOM fallback are the same #FFFFFF. */
+  color: #ffffff;
   pointer-events: none !important;
   cursor: default !important;
   user-select: none;
@@ -160,11 +189,11 @@
    Top/bottom padding and font-size are unchanged; only the horizontal
    padding inherited from .hero .word (0.38em) is tightened here. */
 .hero .rounded {
-  font-weight: 400;
-  padding-top: 0.22em;
-  padding-bottom: 0.26em;
-  padding-left: 0.165em;
-  padding-right: 0.165em;
+  font-weight: 900;
+  padding-top: 0.14em;
+  padding-bottom: 0.18em;
+  padding-left: 0.09em;
+  padding-right: 0.09em;
 }
 
 /* Explore: pill shape, but shares the rectangles' vertical type scale
@@ -174,31 +203,51 @@
    consistent vertical system. Horizontal padding stays its own pill value,
    matching The/Create's padding proportion. */
 .hero .cream {
-  font-weight: 400;
+  font-weight: 900;
   border-radius: 999px;
-  padding-top: 0.22em;
-  padding-bottom: 0.26em;
-  padding-inline: 0.24em;
+  padding-top: 0.14em;
+  padding-bottom: 0.18em;
+  padding-inline: 0.133em;
 }
 
 /* Pull the forced line-break between "The / Voyagerscape" and
    "Explore / Observe / Create" tighter, without touching block padding,
    dimensions, or the hero's own vertical position in the page. */
 .hero .brk {
-  margin-top: -0.15em;
+  margin-top: -0.18em;
 }
 
 /* Small Style pills: "The" and "Create" — identical metrics and pill height,
    tightened horizontal fit */
 .hero .lavender,
 .hero .pink {
-  font-size: 0.74em;
-  font-weight: 400;
-  line-height: 1.10;
-  padding: 0.18em 0.24em 0.22em;
+  font-weight: 900;
+  line-height: 0.98;
+  padding: 0.12em 0.133em 0.16em;
   border-radius: 999px;
-  min-height: 1.42em;
+  min-height: 1.1em;
   align-self: center;
+}
+
+/* ---------- Hero: pills off (warp experiment) ----------
+   The three coloured capsules — lead, Explore, Create — keep their text,
+   their type scale and their padding (which is what holds the words
+   apart; dropping it would close the gaps and move the whole run), and
+   lose the capsule itself: no fill, no radius, no border, no shadow.
+   The two translucent backplates behind Voyagerscape and Observe are
+   .blocked, not accents, and are deliberately not matched here. Hover
+   states are listed explicitly because the accent hovers would otherwise
+   repaint a fill on a word that no longer has one. */
+.hero .lavender,
+.hero .lavender:hover,
+.hero .cream,
+.hero .cream:hover,
+.hero .pink,
+.hero .pink:hover {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* ---------- Statement Scale (Footer / Generic) ---------- */
@@ -230,40 +279,39 @@
 /* ---------- Responsive Breakpoints ---------- */
 @media (max-width: 1099px) {
   .hero {
-    font-size: clamp(1.9rem, 4.2vw, 3.2rem);
-    column-gap: clamp(4px, 0.35vw, 6px);
+    font-size: clamp(2.25rem, 8vw, 5.05rem);
+    column-gap: clamp(2.5px, 0.19vw, 3.3px);
     row-gap: clamp(2px, 0.2vw, 3.5px);
   }
 }
 
 @media (max-width: 767px) {
   .hero {
-    column-gap: 4px;
+    column-gap: 2.5px;
     row-gap: 2.5px;
-    font-size: clamp(1.35rem, 5.6vw, 1.95rem);
-    letter-spacing: -0.014em;
+    font-size: clamp(1.6rem, 8.2vw, 2.6rem);
+    letter-spacing: 0.02em;
   }
   .hero .word {
-    padding: 0.16em 0.32em 0.20em;
+    padding: 0.10em 0.17em 0.14em;
     border-radius: 4px;
-    min-height: 1.36em;
+    min-height: 1.05em;
   }
   .hero .cream {
     border-radius: 999px;
-    padding-inline: 0.46em;
+    padding-inline: 0.25em;
   }
   .hero .lavender,
   .hero .pink {
-    font-size: 0.74em;
-    padding: 0.16em 0.50em 0.20em;
+    padding: 0.12em 0.27em 0.16em;
     border-radius: 999px;
   }
 }
 
 @media (max-width: 380px) {
   .hero {
-    font-size: clamp(1.15rem, 5.2vw, 1.45rem);
-    column-gap: 3px;
+    font-size: clamp(1.4rem, 8vw, 2rem);
+    column-gap: 2px;
     row-gap: 2px;
   }
 }

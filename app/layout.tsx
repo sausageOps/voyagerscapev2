@@ -28,6 +28,37 @@ const display = localFont({
   display: "swap",
 });
 
+/* HERO DISPLAY FACE — Handjet 900.
+   Open source (SIL Open Font License, Google Fonts), taken from the
+   @fontsource/handjet 5.3.0 package and self-hosted like every other
+   face here, so the font-loading system is unchanged and no dependency
+   is added. Geist Pixel Square has exactly one face (no fvar table,
+   usWeightClass 400), so a heavy hero was not reachable with it without
+   synthetic bolding, which smears a pixel grid. Handjet ships a real
+   900 and is the densest of the open pixel families measured, while
+   being narrow enough that both hero rows fit the frame at ~100px.
+
+   Consumed by ONE selector — .hero in WordBlocks.module.css — so it
+   reaches the hero display run and nothing else. The body, nav, footer
+   and UI faces are untouched. */
+const heroDisplay = localFont({
+  src: "../public/fonts/handjet/Handjet-900.woff2",
+  weight: "900",
+  style: "normal",
+  variable: "--font-hero-display",
+  display: "swap",
+  fallback: [
+    "ui-monospace",
+    "SFMono-Regular",
+    "Menlo",
+    "Monaco",
+    "Liberation Mono",
+    "Courier New",
+    "monospace",
+  ],
+  adjustFontFallback: false,
+});
+
 const grotesk = localFont({
   src: [
     {
@@ -98,7 +129,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${grotesk.variable} ${mono.variable}`}>
+    <html lang="en" className={`${display.variable} ${heroDisplay.variable} ${grotesk.variable} ${mono.variable}`}>
       <body>
         <AppShell>{children}</AppShell>
       </body>

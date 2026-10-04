@@ -9,10 +9,13 @@ export default function PlaceholderPage({
   title,
   index,
   note,
+  children,
 }: {
   title: string;
   index: string;
   note: string;
+  /** Optional extra block, rendered under the copy. */
+  children?: React.ReactNode;
 }) {
   return (
     <section className={styles.wrap}>
@@ -26,6 +29,7 @@ export default function PlaceholderPage({
           Press / for the command terminal
         </TechLabel>
       </div>
+      {children ? <div className={styles.extra}>{children}</div> : null}
     </section>
   );
 }
