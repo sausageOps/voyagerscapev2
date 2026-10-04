@@ -72,14 +72,13 @@ export default function CommandTerminal() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [terminalOpen, setTerminalOpen]);
 
-  /* ---- Focus handoff / restoration ---- */
+  /* ---- Focus restoration (opening never steals focus) ---- */
   useEffect(() => {
     if (terminalOpen) {
       if (document.activeElement !== inputRef.current) {
         lastFocused.current = document.activeElement as HTMLElement;
       }
-      const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 120);
-      return () => window.clearTimeout(focusTimer);
+      return undefined;
     }
 
     lastFocused.current?.focus?.();

@@ -1,6 +1,7 @@
 .frame {
   --offcanvas-panel-w: clamp(320px, 24vw, 380px);
   --terminal-panel-w: var(--offcanvas-panel-w);
+  --shell-slide-x: 0px;
   position: relative;
   min-height: 100svh;
   overflow: clip;
@@ -8,13 +9,14 @@
 
 .website {
   min-width: 0;
+  transform: translate3d(var(--shell-slide-x), 0, 0);
   transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 
-.frame[data-terminal-open="true"] .website,
-.frame[data-mobile-menu-open="true"] .website {
-  transform: translate3d(calc(-1 * var(--offcanvas-panel-w)), 0, 0);
+.frame[data-terminal-open="true"],
+.frame[data-mobile-menu-open="true"] {
+  --shell-slide-x: calc(-1 * var(--offcanvas-panel-w));
 }
 
 @media (max-width: 767px) {
