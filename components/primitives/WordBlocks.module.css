@@ -265,7 +265,7 @@
   padding: 0.28em 0.46em 0.32em;
   border-radius: 0.28em;
   font-weight: 400;
-  background: rgba(255, 253, 249, 0.85);
+  background: var(--surface-card);
 }
 
 .statement .round {
@@ -273,7 +273,7 @@
 }
 
 .statement .blocked:hover {
-  background: #fffdf9;
+  background: var(--surface-card-hover);
 }
 
 /* ---------- Responsive Breakpoints ---------- */

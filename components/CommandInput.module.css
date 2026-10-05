@@ -5,12 +5,12 @@
   gap: 11px;
   height: 56px;
   padding: 0 16px;
-  border: 1px solid rgba(17, 17, 17, 0.09);
+  border: 1px solid var(--vs-line);
   border-radius: 13px;
-  background: rgba(17, 17, 17, 0.04);
+  background: var(--surface-card);
   box-shadow:
-    inset 0 1px 2px rgba(17, 17, 17, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    inset 0 1px 2px var(--vs-line-soft),
+    inset 0 1px 0 var(--glass-highlight);
   transition:
     background-color 160ms ease-out,
     border-color 160ms ease-out,
@@ -18,12 +18,12 @@
 }
 
 .form:focus-within {
-  border-color: rgba(17, 17, 17, 0.2);
-  background: rgba(255, 255, 255, 0.7);
+  border-color: var(--vs-ink-soft);
+  background: var(--surface-card-hover);
   box-shadow:
-    inset 0 1px 2px rgba(17, 17, 17, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 0 0 3px rgba(17, 17, 17, 0.035);
+    inset 0 1px 2px var(--vs-line-soft),
+    inset 0 1px 0 var(--glass-highlight),
+    0 0 0 3px var(--vs-line-soft);
 }
 
 .glyph {
@@ -49,7 +49,8 @@
 }
 
 .input::placeholder {
-  color: rgba(17, 17, 17, 0.42);
+  color: var(--vs-ink-faint);
+  opacity: 0.85;
 }
 
 .caret {
@@ -57,12 +58,12 @@
   width: 6px;
   height: 18px;
   background: var(--vs-ink);
-  opacity: 0.28;
+  opacity: 0.38;
   transition: opacity 120ms ease-out;
 }
 
 .form:focus-within .caret {
-  opacity: 0.82;
+  opacity: 0.9;
   animation: blink 0.9s steps(1, end) infinite;
 }
 
@@ -73,7 +74,7 @@
 @keyframes blink {
   0%,
   52% {
-    opacity: 0.82;
+    opacity: 0.9;
   }
 
   53%,
@@ -102,6 +103,6 @@
 
   .form:focus-within .caret {
     animation: none;
-    opacity: 0.82;
+    opacity: 0.9;
   }
 }

@@ -1,0 +1,278 @@
+/* =========================================================
+   VOYAGERSCAPE THEME TOGGLE — RESPONSIVE PRESENTATION
+   
+   DESKTOP / TABLET (>=768px):
+   Inverted monochrome glass pill [ DAY | NIGHT ]
+   with Contrasting Inner Active Capsule
+   - Light Page: Dark glass pill + White Active Capsule behind DAY (#FFFDF9)
+                 DAY text: #18181B (normal weight), NIGHT text: muted white
+   - Dark Page:  Light glass pill + Dark Active Capsule behind NIGHT (#18181B)
+                 NIGHT text: #FFFDF9 (normal weight), DAY text: muted dark
+   - Stable geometry: 0px movement on hover
+   
+   MOBILE (<768px): [LOCKED]
+   Compact 52px × 44px single icon glass capsule (V:/ family)
+   ========================================================= */
+
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--header-control-height);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  backdrop-filter: blur(12px) saturate(1.15);
+  transition:
+    background-color 240ms var(--e-out),
+    border-color 240ms var(--e-out),
+    box-shadow 240ms var(--e-out),
+    color 240ms var(--e-out);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   DESKTOP & TABLET (>=768px): INVERTED MONOCHROME GLASS PILL
+   ========================================================= */
+
+/* Default (Light Mode Page): Entire outer pill is DARK glass */
+.toggle {
+  background-color: rgba(17, 17, 17, 0.28);
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.015) 42%,
+      rgba(0, 0, 0, 0.12) 100%
+    ),
+    radial-gradient(
+      120% 100% at 50% 0%,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0) 65%
+    );
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 4px 14px rgba(30, 27, 22, 0.08),
+    0 2px 5px rgba(30, 27, 22, 0.04);
+}
+
+.toggle:hover {
+  background-color: rgba(17, 17, 17, 0.38);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+/* Dark Mode Page: Entire outer pill is LIGHT glass */
+:global(html[data-theme="dark"]) .toggle,
+:global(html.dark) .toggle {
+  background-color: rgba(255, 253, 249, 0.28);
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.11) 0%,
+      rgba(255, 255, 255, 0.025) 45%,
+      rgba(0, 0, 0, 0.035) 100%
+    ),
+    radial-gradient(
+      120% 100% at 50% 0%,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0) 70%
+    );
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 6px 18px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+:global(html[data-theme="dark"]) .toggle:hover,
+:global(html.dark) .toggle:hover {
+  background-color: rgba(255, 253, 249, 0.38);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.desktopTrack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+/* Internal Selection Indicator: Active Capsule */
+.activeCapsule {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: var(--r-pill);
+  pointer-events: none;
+  z-index: 1;
+  box-sizing: border-box;
+  
+  /* Light Mode: White active capsule (#FFFDF9) */
+  background-color: #FFFDF9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  
+  transition:
+    transform 240ms var(--e-out),
+    background-color 240ms var(--e-out),
+    box-shadow 240ms var(--e-out);
+}
+
+/* Day Mode: Capsule positioned over DAY (LEFT) */
+.activeCapsule.capsuleDay {
+  transform: translateX(0);
+}
+
+/* Night Mode: Capsule positioned over NIGHT (RIGHT) */
+.activeCapsule.capsuleNight {
+  transform: translateX(100%);
+}
+
+/* Dark Mode Page: Dark active capsule (#18181B) */
+:global(html[data-theme="dark"]) .activeCapsule,
+:global(html.dark) .activeCapsule {
+  background-color: #18181B;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.desktopLabel {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 44px;
+  height: 100%;
+  padding: 0 10px;
+  font-family: var(--font-mono);
+  font-size: var(--header-control-font-size);
+  letter-spacing: var(--tracking-tech);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: color 240ms var(--e-out), opacity 240ms var(--e-out);
+}
+
+/* Light Page Desktop Labels */
+.desktopLabel {
+  color: rgba(255, 255, 255, 0.45); /* Inactive (NIGHT) */
+}
+
+.desktopLabel.active {
+  color: #18181B; /* Active (DAY) — dark text on white capsule */
+}
+
+/* Dark Page Desktop Labels */
+:global(html[data-theme="dark"]) .desktopLabel,
+:global(html.dark) .desktopLabel {
+  color: rgba(17, 17, 17, 0.45); /* Inactive (DAY) */
+}
+
+:global(html[data-theme="dark"]) .desktopLabel.active,
+:global(html.dark) .desktopLabel.active {
+  color: #FFFDF9; /* Active (NIGHT) — warm-white text on dark capsule */
+}
+
+.mobileIconWrap {
+  display: none;
+}
+
+.icon {
+  display: block;
+  color: inherit;
+  animation: iconFadeIn 180ms ease-out;
+  transition: transform 180ms var(--e-out);
+}
+
+@keyframes iconFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =========================================================
+   MOBILE (<768px): COMPACT 52×44 SINGLE-ICON CAPSULE (LOCKED)
+   ========================================================= */
+@media (max-width: 767px) {
+  .desktopTrack {
+    display: none;
+  }
+
+  .mobileIconWrap {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    line-height: 1;
+  }
+
+  .toggle {
+    width: 52px;
+  }
+
+  /* Default (Light Mode Page): Mobile toggle is a TRANSLUCENT DARK glass pill */
+  .toggle {
+    background-color: rgba(17, 17, 17, 0.24);
+    border: 1px solid rgba(17, 17, 17, 0.12);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 4px 14px rgba(30, 27, 22, 0.08),
+      0 2px 5px rgba(30, 27, 22, 0.04);
+    color: #f4efe6;
+  }
+
+  .toggle:hover {
+    background-color: rgba(17, 17, 17, 0.32);
+    border-color: rgba(17, 17, 17, 0.2);
+  }
+
+  /* Dark Mode Page: Mobile toggle is a TRANSLUCENT LIGHT glass pill */
+  :global(html[data-theme="dark"]) .toggle,
+  :global(html.dark) .toggle {
+    background-color: rgba(255, 253, 249, 0.24);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      0 6px 18px rgba(0, 0, 0, 0.25),
+      0 2px 6px rgba(0, 0, 0, 0.15);
+    color: #fffdf9;
+  }
+
+  :global(html[data-theme="dark"]) .toggle:hover,
+  :global(html.dark) .toggle:hover {
+    background-color: rgba(255, 253, 249, 0.32);
+    border-color: rgba(255, 255, 255, 0.42);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle,
+  .activeCapsule,
+  .desktopLabel,
+  .icon {
+    transition: none !important;
+    animation: none !important;
+  }
+}

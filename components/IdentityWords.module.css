@@ -44,7 +44,7 @@
   padding: 0.32em 0.5em 0.38em;
   /* Soft rectangle (≈7–10px optical radius at any type scale) */
   border-radius: clamp(7px, 0.34em, 10px);
-  background: rgba(255, 253, 249, 0.85);
+  background: var(--surface-card);
   white-space: nowrap;
 }
 

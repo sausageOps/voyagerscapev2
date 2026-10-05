@@ -3,26 +3,15 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useUI } from "@/lib/ui-store";
-import { useNavSurface } from "@/lib/use-nav-surface";
-import { useNavPointerLight } from "@/lib/use-nav-pointer-light";
 import { EASE, gsap, prefersReducedMotion, revealUp } from "@/lib/motion";
-import BrandMark from "@/components/BrandMark";
-import NavMenu from "@/components/NavMenu";
-import NavGlassSurface from "@/components/NavGlassSurface";
-import TerminalSignal from "@/components/TerminalSignal";
-import reactiveStyles from "./ReactiveNavGlass.module.css";
+import ColoniaPillPrototype from "@/components/ColoniaPillPrototype/ColoniaPillPrototype";
+import MobilePillHeader from "@/components/MobilePillHeader/MobilePillHeader";
 import styles from "./SiteHeader.module.css";
 
 export default function SiteHeader() {
   const { loaded, setTerminalOpen, terminalOpen, mobileMenuOpen, setMobileMenuOpen } = useUI();
   const rootRef = useRef<HTMLElement | null>(null);
-  const mobileNavRef = useNavPointerLight<HTMLDivElement>();
   const pathname = usePathname();
-
-  /* Context-aware nav: tracks which section surface (light/dark) currently
-     sits underneath this header's footprint and publishes it on <html> as
-     data-nav-surface, which NavMenu's pills react to. */
-  useNavSurface(rootRef);
 
   useEffect(() => {
     if (!loaded || !rootRef.current) return;
@@ -140,8 +129,6 @@ export default function SiteHeader() {
         accumulatedDistance = 0;
         hide();
       } else if (state === "hidden" && direction === -1 && accumulatedDistance >= 10) {
-        // Hidden + ten meaningful upward pixels always reveals immediately.
-        // No moving anchor and no proximity-to-top requirement are involved.
         accumulatedDistance = 0;
         show();
       }
@@ -170,91 +157,24 @@ export default function SiteHeader() {
 
   return (
     <header className={styles.header} ref={rootRef}>
-      <div className={styles.row}>
-        <div className={styles.left} data-header-item>
-          <BrandMark />
-        </div>
+      {/* Web + Tablet: Pure mathematical viewport-centered physical pill navigation */}
+      <div className={styles.desktopContainer} data-header-item>
+        <ColoniaPillPrototype />
+      </div>
 
-        <div className={styles.center} data-header-item>
-          <NavMenu />
-        </div>
-
-        <div className={styles.right} data-header-item>
-          <button
-            type="button"
-            className={styles.hint}
-            onClick={() => setTerminalOpen(!terminalOpen)}
-            aria-expanded={terminalOpen}
-            aria-controls="vs-command-terminal"
-            data-cursor="link"
-            data-cursor-label="Terminal"
-            data-magnetic
-          >
-            <span className="vs-tech">Press</span>
-            <span className={styles.key} aria-hidden="true">
-              /
-            </span>
-            <span className="vs-sr-only">for ?</span>
-            <span className={`vs-tech ${styles.forVisual}`} aria-hidden="true">
-              <span>for</span>
-              <TerminalSignal />
-            </span>
-          </button>
-        </div>
-
-        {/* ---- Mobile cluster ---- */}
-        <div
-          className={`${styles.mobileRight} ${reactiveStyles.tracker}`}
-          data-header-item
-          ref={mobileNavRef}
-        >
-          <NavGlassSurface
-            height="var(--header-control-height)"
-            borderRadius={9999}
-            borderWidth={0.08}
-            brightness={62}
-            opacity={0.9}
-            blur={8}
-            displace={0.2}
-            backgroundOpacity={0.14}
-            saturation={1.08}
-            distortionScale={-76}
-            redOffset={0}
-            greenOffset={0}
-            blueOffset={0}
-            className={reactiveStyles.surface}
-          >
-            <div className={styles.mobileControls}>
-              <button
-                type="button"
-                className={styles.mobileControl}
-                onClick={() => {
-                  setTerminalOpen(false);
-                  setMobileMenuOpen(!mobileMenuOpen);
-                }}
-                aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
-                aria-expanded={mobileMenuOpen}
-                aria-controls="vs-mobile-nav"
-              >
-                {mobileMenuOpen ? "Close" : "Menu"}
-              </button>
-              <button
-                type="button"
-                className={`${styles.mobileControl} ${styles.terminalControl}`}
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setTerminalOpen(!terminalOpen);
-                }}
-                aria-label={terminalOpen ? "Close terminal" : "Open terminal"}
-                data-magnetic
-                aria-controls="vs-command-terminal"
-                aria-expanded={terminalOpen}
-              >
-                <TerminalSignal open={terminalOpen} />
-              </button>
-            </div>
-          </NavGlassSurface>
-        </div>
+      {/* Mobile (<= 767px): Compact physical navigation pill header */}
+      <div className={styles.mobileRow} data-header-item>
+        <MobilePillHeader
+          mobileMenuOpen={mobileMenuOpen}
+          onMenuClick={() => {
+            setTerminalOpen(false);
+            setMobileMenuOpen(!mobileMenuOpen);
+          }}
+          onTerminalClick={() => {
+            setMobileMenuOpen(false);
+            setTerminalOpen(!terminalOpen);
+          }}
+        />
       </div>
     </header>
   );

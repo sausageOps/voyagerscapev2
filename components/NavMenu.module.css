@@ -25,32 +25,34 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 58px;
-  height: 30px;
+  height: 32px;
   border: 0;
   background: transparent;
   box-shadow: none;
-  color: var(--vs-ink);
+  color: var(--vs-ink-soft);
   font-family: var(--font-mono);
   font-size: var(--header-control-font-size);
+  font-weight: 400;
   line-height: 1;
   letter-spacing: var(--tracking-tech);
   text-decoration: none;
   text-transform: uppercase;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 220ms var(--e-out);
+  transition: color 200ms var(--e-out);
 }
 
-/* Existing target geometry is preserved without retaining the old individual
-   silhouettes. Future items inherit the same clean base item automatically. */
+.item:hover {
+  color: var(--vs-ink);
+}
+
+/* Fixed width targets for typography symmetry */
 .list > li:nth-child(1) .item {
   width: 58px;
 }
 
 .list > li:nth-child(2) .item {
   width: 32px;
-  height: 32px;
 }
 
 .list > li:nth-child(3) .item {
@@ -65,23 +67,8 @@
   position: relative;
   z-index: 2;
   display: inline-block;
-  opacity: 0.84;
-  transition:
-    transform 220ms var(--e-out),
-    color 200ms var(--e-out),
-    opacity 200ms var(--e-out);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .item:hover {
-    transform: translateY(-1px) scale(1.01);
-  }
-
-  .item:hover .label {
-    color: #080808;
-    opacity: 1;
-    transform: translateY(-0.35px);
-  }
+  color: inherit;
+  font-weight: 400;
 }
 
 /* aria-current remains semantic only; it deliberately has no visual selector.
@@ -92,13 +79,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .item,
-  .label {
+  .item {
     transition-duration: 0.01ms;
-  }
-
-  .item:hover,
-  .item:hover .label {
-    transform: none;
   }
 }

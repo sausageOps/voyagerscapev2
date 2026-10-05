@@ -3,7 +3,7 @@
    ========================================================= */
 
 :root {
-  /* ---- Colour ---- */
+  /* ---- Colour (Light Theme Baseline) ---- */
   --vs-bg: #f5f0e8;
   --vs-bg-deep: #efe8dd;
   /* Secondary section (footer) — a half-step darker warm grey */
@@ -16,17 +16,42 @@
 
   --vs-pink: #f1b8e4;
   --vs-lavender: #d8ccff;
-  /* Same colour, as channels: the Liquid Glass material tints itself with
-     `rgba(var(--glass-tint), …)`, so a surface that wants to be lavender
-     needs the triplet rather than the hex. Kept next to its hex so the two
-     cannot drift. */
   --vs-lavender-rgb: 216, 204, 255;
   --vs-yellow: #f3e5b5;
   --vs-peach: #f5d8b8;
 
+  /* ---- Physical Navigation Pill Tokens (Light / Day) ---- */
+  --vs-nav-pill: #24231F;
+  --vs-nav-text: #ffffff;
+  --vs-nav-disc: #F1EEE5;
+  --vs-nav-disc-ink: #24231F;
+
+  /* ---- Semantic Surface Tokens (Light) ---- */
+  --vs-frame-bg: #fffdf9;
+  --vs-pw-bg: #fffdf9;
+  --vs-pw-ink: #18181b;
+  --vs-email-bg: #fffefc;
+  --vs-email-ink: #111111;
+
+  --vs-terminal-bg: #fffdf9;
+  --vs-terminal-border: rgba(17, 17, 17, 0.12);
+  --vs-terminal-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.92), -18px 0 48px rgba(20, 18, 15, 0.12), -4px 0 14px rgba(20, 18, 15, 0.07);
+
+  --vs-menu-bg: #f5f0e8;
+  --vs-menu-border: rgba(17, 17, 17, 0.1);
+  --vs-menu-shadow: -18px 0 46px rgba(17, 17, 17, 0.1);
+
+  /* Glass material tokens (Light) */
+  --glass-tint: 255, 253, 249;
+  --glass-alpha: 0.36;
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-border-subtle: rgba(17, 17, 17, 0.08);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), inset 0 -1px 0 rgba(17, 17, 17, 0.03), 0 7px 18px rgba(30, 27, 22, 0.075), 0 2px 5px rgba(30, 27, 22, 0.04);
+  --glass-highlight: rgba(255, 255, 255, 0.6);
+  --surface-card: rgba(255, 253, 249, 0.72);
+  --surface-card-hover: rgba(255, 253, 249, 0.94);
+
   /* ---- Type ---- */
-  /* Three explicit roles — identical on every breakpoint, no fallbacks to a
-     system face on mobile. */
   --font-display: var(--font-display-face), var(--font-grotesk), "Helvetica Neue", Arial, sans-serif;
   --font-body: var(--font-grotesk), "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono: var(--font-mono-tech), ui-monospace, "SF Mono", Menlo, monospace;
@@ -47,10 +72,9 @@
 
   --gutter: clamp(16px, 3.2vw, 40px);
   --header-h: 64px;
-  /* One frame rhythm: the header row starts 28px below the frame top and
-     outer controls sit 28px in from its side edges. */
   --frame-edge-inset: 16px;
   --header-frame-space: 28px;
+  --frame-to-pill-gap: 14px;
   --header-control-height: 44px;
   --header-control-font-size: var(--fs-micro);
   --frame-corner-space: 28px;
@@ -69,15 +93,6 @@
   --t-fast: 0.22s;
   --t-med: 0.42s;
 
-  /* ---- Flat surface material ----
-     Two knobs only: the fill tone and its opacity. Every decorative layer
-     the glass system used to add — blur, backdrop sampling, edge highlight,
-     sheen, cast shadow — is gone; surfaces are flat graphic fills. */
-  --glass-tint: 255, 253, 249;
-  --glass-alpha: 0.42;
-  --surface-card: rgba(255, 253, 249, 0.66);
-  --surface-card-hover: rgba(255, 253, 249, 0.92);
-
   --z-cursor: 120;
   --z-loader: 110;
   --z-terminal: 90;
@@ -85,9 +100,62 @@
   --z-float: 40;
 }
 
+/* =========================================================
+   DARK THEME PALETTE
+   Warm charcoal & near-black grounded architecture
+   ========================================================= */
+html[data-theme="dark"],
+html.dark {
+  /* ---- Colour (Dark Theme) ---- */
+  --vs-bg: #121211;
+  --vs-bg-deep: #0d0d0c;
+  --vs-bg-sub: #171716;
+  --vs-ink: #f4efe6;
+  --vs-ink-soft: #a8a298;
+  --vs-ink-faint: #6c675f;
+  --vs-line: rgba(244, 239, 230, 0.14);
+  --vs-line-soft: rgba(244, 239, 230, 0.08);
+
+  --vs-pink: #e2a8d3;
+  --vs-lavender: #c8bbf5;
+  --vs-lavender-rgb: 200, 187, 245;
+  --vs-yellow: #ebd69b;
+  --vs-peach: #e5c5a2;
+
+  /* ---- Physical Navigation Pill Tokens (Night / Dark — Light Cream Floating Nav) ---- */
+  --vs-nav-pill: #F1EEE5;
+  --vs-nav-text: #24231F;
+  --vs-nav-disc: #24231F;
+  --vs-nav-disc-ink: #F1EEE5;
+
+  /* ---- Semantic Surface Tokens (Dark) ---- */
+  --vs-frame-bg: #171716;
+  --vs-pw-bg: #171716;
+  --vs-pw-ink: #847d75;
+  --vs-email-bg: rgba(255, 255, 255, 0.08);
+  --vs-email-ink: #f4efe6;
+
+  --vs-terminal-bg: #171716;
+  --vs-terminal-border: rgba(255, 255, 255, 0.12);
+  --vs-terminal-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.08), -18px 0 48px rgba(0, 0, 0, 0.5), -4px 0 14px rgba(0, 0, 0, 0.3);
+
+  --vs-menu-bg: #141413;
+  --vs-menu-border: rgba(255, 255, 255, 0.12);
+  --vs-menu-shadow: -18px 0 46px rgba(0, 0, 0, 0.5);
+
+  /* Glass material tokens (Dark) */
+  --glass-tint: 255, 255, 255;
+  --glass-alpha: 0.08;
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-border-subtle: rgba(255, 255, 255, 0.08);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.25);
+  --glass-highlight: rgba(255, 255, 255, 0.12);
+  --surface-card: rgba(255, 255, 255, 0.07);
+  --surface-card-hover: rgba(255, 255, 255, 0.12);
+}
+
 @media (max-width: 767px) {
   :root {
-    /* The approved phone frame is 8px tighter, so its shared rhythm is 20px. */
     --frame-edge-inset: 8px;
     --header-frame-space: 20px;
     --frame-corner-space: 24px;
@@ -112,9 +180,7 @@ body {
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: auto;
-  /* Canvas colour lives on <html> so body-level filters can invert it too */
   background: var(--vs-bg);
-  transition: background-color 0.45s var(--e-inout);
 }
 
 body {
@@ -127,24 +193,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
-}
-
-/* Warm paper ambience — cheap, no blur, GPU friendly */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 60%),
-    radial-gradient(70% 55% at 12% 88%, rgba(241, 184, 228, 0.16), rgba(241, 184, 228, 0) 70%),
-    radial-gradient(65% 50% at 88% 82%, rgba(216, 204, 255, 0.16), rgba(216, 204, 255, 0) 70%);
-}
-
-/* The homepage owns its own contained atmosphere. */
-body:has([data-home-canvas])::before {
-  display: none;
 }
 
 h1,
@@ -239,107 +287,65 @@ svg {
 }
 
 /* =========================================================
-   FLAT SURFACE MATERIAL
-   One language for every UI surface: a solid tone, the
-   component's own border-radius, nothing else — no blur, no
-   backdrop sampling, no edge highlight, no sheen, no cast
-   shadow. Definition comes from the fill against the page.
+   GLASS SURFACE MATERIAL PRIMITIVE
    ========================================================= */
-
-/* =========================================================
-   PROJECT RULE — GLASS NEVER IMPLIES A BORDER OR A SHADOW
-   ---------------------------------------------------------
-   "Glass" in Voyagerscape means exactly two things:
-
-       translucent surface  +  (optional) backdrop blur
-
-   It does NOT mean border, box-shadow, inset highlight,
-   outline, gradient edge, glow, or a decorative pseudo-element
-   edge. Those are separate, opt-in design decisions.
-
-   A component may still declare `border` / `box-shadow` for a
-   specific, deliberate reason — it just never inherits one
-   from being glass. Nothing here disables borders or shadows
-   on non-glass elements.
-   ========================================================= */
-
 .vs-glass {
   position: relative;
   background-color: rgba(var(--glass-tint), var(--glass-alpha));
-  transition: background-color var(--t-fast) var(--e-out), transform var(--t-fast) var(--e-out);
-
-  /* The canonical guarantee. Declared on the shared class itself (not in a
-     :where() block) so the glass system can never silently grow an edge;
-     a component that genuinely needs one still wins with its own module
-     selector, which is at least as specific and loads after globals. */
-  border: none;
-  box-shadow: none;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.018) 45%,
+      rgba(0, 0, 0, 0.025) 100%
+    ),
+    radial-gradient(
+      120% 100% at 50% 0%,
+      rgba(255, 255, 255, 0.11) 0%,
+      rgba(255, 255, 255, 0) 68%
+    );
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  backdrop-filter: blur(12px) saturate(1.15);
+  transition:
+    background-color var(--t-fast) var(--e-out),
+    border-color var(--t-fast) var(--e-out),
+    box-shadow var(--t-fast) var(--e-out),
+    transform var(--t-fast) var(--e-out);
 }
 
-/* Default radius at zero specificity so component modules always win */
+html[data-theme="dark"] .vs-glass,
+html.dark .vs-glass {
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.015) 45%,
+      rgba(0, 0, 0, 0.1) 100%
+    ),
+    radial-gradient(
+      120% 100% at 50% 0%,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0) 65%
+    );
+}
+
 :where(.vs-glass) {
   border-radius: var(--r-pill);
 }
 
-/* Backdrop blur is permitted and is opt-in per surface:
-   set `--glass-blur: 12px` on the element (or a variant) and the material
-   samples what is behind it. Unset, it costs nothing. */
-:where(.vs-glass) {
-  -webkit-backdrop-filter: var(--glass-backdrop, none);
-  backdrop-filter: var(--glass-backdrop, none);
-}
-
-.vs-glass[style*="--glass-blur"],
-.vs-glass--blur {
-  --glass-backdrop: blur(var(--glass-blur, 12px));
-}
-
-/* Interaction states may change tone / transform — never the edge.
-   Kept at the same specificity level as the component hover rules that
-   could otherwise reintroduce an edge through the shared system. */
-.vs-glass:hover,
-.vs-glass:focus,
-.vs-glass:active {
-  border: none;
-  box-shadow: none;
-  outline: none;
-}
-
-/* Keyboard focus is the one sanctioned ring: it is transient, it is drawn
-   outside the surface via outline-offset, and it never persists as a
-   decorative border. It inherits the global :focus-visible treatment. */
 .vs-glass:focus-visible {
-  border: none;
-  box-shadow: none;
   outline: 2px solid var(--vs-ink);
   outline-offset: 3px;
 }
 
-/* No decorative edge/highlight/glow pseudo-elements from the glass system.
-   Zero specificity (:where) so any pseudo-element a component defines for
-   an unrelated functional purpose — icons, carets, underlines, counters —
-   still works normally. */
-:where(.vs-glass)::before,
-:where(.vs-glass)::after {
-  box-shadow: none;
-  border: none;
-  filter: none;
-}
-
-/* Clearer treatment — floating controls over rich content */
 .vs-glass--clear {
-  --glass-alpha: 0.24;
+  --glass-alpha: 0.22;
 }
 
-/* Denser, legible treatment — text surfaces (terminal, panels) */
 .vs-glass--solid {
   --glass-alpha: 0.84;
-}
-
-.vs-glass--dark {
-  --glass-tint: 18, 18, 17;
-  --glass-alpha: 0.78;
-  color: #f7f3ec;
 }
 
 /* =========================================================
@@ -369,7 +375,6 @@ html[data-visual-mode="bw"] body {
   filter: grayscale(1) contrast(1.02);
 }
 
-/* Match the canvas to the inverted page so the fold has no light seam */
 html[data-visual-mode="negative"] {
   background: #0a0f17;
 }
@@ -378,19 +383,27 @@ html[data-visual-mode="negative"] body {
   filter: invert(1) hue-rotate(180deg);
 }
 
-html[data-visual-mode="negative"] body::before {
-  opacity: 0.6;
+/* =========================================================
+   VIEW TRANSITION CIRCULAR THEME WIPE
+   ========================================================= */
+::view-transition-group(root),
+::view-transition-image-pair(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal !important;
 }
 
-/* Keep the mode transition itself calm */
-body {
-  transition: filter 0.45s var(--e-inout);
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
 }
 
 /* =========================================================
-   CURSOR — the class is added by <Cursor> only after it has
-   mounted and seen a real mouse, so the native pointer is
-   never hidden before a replacement exists.
+   CURSOR
    ========================================================= */
 @media (hover: hover) and (pointer: fine) {
   html.has-custom-cursor,
@@ -410,5 +423,12 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.12s !important;
     scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(root),
+  ::view-transition-image-pair(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 }

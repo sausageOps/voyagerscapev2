@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "@/styles/globals.css";
+import { ThemeProvider } from "@/lib/theme-provider";
 import AppShell from "@/components/AppShell";
 
 /* Display face: a grotesque whose curves are built from rectangular steps —
@@ -127,11 +128,26 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+/**
+ * Anti-flash theme initialization script.
+ * Runs synchronously before first render to apply stored or system theme immediately.
+ */
+const themeInitScript = `(function(){try{var t=localStorage.getItem('vs-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.toggle('dark',t==='dark');}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${heroDisplay.variable} ${grotesk.variable} ${mono.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${display.variable} ${heroDisplay.variable} ${grotesk.variable} ${mono.variable}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
-        <AppShell>{children}</AppShell>
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );

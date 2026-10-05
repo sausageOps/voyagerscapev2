@@ -1,0 +1,451 @@
+/* =========================================================
+   COLONIA PILL — EXACT REFERENCE RECONSTRUCTION
+   Art Page Lab — Direct Visual Match to Colonia Zacamil
+   ========================================================= */
+
+@font-face {
+  font-family: "Geist Pixel Square";
+  src: url("/fonts/geist-pixel/GeistPixel-Square.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================================================
+   NORMAL STATE CONTAINER (Shape A Main Pill)
+   ========================================================= */
+.normalCluster {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* =========================================================
+   EXPANDED STATE CONTAINER (Series + Options + Back)
+   ========================================================= */
+.expandedCluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* =========================================================
+   MAIN CONTINUOUS SILHOUETTE (Shape A) - 42px HEIGHT (LOCKED)
+   Play Disc (35px Inset) + WATCH SERIES + Master Saddle + ROUTES
+   ========================================================= */
+.mainPill {
+  position: relative;
+  width: 248px;
+  height: 42px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+.mainSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 248px;
+  height: 42px;
+  display: block;
+  pointer-events: none;
+}
+
+.mainSvg path {
+  fill: var(--vs-nav-pill, #24231F);
+  transition: fill 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mainContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Left Chamber (154.5px): Play Disc (35px) + VOYAGERSCAPE */
+.leftSection {
+  display: flex;
+  align-items: center;
+  width: 154.5px;
+  height: 100%;
+  padding-left: 3.5px;
+  padding-right: 8px;
+  box-sizing: border-box;
+}
+
+.homeLabelWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* Play Disc: 35px diameter concentric circular control with ~3.5px black collar - LOCKED */
+.playDisc {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background-color: var(--vs-nav-disc, #F1EEE5);
+  color: var(--vs-nav-disc-ink, #000000);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition:
+    background-color 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms ease-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.playDisc:hover {
+  opacity: 0.92;
+}
+
+.playDisc:focus-visible {
+  outline: 2px solid var(--vs-nav-disc, #ffffff);
+  outline-offset: 2px;
+}
+
+/* Subtle luminous pixel glow layer inside the white disc */
+.signalGlow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+  pointer-events: none;
+  opacity: 0.35;
+  transition: opacity 160ms ease-out, transform 160ms ease-out;
+}
+
+.signalGlowPulse {
+  opacity: 0.85;
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+/* Experience Japan Pictogram Icon container */
+.signalIconWrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--vs-nav-disc-ink, #000000);
+  transition:
+    opacity 160ms ease-out,
+    transform 160ms ease-out,
+    color 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.signalIconWrapFade {
+  opacity: 0.15;
+  transform: scale(0.92);
+}
+
+.signalIcon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+}
+
+/* Dynamic SVG Mask for loaded public/icons/nav SVGs with automatic theme color */
+.signalIconMask {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+@media (max-width: 767px) {
+  .signalIconWrap {
+    width: 14px;
+    height: 14px;
+  }
+  .signalIcon,
+  .signalIconMask {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* =========================================================
+   UNIFIED NAVIGATION TYPOGRAPHY SYSTEM (SOURCE OF TRUTH)
+   Shared across: VOYAGERSCAPE, ROUTES, ART, CONNECT, ABOUT, V:/
+   ========================================================= */
+.watchLabel,
+.routesLabel,
+.vSlashLabel,
+.categoryOption {
+  font-family: "Geist Pixel Square", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 767px) {
+  .watchLabel,
+  .routesLabel,
+  .vSlashLabel,
+  .categoryOption {
+    font-size: 10.5px;
+    letter-spacing: 0.075em;
+  }
+}
+
+/* Specific Label Variations & Interactive States */
+.watchLabel {
+  color: var(--vs-nav-text, #ffffff);
+  perspective: 500px;
+  transition: color 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.shimmerWord {
+  display: inline-flex;
+  align-items: center;
+  perspective: 500px;
+  transform-style: preserve-3d;
+}
+
+.shimmerChar {
+  display: inline-block;
+  transform-origin: 50% 50%;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  opacity: 0.88;
+}
+
+/* V:/ Terminal-style label (Expanded State) */
+.vSlashLabel {
+  color: var(--vs-nav-text, #ffffff);
+  transition:
+    color 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 140ms ease-out;
+}
+
+.vSlashLabel:hover {
+  opacity: 0.8;
+}
+
+/* Blinking terminal cursor slash - ONLY '/' blinks every 500ms */
+.cursorSlash {
+  display: inline-block;
+  margin-left: 0.5px;
+  animation: cursorSlashBlink 1000ms cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  will-change: opacity;
+}
+
+@keyframes cursorSlashBlink {
+  0%, 45% {
+    opacity: 1;
+  }
+  50%, 95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Right Chamber (93.5px): ROUTES - LOCKED */
+.rightSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 93.5px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.routesLabel {
+  width: 100%;
+  height: 100%;
+  color: var(--vs-nav-text, #ffffff);
+  transition: color 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* =========================================================
+   1. SERIES PILL (EXPANDED MODE) - 42px HEIGHT
+   ========================================================= */
+.seriesPill {
+  position: relative;
+  height: 42px;
+  background-color: var(--vs-nav-pill, #24231F);
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px 0 3.5px;
+  gap: 8.5px;
+  flex-shrink: 0;
+  transform-origin: left center;
+  will-change: opacity, transform;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+  transition: background-color 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* =========================================================
+   2. CONNECTED MEDIA OPTIONS + BACK ARROW PILL (EXPANDED MODE)
+   [ ART   CONNECT   ABOUT ╲____╱ ‹ ] - 228px × 42px (COMPACT)
+   ========================================================= */
+.mediaBackPill {
+  position: relative;
+  width: 228px;
+  height: 42px;
+  flex-shrink: 0;
+  transform-origin: left center;
+  will-change: opacity, transform;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+.mediaBackSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 228px;
+  height: 42px;
+  display: block;
+  pointer-events: none;
+}
+
+.mediaBackSvg path {
+  fill: var(--vs-nav-pill, #24231F);
+  transition: fill 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mediaBackContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.mediaCategoriesSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 186px;
+  height: 100%;
+  padding: 0;
+  gap: 11px;
+  box-sizing: border-box;
+}
+
+.categoryOption {
+  height: 100%;
+  padding: 0 4px;
+  color: var(--vs-nav-text, #ffffff);
+  opacity: 0.75;
+  will-change: opacity, transform;
+  transition:
+    opacity 140ms ease-out,
+    color 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.categoryOption:hover {
+  opacity: 1;
+  color: var(--vs-nav-text, #ffffff);
+}
+
+.categoryOptionActive {
+  opacity: 1;
+  color: var(--vs-nav-text, #ffffff);
+}
+
+/* Back Arrow Button (in the 42px right circular lobe centered at X=207) */
+.backButton {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: transparent;
+  color: var(--vs-nav-text, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 2;
+  will-change: opacity, transform;
+  transition:
+    opacity 140ms ease-out,
+    color 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.backButton:hover {
+  opacity: 0.8;
+}
+
+.backButton:focus-visible {
+  outline: 2px solid var(--vs-nav-text, #ffffff);
+  outline-offset: 2px;
+}
+
+.backIcon {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+/* =========================================================
+   4. RIGHT SATELLITE CONTAINER - 100% LOCKED
+   ========================================================= */
+.satelliteContainer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transform-origin: center center;
+  will-change: transform;
+}

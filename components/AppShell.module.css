@@ -5,6 +5,8 @@
   position: relative;
   min-height: 100svh;
   overflow: clip;
+  background: var(--vs-bg);
+  transition: background-color var(--t-fast) var(--e-out);
 }
 
 .website {

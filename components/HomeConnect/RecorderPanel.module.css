@@ -52,12 +52,12 @@
   font-size: 15px;
   line-height: 1;
   color: var(--vs-ink-soft);
-  background: rgba(17, 17, 17, 0.05);
+  background: var(--vs-line-soft);
   transition: background var(--t-fast) var(--e-out), transform var(--t-fast) var(--e-out);
 }
 
 .close:hover {
-  background: rgba(17, 17, 17, 0.11);
+  background: var(--vs-line);
   transform: scale(1.06);
 }
 
@@ -146,12 +146,12 @@
 }
 
 .secondary {
-  background: rgba(17, 17, 17, 0.06);
+  background: var(--vs-line-soft);
   color: var(--vs-ink);
 }
 
 .secondary:hover {
-  background: rgba(17, 17, 17, 0.11);
+  background: var(--vs-line);
   transform: translateY(-1px);
 }
 

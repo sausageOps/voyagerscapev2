@@ -13,7 +13,7 @@
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  opacity: var(--nav-light-opacity);
+  opacity: var(--nav-light-opacity, 0);
   transition: opacity 220ms ease-out;
 }
 

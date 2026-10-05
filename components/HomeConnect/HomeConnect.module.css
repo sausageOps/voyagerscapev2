@@ -48,11 +48,13 @@
   align-items: center;
   padding: 2px 7px;
   border-radius: clamp(4px, 0.08em, 6px);
-  background-color: #f7f5f0;
+  border: 1px solid var(--vs-line-soft);
+  background-color: var(--vs-email-bg);
   font-family: var(--font-mono);
   font-size: var(--fs-micro);
   letter-spacing: var(--tracking-tight);
-  color: var(--vs-ink);
+  color: var(--vs-email-ink);
+  transition: background-color var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out), border-color var(--t-fast) var(--e-out);
 }
 
 /* ---------------- Floating control (top-right) ---------------- */

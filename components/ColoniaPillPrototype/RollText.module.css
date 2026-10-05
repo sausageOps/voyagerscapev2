@@ -1,0 +1,66 @@
+/* =========================================================
+   ANIMATA ROLL TEXT — NAVIGATION LABELS
+   Direct implementation of Animata Roll Text:
+   - Strict block-stack geometry: Copy A at [0, 1.2em], Copy B at [1.2em, 2.4em]
+   - Clipped viewport: exactly 1.2em height with overflow: hidden
+   - 32ms character stagger, 250ms duration, cubic-bezier(0.77, 0, 0.175, 1)
+   - pointer-events: none on text layer so parent handles all clicks
+   ========================================================= */
+
+.container {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  vertical-align: middle;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1.2;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.visualRow {
+  display: inline-flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.charViewport {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  height: 1.2em;
+  line-height: 1.2em;
+  vertical-align: middle;
+}
+
+.charTrack {
+  display: block;
+  width: 100%;
+  will-change: transform;
+}
+
+.charItem {
+  display: block;
+  height: 1.2em;
+  line-height: 1.2em;
+  text-align: center;
+  white-space: pre;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .charTrack {
+    transition: none !important;
+    transform: none !important;
+  }
+}
