@@ -4,28 +4,12 @@ import { useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUI } from "@/lib/ui-store";
+import { useTheme } from "@/lib/theme-provider";
 import { NAV_ROUTES, isRouteActive } from "@/lib/routes";
-import { useNavPointerLight } from "@/lib/use-nav-pointer-light";
 import { mountRotation } from "@/lib/rotating-words";
 import { useSwipeToClose } from "@/lib/use-swipe-to-close";
-import BrandMark from "@/components/BrandMark";
-import NavGlassSurface from "@/components/NavGlassSurface";
-import reactiveStyles from "./ReactiveNavGlass.module.css";
+import { SeriesPill } from "@/components/ColoniaPillPrototype/ColoniaPillPrototype";
 import styles from "./MobileMenu.module.css";
-
-const GLASS_PROPS = {
-  borderWidth: 0.08,
-  brightness: 62,
-  opacity: 0.9,
-  blur: 8,
-  displace: 0.2,
-  backgroundOpacity: 0.14,
-  saturation: 1.08,
-  distortionScale: -76,
-  redOffset: 0,
-  greenOffset: 0,
-  blueOffset: 0,
-} as const;
 
 const NAV_SHAPES = [
   { className: styles.tSoftSquare, radius: 18 },
@@ -45,22 +29,21 @@ const MENU_WORD_SETS = [
  * trail keeps the first word rolls editorial rather than simultaneous. */
 const ROTATION_LEAD_INS = [1.25, 1.57, 1.89, 2.21] as const;
 
-/** Mobile navigation side-sheet, sharing the terminal's off-canvas shell. */
+/** Mobile navigation side-sheet, sharing the site's solid theme-aware panel styling. */
 export default function MobileMenu() {
   const { mobileMenuOpen, setMobileMenuOpen } = useUI();
+  const { isDark, toggleTheme } = useTheme();
   const pathname = usePathname();
   const layerRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const themeButtonRef = useRef<HTMLButtonElement | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
-  const closeTrackerRef = useNavPointerLight<HTMLDivElement>();
-  const navTrackerRef = useNavPointerLight<HTMLElement>();
   const rotationRefs = useRef<Array<HTMLLIElement | null>>([]);
   const closeMenu = useCallback(() => setMobileMenuOpen(false), [setMobileMenuOpen]);
 
   useSwipeToClose(layerRef, mobileMenuOpen, closeMenu);
 
-  /* Reuse the hero/footer rotation engine only while the menu is open.
-     Cleanup restores every pill to its first authored word. */
+  /* Reuse the hero/footer rotation engine only while the menu is open. */
   useEffect(() => {
     if (!mobileMenuOpen) return;
 
@@ -105,6 +88,11 @@ export default function MobileMenu() {
     };
   }, [mobileMenuOpen, setMobileMenuOpen]);
 
+  const handleThemeToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleTheme(themeButtonRef.current);
+  };
+
   return (
     <aside
       ref={layerRef}
@@ -115,36 +103,70 @@ export default function MobileMenu() {
     >
       <div className={styles.surface} role="dialog" aria-modal="true" aria-label="Navigation menu">
         <div className={styles.top}>
-          <BrandMark />
-          <div
-            className={`${styles.closeTracker} ${reactiveStyles.tracker}`}
-            ref={closeTrackerRef}
-          >
-            <NavGlassSurface
-              {...GLASS_PROPS}
-              width={72}
-              height="var(--header-control-height)"
-              borderRadius={9999}
-              className={reactiveStyles.surface}
+          {/* Left: Complete Web/Tablet Left Physical Navigation Unit [ ◉ | V:/ ] */}
+          <SeriesPill onHomeClick={() => setMobileMenuOpen(false)} />
+
+          {/* Right: Physical theme toggle & Close button */}
+          <div className={styles.topRight}>
+            <button
+              ref={themeButtonRef}
+              type="button"
+              className={styles.themeCircle}
+              onClick={handleThemeToggle}
+              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
             >
-              <button
-                ref={closeRef}
-                type="button"
-                className={styles.close}
-                onClick={() => setMobileMenuOpen(false)}
-                aria-label="Close navigation"
-                tabIndex={mobileMenuOpen ? 0 : -1}
-              >
-                Close
-              </button>
-            </NavGlassSurface>
+              {isDark ? (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={styles.themeIcon}
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ) : (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={styles.themeIcon}
+                  aria-hidden="true"
+                >
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              )}
+            </button>
+            <button
+              ref={closeRef}
+              type="button"
+              className={styles.close}
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close navigation"
+              tabIndex={mobileMenuOpen ? 0 : -1}
+            >
+              Close
+            </button>
           </div>
         </div>
 
         <nav
-          className={`${styles.nav} ${reactiveStyles.tracker}`}
+          className={styles.nav}
           aria-label="Mobile primary"
-          ref={navTrackerRef}
         >
           <ul className={styles.navList}>
             {NAV_ROUTES.map((route, index) => {
@@ -158,41 +180,32 @@ export default function MobileMenu() {
                     rotationRefs.current[index] = node;
                   }}
                 >
-                  <NavGlassSurface
-                    {...GLASS_PROPS}
-                    width="auto"
-                    height="auto"
-                    contentPadding={0}
-                    borderRadius={shape.radius}
-                    className={`${reactiveStyles.surface} ${styles.itemGlass}`}
+                  <Link
+                    href={route.href}
+                    className={`${styles.navItem} ${shape.className}`}
+                    aria-current={active ? "page" : undefined}
+                    aria-label={slot.words[0]}
+                    tabIndex={mobileMenuOpen ? 0 : -1}
+                    onClick={() => setMobileMenuOpen(false)}
                   >
-                    <Link
-                      href={route.href}
-                      className={`${styles.navItem} ${shape.className}`}
-                      aria-current={active ? "page" : undefined}
-                      aria-label={slot.words[0]}
-                      tabIndex={mobileMenuOpen ? 0 : -1}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className={styles.wordWindow} data-identity-window aria-hidden="true">
-                        <span className={styles.wordSizer}>{slot.words[0]}</span>
-                        {slot.words.map((word, wordIndex) => (
-                          <span
-                            className={[
-                              styles.rotatingWord,
-                              wordIndex > 0 ? styles.dormantWord : "",
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                            data-identity-word
-                            key={word}
-                          >
-                            {word}
-                          </span>
-                        ))}
-                      </span>
-                    </Link>
-                  </NavGlassSurface>
+                    <span className={styles.wordWindow} data-identity-window aria-hidden="true">
+                      <span className={styles.wordSizer}>{slot.words[0]}</span>
+                      {slot.words.map((word, wordIndex) => (
+                        <span
+                          className={[
+                            styles.rotatingWord,
+                            wordIndex > 0 ? styles.dormantWord : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          data-identity-word
+                          key={word}
+                        >
+                          {word}
+                        </span>
+                      ))}
+                    </span>
+                  </Link>
                 </li>
               );
             })}

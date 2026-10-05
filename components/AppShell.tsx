@@ -13,6 +13,7 @@ import PageLoader from "@/components/PageLoader";
 import RouteTransition, { RouteTransitionProvider } from "@/components/RouteTransition";
 import SiteFooter from "@/components/SiteFooter";
 import HomeCanvas from "@/components/HomeCanvas";
+import AppBackdrop from "@/components/AppBackdrop";
 import styles from "./AppShell.module.css";
 
 /**
@@ -42,6 +43,7 @@ function AppFrame({ children }: { children: ReactNode }) {
       <a className="vs-skip" href="#main">
         Skip to content
       </a>
+      <AppBackdrop />
       <PageLoader />
       <SiteHeader />
       <div className={styles.website}>

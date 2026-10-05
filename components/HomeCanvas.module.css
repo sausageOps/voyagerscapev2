@@ -9,12 +9,13 @@
   overflow: hidden;
   isolation: isolate;
   border-radius: 18px;
-  background: #fffdf9;
+  background: var(--vs-frame-bg);
+  transition: background-color var(--t-fast) var(--e-out);
 }
 
 /* The atmosphere is now a single layer: the frame's paper colour plus the
    Pattern Waves canvas. The colour matches the component's own
-   backgroundColor (#fffdf9), so the canvas cannot seam against it and a
+   backgroundColor (var(--vs-frame-bg)), so the canvas cannot seam against it and a
    renderer failure lands on the same paper instead of a blank rectangle. */
 .atmosphere {
   position: absolute;
@@ -26,7 +27,7 @@
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  background: #fffdf9;
+  background: var(--vs-frame-bg);
 }
 
 /* --- Pattern Waves atmosphere (WebGL2 / OGL) --------------------------------

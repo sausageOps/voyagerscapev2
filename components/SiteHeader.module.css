@@ -7,167 +7,62 @@
 .header {
   --header-y: 0px;
   position: fixed;
-  top: var(--frame-edge-inset);
-  left: var(--frame-edge-inset);
-  right: var(--frame-edge-inset);
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: var(--z-header);
   pointer-events: none;
-  padding-block-start: var(--header-frame-space);
-  padding-inline: var(--header-frame-space);
   transform: translate3d(var(--shell-slide-x, 0px), var(--header-y), 0);
   transition-property: --shell-slide-x;
   transition-duration: 620ms;
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: visible;
 }
 
-/* One viewport-wide coordinate system: equal outer tracks keep the middle
-   mathematically centred regardless of the left/right control widths. */
-.row {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  min-height: var(--header-control-height);
-}
-
-.left,
-.center,
-.right,
-.mobileRight {
-  pointer-events: auto;
+/* =========================================================
+   WEB + TABLET (>= 768px): PURE MATHEMATICAL VIEWPORT CENTERING
+   Positioned strictly from the frame bottom edge:
+   pillTop = actualFrameBottom (16px) + var(--frame-to-pill-gap)
+   ========================================================= */
+.desktopContainer {
   display: flex;
   align-items: center;
-}
-
-.left {
-  grid-column: 1;
-  justify-self: start;
-}
-
-.center {
-  grid-column: 2;
-  justify-self: center;
-}
-
-.right,
-.mobileRight {
-  grid-column: 3;
-  justify-self: end;
-}
-
-.right {
-  gap: 7px;
-}
-
-.hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: var(--header-control-height);
-  padding: 0 2px;
-  transition: opacity var(--t-fast) var(--e-out);
-}
-
-.hint:hover {
-  opacity: 0.62;
-}
-
-.key {
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
-  width: 17px;
-  height: 17px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.5);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  line-height: 1;
-  color: var(--vs-ink);
-  transition: transform var(--t-fast) var(--e-out), background var(--t-fast) var(--e-out);
+  width: 100%;
+  height: 42px;
+  margin-top: calc(var(--frame-edge-inset, 16px) + var(--frame-to-pill-gap, 14px));
+  overflow: visible;
+  pointer-events: auto;
 }
 
-.hint:hover .key {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.forVisual {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35em;
-}
-
-.mobileRight {
+/* =========================================================
+   MOBILE (<= 767px):
+   Compact centered physical navigation pill header
+   ========================================================= */
+.mobileRow {
   display: none;
 }
 
-.mobileControls {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 0;
-}
-
-.mobileControl {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 32px;
-  padding: 0 11px;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--vs-ink);
-  font-family: var(--font-mono);
-  font-size: var(--header-control-font-size);
-  line-height: 1;
-  letter-spacing: var(--tracking-tech);
-  text-transform: uppercase;
-  white-space: nowrap;
-  opacity: 0.84;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    transform 220ms var(--e-out),
-    color 200ms var(--e-out),
-    opacity 200ms var(--e-out);
-}
-
-.mobileControl[aria-expanded="true"] {
-  color: #080808;
-  opacity: 1;
-}
-
-.mobileControl:focus-visible {
-  outline: 2px solid var(--vs-ink);
-  outline-offset: -3px;
-  border-radius: var(--r-pill);
-}
-
-.terminalControl {
-  min-width: 38px;
-  padding-inline: 10px;
-  border-left: 1px solid rgba(17, 17, 17, 0.1);
-  font-size: 12px;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .mobileControl:hover {
-    color: #080808;
-    opacity: 1;
-    transform: translateY(-1px) scale(1.01);
-  }
-}
-
-/* Phone swaps only the middle/right content; the grid and insets stay shared. */
 @media (max-width: 767px) {
-  .center,
-  .right {
+  .header {
+    padding-block-start: 0;
+  }
+
+  .desktopContainer {
     display: none;
   }
-  .mobileRight {
+
+  .mobileRow {
+    position: relative;
     display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 42px;
+    margin-top: calc(var(--frame-edge-inset, 8px) + var(--frame-to-pill-gap, 14px));
+    padding-top: env(safe-area-inset-top, 0px);
+    overflow: visible;
+    pointer-events: auto;
   }
 }
 
@@ -179,9 +74,4 @@
   .mobileControl {
     transition-duration: 0.01ms;
   }
-
-  .mobileControl:hover {
-    transform: none;
-  }
-
 }

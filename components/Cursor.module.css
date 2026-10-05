@@ -24,7 +24,7 @@
   height: 6px;
   margin: -3px 0 0 -3px;
   background: var(--vs-ink);
-  box-shadow: 0 0 0 1.5px rgba(255, 253, 249, 0.55);
+  box-shadow: 0 0 0 1.5px var(--vs-frame-bg);
   transition: width 0.22s var(--e-out), height 0.22s var(--e-out), margin 0.22s var(--e-out),
     background 0.22s var(--e-out);
 }
@@ -36,8 +36,8 @@
   width: 30px;
   height: 30px;
   margin: -15px 0 0 -15px;
-  border: 1px solid rgba(17, 17, 17, 0.32);
-  background: rgba(255, 253, 249, 0.06);
+  border: 1px solid var(--vs-line);
+  background: var(--vs-line-soft);
   transition: width 0.3s var(--e-out), height 0.3s var(--e-out), margin 0.3s var(--e-out),
     background-color 0.3s var(--e-out), border-color 0.3s var(--e-out);
 }
@@ -47,7 +47,7 @@
   font-size: 9px;
   letter-spacing: var(--tracking-tech);
   text-transform: uppercase;
-  color: #f7f3ec;
+  color: var(--vs-bg);
   opacity: 0;
   transform: scale(0.82);
   transition: opacity 0.22s var(--e-out), transform 0.28s var(--e-out);
@@ -59,8 +59,8 @@
   width: 44px;
   height: 44px;
   margin: -22px 0 0 -22px;
-  background: rgba(17, 17, 17, 0.07);
-  border-color: rgba(17, 17, 17, 0.14);
+  background: var(--vs-line-soft);
+  border-color: var(--vs-line);
 }
 
 .root[data-mode="link"] .dot {
@@ -74,7 +74,7 @@
   width: 62px;
   height: 62px;
   margin: -31px 0 0 -31px;
-  background: rgba(17, 17, 17, 0.92);
+  background: var(--vs-ink);
   border-color: transparent;
 }
 

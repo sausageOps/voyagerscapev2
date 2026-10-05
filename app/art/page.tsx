@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import PlaceholderPage from "@/components/PlaceholderPage";
 
-export const metadata: Metadata = { title: "Art" };
+export const metadata: Metadata = {
+  title: "Art",
+  description: "Voyagerscape photography and art portfolio — galleries, projects and filters.",
+};
 
 export default function ArtPage() {
   return (

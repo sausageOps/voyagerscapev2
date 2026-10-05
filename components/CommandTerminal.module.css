@@ -34,13 +34,10 @@
     20px;
   overflow: hidden;
   border: 0;
-  border-left: 1px solid rgba(17, 17, 17, 0.12);
+  border-left: 1px solid var(--vs-terminal-border);
   border-radius: 22px 0 0 22px;
-  background: #fffdf9;
-  box-shadow:
-    inset 1px 0 0 rgba(255, 255, 255, 0.92),
-    -18px 0 48px rgba(20, 18, 15, 0.12),
-    -4px 0 14px rgba(20, 18, 15, 0.07);
+  background: var(--vs-terminal-bg);
+  box-shadow: var(--vs-terminal-shadow);
 }
 
 .panel > * {
@@ -76,10 +73,10 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid rgba(17, 17, 17, 0.08);
+  border: 1px solid var(--vs-line);
   border-radius: 50%;
-  background: rgba(17, 17, 17, 0.035);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  background: var(--surface-card);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
   color: var(--vs-ink);
   font-size: 18px;
   line-height: 1;
@@ -115,12 +112,12 @@
 
 .close:hover {
   transform: translateY(-1px);
-  border-color: rgba(17, 17, 17, 0.14);
-  background: rgba(17, 17, 17, 0.06);
+  border-color: var(--vs-ink-soft);
+  background: var(--surface-card-hover);
 }
 
 .close:focus-visible {
-  outline: 2px solid rgba(17, 17, 17, 0.72);
+  outline: 2px solid var(--vs-ink);
   outline-offset: 2px;
 }
 
@@ -150,7 +147,7 @@
   padding-right: 3px;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(17, 17, 17, 0.18) transparent;
+  scrollbar-color: var(--vs-line) transparent;
 }
 
 .intro {
@@ -165,9 +162,9 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
-  border: 1px solid rgba(17, 17, 17, 0.055);
+  border: 1px solid var(--vs-line-soft);
   border-radius: var(--r-md);
-  background: rgba(17, 17, 17, 0.035);
+  background: var(--vs-line-soft);
 }
 
 .logLine {
@@ -185,7 +182,7 @@
 }
 
 .logLine[data-kind="err"] {
-  color: #9c3535;
+  color: #d9534f;
 }
 
 .logGlyph {
@@ -250,24 +247,29 @@
 .prompt:hover,
 .prompt:focus-visible,
 .prompt[data-active="true"] {
-  border-color: rgba(17, 17, 17, 0.065);
-  background: rgba(17, 17, 17, 0.045);
+  border-color: var(--vs-line);
+  background: var(--surface-card);
+  color: var(--vs-ink);
+}
+
+.prompt:hover .commandDescription,
+.prompt:focus-visible .commandDescription,
+.prompt[data-active="true"] .commandDescription {
   color: var(--vs-ink);
 }
 
 .prompt:hover::before,
 .prompt:focus-visible::before,
 .prompt[data-active="true"]::before {
-  opacity: 0.58;
+  opacity: 0.85;
 }
 
 .prompt:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.1);
+  box-shadow: inset 0 0 0 1px var(--vs-line);
 }
 
-.sequence,
-.commandArrow {
+.sequence {
   color: var(--vs-ink-faint);
   font-family: var(--font-mono);
   font-size: 9.75px;
@@ -280,12 +282,13 @@
   font-weight: 500;
   letter-spacing: var(--tracking-tech);
   text-transform: uppercase;
+  color: var(--vs-ink);
 }
 
 .commandDescription {
   min-width: 0;
   overflow: hidden;
-  color: var(--vs-ink-faint);
+  color: var(--vs-ink-soft);
   font-size: 0.75rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -293,7 +296,8 @@
 
 .commandArrow {
   justify-self: end;
-  opacity: 0.48;
+  color: var(--vs-ink-soft);
+  opacity: 0.7;
 }
 
 /* ---- Foot ---- */
@@ -305,12 +309,13 @@
   gap: 10px;
   margin-top: 14px;
   padding: 12px 2px 0;
-  color: var(--vs-ink-faint);
+  color: var(--vs-ink-soft);
 }
 
 .escapeHint,
 .mode {
   font-size: 0.75rem;
+  color: var(--vs-ink-soft);
 }
 
 .mode {

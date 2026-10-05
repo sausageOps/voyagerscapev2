@@ -93,7 +93,15 @@ export function revealUp(
   return gsap.fromTo(
     targets,
     { opacity: 0, y },
-    { opacity: 1, y: 0, duration: DUR.base, ease: EASE.out, stagger, delay },
+    {
+      opacity: 1,
+      y: 0,
+      duration: DUR.base,
+      ease: EASE.out,
+      stagger,
+      delay,
+      clearProps: "transform,willChange",
+    },
   );
 }
 

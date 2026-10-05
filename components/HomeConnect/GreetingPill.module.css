@@ -28,7 +28,7 @@
   letter-spacing: var(--tracking-tech);
   text-transform: uppercase;
   line-height: 1.2;
-  color: var(--vs-ink);
+  color: #111111;
   /* never squeezed by the row — it wraps instead */
   flex: none;
   transition: transform var(--t-fast) var(--e-out), background-color var(--t-fast) var(--e-out);
@@ -73,6 +73,7 @@
      line box and would be shaved by the clip window — give the row room.
      Uniform across greetings, so the window height never changes. */
   line-height: 1.5;
+  color: #111111;
 }
 
 /* Cursive and conjunct scripts must not be letter-spaced: tracking breaks

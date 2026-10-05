@@ -248,10 +248,13 @@ function collect(root: HTMLElement): Piece[] {
   return pieces;
 }
 
-/** Signature of what is on screen right now. Text changes and roll
- *  frames both move it, so one comparison covers both re-raster rules. */
+/** Signature of what is on screen right now. Text changes, roll
+ *  frames, and theme changes all move it, so one comparison covers all re-raster rules. */
 function signature(pieces: Piece[]): string {
-  return pieces
+  const activeTheme =
+    (typeof document !== "undefined" && document.documentElement.getAttribute("data-theme")) ||
+    "light";
+  return `${activeTheme}::` + pieces
     .map((p) => {
       const b = p.el.getBoundingClientRect();
       return `${p.el.textContent}@${Math.round(b.left)},${Math.round(b.top)},${Math.round(b.width)}`;
@@ -266,20 +269,28 @@ function signature(pieces: Piece[]): string {
  * then kept re-reading that same text's computed colour on every
  * re-mirror, so every raster after the first one painted the line in
  * `transparent` and the texture came back empty. The ink is now read
- * once, cached, and never re-read from a hidden element; hiding also
+ * once per theme, cached, and never re-read from a hidden element; hiding also
  * uses visibility rather than colour so a cache miss still reads a real
  * colour.
  */
-const inkCache = new WeakMap<HTMLElement, string>();
+let cachedTheme = "";
+let inkCache = new WeakMap<HTMLElement, string>();
 
 function inkOf(el: HTMLElement): string {
+  const activeTheme =
+    (typeof document !== "undefined" && document.documentElement.getAttribute("data-theme")) ||
+    "light";
+  if (activeTheme !== cachedTheme) {
+    cachedTheme = activeTheme;
+    inkCache = new WeakMap<HTMLElement, string>();
+  }
   const cached = inkCache.get(el);
   if (cached) return cached;
   let color = getComputedStyle(el).color;
   // Defensive: never cache an invisible ink.
   if (!color || color === "transparent" || /rgba\(.*,\s*0\s*\)$/.test(color)) {
     const parent = el.parentElement;
-    color = parent ? getComputedStyle(parent).color : "#18181b";
+    color = parent ? getComputedStyle(parent).color : (activeTheme === "dark" ? "#f4efe6" : "#18181b");
   }
   // The glyph body must be solid: drop any alpha the computed value
   // carries so the texture can never be rasterised semi-transparent.
@@ -779,6 +790,17 @@ export default function WarpTextLayer({
     );
     intersectionObserver.observe(container);
 
+    const themeObserver = new MutationObserver(() => {
+      if (disposed || contextLost) return;
+      inkCache = new WeakMap<HTMLElement, string>();
+      lastSignature = "";
+      rasterize();
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme", "class"],
+    });
+
     if (hasFinePointer) {
       window.addEventListener("pointermove", onPointerMove, { passive: true });
       window.addEventListener("blur", onPointerLeave);
@@ -821,6 +843,7 @@ export default function WarpTextLayer({
       if (raf) cancelAnimationFrame(raf);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
+      themeObserver.disconnect();
       if (hasFinePointer) {
         window.removeEventListener("pointermove", onPointerMove);
         window.removeEventListener("blur", onPointerLeave);

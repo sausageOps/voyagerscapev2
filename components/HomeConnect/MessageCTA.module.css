@@ -42,11 +42,12 @@
   justify-content: center;
   padding: 4px 6px;
   border-radius: clamp(4px, 0.08em, 6px);
-  background: rgba(255, 253, 249, 0.82);
+  background: var(--surface-card);
+  color: var(--vs-ink);
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1;
-  transition: transform var(--t-fast) var(--e-out);
+  transition: transform var(--t-fast) var(--e-out), background-color var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out);
 }
 
 .promptGlyph {
