@@ -8,11 +8,12 @@
      .layer   fixed right-side frame; resting visibility states only
      .frame   the terminal's exact border/radius/shadow, faded with
               the wipe (animation-only chrome carrier)
-     .panel   layout + clipping (rounded, overflow hidden)
-     .base    the terminal's resting surface — its own
-              --vs-terminal-bg; hidden while the sheets sweep, faded
-              back in as they settle, so the settled terminal is the
-              exact approved design
+     .panel   layout + clipping (rounded, overflow hidden) + the
+              terminal's resting surface — its own
+              --vs-terminal-bg, painted at all times (never cleared,
+              never hidden); the sheets sweep over it and are hidden
+              the moment the wipe finishes, so the settled terminal is
+              the exact approved design
      .wipe    THREE distinct colored sheets — the Osmo signature.
               Their colors are chosen per open (in CommandTerminal.tsx)
               from the approved Voyagerscape page-transition palettes
@@ -21,7 +22,7 @@
               (left) matches the terminal's own geometry. GSAP sweeps
               them right-to-left, staggered, on open — and folds the
               same three back out to the right on close. Invisible at
-              rest (the .base is the surface).
+              rest (the .panel background is the surface).
 
    At rest (open or closed) the terminal is visually identical to
    the pre-animation design: same position, width, height, surface,
@@ -76,26 +77,16 @@
   overflow: hidden;
   border: 0;
   /* Clips the wipe slabs to the terminal's rounded shape. The surface
-     color now lives on the .wipe slabs; the border/shadow live on the
-     .frame — resting appearance unchanged. */
+     color lives on the panel itself (always painted, never hidden);
+     the border/shadow live on the .frame — resting appearance
+     unchanged. */
   border-radius: 22px 0 0 22px;
+  background: var(--vs-terminal-bg);
 }
 
 .panel > * {
   position: relative;
   z-index: 1;
-}
-
-/* The terminal's resting surface — its own background, exactly as the
-   panel always painted it. GSAP hides it while the colored sheets
-   sweep and fades it back in as they settle (see CommandTerminal.tsx);
-   at rest this IS the terminal surface. */
-.base {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: var(--vs-terminal-bg);
-  pointer-events: none;
 }
 
 /* The three Osmo background wipe sheets. Colors are assigned per open

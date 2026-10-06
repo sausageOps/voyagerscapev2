@@ -44,9 +44,11 @@ const COMMAND_DESCRIPTIONS: Record<string, string> = {
      • the contents then rise in AFTER the wipe has begun (fade + small
        rise + 1–1.5° settle, stagger 0.04–0.045 — the reference's
        yPercent 140 / rotate 10 link entrance, conservatively adapted);
-     • the sheets then dissolve into the terminal's own resting surface
-       (.base), so the settled terminal looks EXACTLY like the approved
-       design (the colored panels are temporary, per the brief);
+     • when the wipe finishes the sheets are hidden instantly
+       (autoAlpha 0), revealing the terminal's own background — the
+       panel paints var(--vs-terminal-bg) at all times, so the settled
+       terminal looks EXACTLY like the approved design (the colored
+       panels are temporary, per the brief);
      • CLOSE is the exact physical reverse: the contents retract into
        the wipe, the SAME three sheets fold back out toward the right
        (topmost first — reversed stagger), and only once the last sheet
@@ -187,11 +189,10 @@ export default function CommandTerminal() {
     if (!layer) return undefined;
     const panel = layer.querySelector<HTMLElement>("[data-term-panel]");
     const frame = layer.querySelector<HTMLElement>("[data-term-frame]");
-    const base = layer.querySelector<HTMLElement>("[data-term-base]");
     const wipes = Array.from(layer.querySelectorAll<HTMLElement>("[data-term-wipe]"));
     const blocks = Array.from(layer.querySelectorAll<HTMLElement>("[data-term-item]"));
     const rows = Array.from(layer.querySelectorAll<HTMLElement>("[data-term-row]"));
-    if (!panel || !frame || !base || wipes.length !== 3) return undefined;
+    if (!panel || !frame || wipes.length !== 3) return undefined;
 
     /* Interruption safety: ONE timeline ref, always killed first. The new
        timeline re-specifies every animated property (fromTo / explicit
@@ -225,7 +226,7 @@ export default function CommandTerminal() {
        animation stays visible after data-open flips); after CLOSE the
        layer is cleared too, landing exactly on the CSS closed state. */
     const cleanupContent = () => {
-      gsap.set([frame, base, ...wipes, ...blocks, ...rows, panel], { clearProps: "all" });
+      gsap.set([frame, ...wipes, ...blocks, ...rows, panel], { clearProps: "all" });
     };
     const cleanupClosed = () => {
       cleanupContent();
@@ -263,7 +264,9 @@ export default function CommandTerminal() {
             fades in with the first sheet, so there is never an empty
             shell
          3. the contents rise in after the wipe has begun
-         4. the sheets dissolve into the terminal's own resting surface
+         4. when the wipe finishes the sheets are hidden instantly —
+            the terminal's own background (painted by .panel at all
+            times) shows underneath
          5. cleanup → the exact settled terminal UI */
       const combo = nextWipeCombo();
       comboRef.current = combo;
@@ -275,9 +278,9 @@ export default function CommandTerminal() {
       timelineRef.current = tl;
       tl.set(layer, { x: 0, visibility: "visible", pointerEvents: "auto" }, 0)
         .set(panel, { x: 0 }, 0)
-        /* start state: the resting surface hidden, the colored sheets
-           parked off-right and fully opaque */
-        .set(base, { autoAlpha: 0 }, 0)
+        /* start state: the colored sheets parked off-right and fully
+           opaque; the terminal's own background (.panel CSS) stays
+           painted underneath — never cleared, never hidden */
         .set(wipes, { autoAlpha: 1 }, 0)
         .fromTo(frame, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.18, ease: "none" }, 0)
         /* THE WIPE — the reference's exact numbers */
@@ -299,11 +302,11 @@ export default function CommandTerminal() {
           { autoAlpha: 1, y: 0, rotate: 0, duration: 0.5, stagger: 0.04, ease },
           0.36,
         )
-        /* the sheets settle INTO the terminal's own surface: a short
-           crossfade behind the (already arrived) content, so the
-           resting terminal is the approved design, not a palette color */
-        .to(wipes, { autoAlpha: 0, duration: 0.26, ease: "none" }, 0.86)
-        .to(base, { autoAlpha: 1, duration: 0.26, ease: "none" }, 0.86)
+        /* when the wipe finishes, the sheets are hidden instantly —
+           no crossfade — revealing the terminal's own background that
+           has been underneath the whole time. This is what removes the
+           one-frame pale-panel flash of a dissolve. */
+        .set(wipes, { autoAlpha: 0 }, 0.86)
         .call(cleanupContent);
       return () => {
         timelineRef.current?.kill();
@@ -343,7 +346,7 @@ export default function CommandTerminal() {
          momentum — one continuous motion, no snap-back. */
       tl.set(layer, { x: 0 }, 0)
         .set(panel, { x: dragX }, 0)
-        .to([frame, base, ...blocks, ...rows], { autoAlpha: 0, duration: 0.2, ease: "none" }, 0)
+        .to([frame, ...blocks, ...rows], { autoAlpha: 0, duration: 0.2, ease: "none" }, 0)
         .to(panel, { x: () => panel.clientWidth + 2, duration: 0.3, ease }, 0)
         .call(cleanupClosed);
     } else {
@@ -357,11 +360,10 @@ export default function CommandTerminal() {
           { autoAlpha: 0, y: 22, rotate: 1, duration: 0.24, stagger: { each: 0.016, from: "end" }, ease },
           0,
         )
-        /* the surface re-forms as the colored sheets (base out, sheets
-           in — a quick crossfade behind the retracting content) and the
+        /* the surface re-forms as the colored sheets come back over
+           the terminal's own (always-painted) background, and the
            chrome departs with it */
         .to(wipes, { autoAlpha: 1, duration: 0.12, ease: "none" }, 0.02)
-        .to(base, { autoAlpha: 0, duration: 0.14, ease: "none" }, 0.06)
         .to(frame, { autoAlpha: 0, duration: 0.26, ease: "none" }, 0.16)
         /* THE REVERSE WIPE — the same three sheets travel back out to
            the right; from:"end" sends the topmost (last-arrived) sheet
@@ -436,11 +438,6 @@ export default function CommandTerminal() {
         aria-label="Voyagerscape command terminal"
         data-term-panel
       >
-        {/* The terminal's resting surface (its own background). Hidden
-            while the colored sheets sweep, faded back in as they settle
-            — see the motion notes at the top of this file. */}
-        <span className={styles.base} data-term-base aria-hidden="true" />
-
         {/* The three Osmo wipe sheets — animation-only slabs whose
             colors are chosen per open from the approved Voyagerscape
             transition palettes (three DISTINCT colors), stacked behind
