@@ -116,12 +116,22 @@ export const ComputerScreen = () => {
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const [windowOpen, setWindowOpen] = useState(true);
   const [zoomed, setZoomed] = useState(false);
-  const [clock, setClock] = useState(() => formatClock(new Date()));
+  /* Hydration-safe clock (Voyagerscape fix): the initial render — on the
+     server AND the client's first paint — carries NO time. Calling
+     formatClock(new Date()) during render would bake the SERVER's
+     clock/timezone into the HTML and mismatch every client in another
+     timezone or another minute (React: "Text content does not match
+     server-rendered HTML"). The real, client-local time is set in the
+     mount effect below. "\u00A0" keeps a stable non-empty text node for
+     the HTMLTexture rasterization. */
+  const [clock, setClock] = useState<string | null>(null);
   const [hasRendered, setHasRendered] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const id = setInterval(() => setClock(formatClock(new Date())), 1000);
+    const update = () => setClock(formatClock(new Date()));
+    update(); // real client-local time immediately after mount
+    const id = setInterval(update, 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -170,7 +180,7 @@ export const ComputerScreen = () => {
             )}
           </span>
         ))}
-        <span className="mac-clock">{clock}</span>
+        <span className="mac-clock">{clock ?? "\u00A0"}</span>
       </div>
 
       {windowOpen && (

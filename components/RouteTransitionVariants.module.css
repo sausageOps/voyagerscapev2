@@ -24,11 +24,11 @@
    and timing are identical in both modes; only these colours change.
 
    Mapping (variant → day → night):
-     pale-curtain      → ivory  #F3F0E8 → moon ivory    #D8D3C8
-     pale-clip-reveal  → lavender #DDD9E8 → dust lavender #C3BECF
-     pale-panel-sweep  → parchment #E8E2D7 → smoked beige  #CEC6B9
-     pale-split-mask   → sage   #DCE1D8 → muted sage    #BFC7BE
-     pale-band         → blush  #E9DCD2 → dusty rose    #CDBBB7 */
+     pale-curtain      → ivory  #F3F0E8 → moon ivory    #A9A49A
+     pale-clip-reveal  → lavender #DDD9E8 → dust lavender #918D9D
+     pale-panel-sweep  → parchment #E8E2D7 → smoked parchment #9D9689
+     pale-split-mask   → sage   #DCE1D8 → muted sage    #929A91
+     pale-band         → blush  #E9DCD2 → dusty rose    #9B8987 */
 .overlay {
   position: absolute;
   inset: 0;
@@ -43,14 +43,16 @@
   --transition-blue-grey: #d9dfe2;
 }
 
-/* NIGHT — same vars, muted-pale values. */
+/* NIGHT — same vars, dusty/muted/moonlit values. Subdued enough to sit
+   against the dark Voyagerscape page while remaining clearly visible:
+   no pastel brightness, no cream flash. */
 :global(html[data-theme="dark"]) .overlay {
-  --transition-ivory: #d8d3c8;
-  --transition-parchment: #cec6b9;
-  --transition-lavender: #c3becf;
-  --transition-sage: #bfc7be;
-  --transition-blush: #cdbbb7;
-  --transition-blue-grey: #c2c9cd;
+  --transition-ivory: #a9a49a;
+  --transition-parchment: #9d9689;
+  --transition-lavender: #918d9d;
+  --transition-sage: #929a91;
+  --transition-blush: #9b8987;
+  --transition-blue-grey: #8e9499;
 }
 
 /* Single full-viewport surface (curtain / clip / band variants). */
