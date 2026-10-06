@@ -302,11 +302,18 @@ export default function CommandTerminal() {
           { autoAlpha: 1, y: 0, rotate: 0, duration: 0.5, stagger: 0.04, ease },
           0.36,
         )
-        /* when the wipe finishes, the sheets are hidden instantly —
-           no crossfade — revealing the terminal's own background that
-           has been underneath the whole time. This is what removes the
-           one-frame pale-panel flash of a dissolve. */
-        .set(wipes, { autoAlpha: 0 }, 0.86)
+        /* The sheets hide at 0.735 — when the last sheet (start 0.24,
+           dur 0.575) is ~99% through its sweep, its edge still ~3.5px
+           from landing. The ease (0.65,0.01,0.05,0.99) decelerates so
+           hard that from ~0.75 onward the sheet is within ~2px of
+           landed and READS as a settled pale background — painting
+           those tail frames was the reported "pale flash". Hiding here
+           means the last PAINTED wipe frame still visibly reads as a
+           moving wipe (a closing sliver at the right edge), the fully
+           arrived pale panel is never painted, and the very next frame
+           is the normal terminal surface. The sweep itself (timings,
+           stagger, ease, colors) is untouched. */
+        .set(wipes, { autoAlpha: 0 }, 0.735)
         .call(cleanupContent);
       return () => {
         timelineRef.current?.kill();
