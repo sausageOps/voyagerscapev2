@@ -19,9 +19,16 @@
    renderer failure lands on the same paper instead of a blank rectangle. */
 .atmosphere {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   width: 100%;
-  height: 100%;
+  /* The homepage is now a scrolling, multi-chapter page rather than a single
+     viewport, so the WebGL surface is capped at the first screen — exactly
+     where it is visible, behind the arrival chapter. Below that the frame's
+     own paper (var(--vs-frame-bg) on .canvas) carries the page, and the
+     renderer never has to size itself to the full document height. */
+  height: 100svh;
   min-width: 0;
   overflow: hidden;
   border-radius: inherit;

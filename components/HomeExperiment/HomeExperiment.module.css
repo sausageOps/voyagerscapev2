@@ -1,0 +1,819 @@
+/* =========================================================
+   VOYAGERSCAPE — HOMEPAGE EXPERIMENT
+   Scoped entirely to the homepage. Uses only existing design
+   tokens; introduces no new palette, no new font family, no
+   glass, no neon, no rounded card language.
+   ========================================================= */
+
+.page {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  /* The page's own measure. Matches the frame's gutter rhythm. */
+  --edge: clamp(20px, 5.2vw, 88px);
+  --measure: 1440px;
+  color: var(--vs-ink);
+}
+
+/* Shared reveal contract: anything with [data-reveal] rises once. */
+.page [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition:
+    opacity 0.9s var(--e-out),
+    transform 0.9s var(--e-out);
+  will-change: opacity, transform;
+}
+
+.page [data-reveal][data-inview="true"] {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+.chapterTag {
+  display: block;
+  color: var(--vs-ink-faint);
+}
+
+.sectionTitle {
+  max-width: 16ch;
+  margin-top: clamp(14px, 2vw, 22px);
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: clamp(2rem, 5.2vw, 4.1rem);
+  line-height: 0.98;
+  letter-spacing: var(--tracking-tight);
+  color: var(--vs-ink);
+}
+
+/* Film grain — the single tactile overlay, reused by every plate. */
+.grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.3;
+  mix-blend-mode: multiply;
+  background-image: radial-gradient(
+    rgba(17, 17, 17, 0.22) 0.5px,
+    rgba(0, 0, 0, 0) 0.5px
+  );
+  background-size: 3px 3px;
+}
+
+:global(html[data-theme="dark"]) .grain {
+  mix-blend-mode: screen;
+  opacity: 0.16;
+  background-image: radial-gradient(
+    rgba(244, 239, 230, 0.4) 0.5px,
+    rgba(0, 0, 0, 0) 0.5px
+  );
+}
+
+/* =========================================================
+   01 — ARRIVAL
+   ========================================================= */
+.arrival {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: clamp(18px, 3vh, 40px);
+  min-height: calc(100svh - 32px);
+  padding: calc(var(--header-h) + clamp(28px, 7vh, 86px)) var(--edge)
+    clamp(24px, 5vh, 52px);
+}
+
+.arrivalTitle {
+  position: relative;
+  align-self: center;
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: clamp(3.4rem, 15.5vw, 14rem);
+  line-height: 0.84;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+
+.arrivalRow {
+  display: block;
+  white-space: nowrap;
+}
+
+/* The three rows are set off-axis so the block reads as a built object
+   rather than a centred headline. */
+.arrivalRow[data-row="b"] {
+  padding-left: clamp(0px, 9vw, 180px);
+}
+
+.arrivalRow[data-row="c"] {
+  padding-left: clamp(0px, 3.5vw, 64px);
+}
+
+.arrivalStop {
+  display: inline-block;
+  margin-left: 0.06em;
+  color: var(--vs-ink-faint);
+}
+
+.splitLine {
+  display: inline-block;
+}
+
+/* Split Text + Variable Proximity.
+   --p (0..1) is written by the proximity hook; the character answers with
+   weight, a hair of tracking and a lift. Transform/opacity/colour only. */
+.splitChar {
+  --p: 0;
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, 0.42em, 0);
+  transition:
+    opacity 1s var(--e-out),
+    transform 1.1s var(--e-out);
+  color: color-mix(in oklab, var(--vs-ink) calc(62% + var(--p) * 38%), var(--vs-ink-faint));
+  will-change: transform, opacity;
+}
+
+.arrival[data-entered="true"] .splitChar {
+  opacity: 1;
+  transform: translate3d(
+    calc(var(--p) * var(--pdx, 0) * -5px),
+    calc(var(--p) * -6px),
+    0
+  );
+  will-change: auto;
+}
+
+.arrivalFragment {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: clamp(var(--edge), 12vw, 230px);
+  width: clamp(150px, 23vw, 340px);
+  aspect-ratio: 3 / 4;
+  margin: 0;
+  overflow: hidden;
+  translate: calc(var(--pdx, 0) * 14px) calc(-54% + var(--pdy, 0) * 14px);
+  transition: translate 0.18s linear;
+  background: var(--vs-bg-deep);
+}
+
+.arrivalFragmentImage {
+  object-fit: cover;
+  filter: saturate(0.76) contrast(1.04);
+  transform: scale(1.06);
+}
+
+.arrivalFoot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(16px, 4vw, 64px);
+  flex-wrap: wrap;
+}
+
+.arrivalNote {
+  max-width: 34ch;
+  font-size: clamp(0.9rem, 1.1vw, 1.0625rem);
+  line-height: 1.5;
+  color: var(--vs-ink-soft);
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  transition:
+    opacity 1s var(--e-out) 0.85s,
+    transform 1s var(--e-out) 0.85s;
+}
+
+.scrollHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--vs-ink-faint);
+  opacity: 0;
+  transition: opacity 1s var(--e-out) 1.1s;
+}
+
+.scrollHintRule {
+  display: block;
+  width: clamp(28px, 5vw, 64px);
+  height: 1px;
+  background: currentColor;
+  transform-origin: left;
+  animation: hintPulse 3.2s var(--e-inout) infinite;
+}
+
+@keyframes hintPulse {
+  0%,
+  100% {
+    transform: scaleX(0.35);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.arrival[data-entered="true"] .arrivalNote,
+.arrival[data-entered="true"] .scrollHint {
+  opacity: 1;
+  transform: none;
+}
+
+/* =========================================================
+   02 — IDENTITY
+   ========================================================= */
+.identity {
+  position: relative;
+  padding: clamp(96px, 18vh, 220px) var(--edge) clamp(72px, 12vh, 160px);
+  background: var(--vs-frame-bg);
+  border-top: 1px solid var(--vs-line-soft);
+}
+
+.identityLede {
+  max-width: 18ch;
+  margin-top: clamp(18px, 3vw, 34px);
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: clamp(1.6rem, 3.4vw, 2.9rem);
+  line-height: 1.08;
+  letter-spacing: var(--tracking-tight);
+}
+
+.identityLede em {
+  font-style: italic;
+  color: var(--vs-ink-soft);
+}
+
+.disciplineList {
+  margin-top: clamp(44px, 8vh, 96px);
+  border-top: 1px solid var(--vs-line-soft);
+}
+
+.disciplineRow {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: clamp(10px, 2vw, 28px);
+  padding: clamp(12px, 1.8vw, 22px) 0;
+  border-bottom: 1px solid var(--vs-line-soft);
+}
+
+.disciplineIndex {
+  color: var(--vs-ink-faint);
+}
+
+.disciplineWord {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: clamp(1.75rem, 6.4vw, 5.4rem);
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  transition:
+    letter-spacing 0.55s var(--e-out),
+    color 0.4s var(--e-out);
+}
+
+.disciplineRow:hover .disciplineWord {
+  letter-spacing: -0.012em;
+}
+
+.disciplineNote {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  color: var(--vs-ink-faint);
+  text-align: right;
+}
+
+.identityTail {
+  max-width: 46ch;
+  margin-top: clamp(40px, 7vh, 88px);
+  margin-left: auto;
+  font-size: clamp(0.95rem, 1.2vw, 1.125rem);
+  line-height: 1.55;
+  color: var(--vs-ink-soft);
+}
+
+/* =========================================================
+   03 — VISUAL WORLD
+   ========================================================= */
+.playground {
+  position: relative;
+  padding: clamp(84px, 15vh, 190px) var(--edge) clamp(96px, 16vh, 200px);
+  background: var(--vs-bg);
+  border-top: 1px solid var(--vs-line-soft);
+}
+
+.playgroundHead {
+  max-width: var(--measure);
+  margin: 0 auto clamp(48px, 9vh, 110px);
+}
+
+.grid {
+  display: grid;
+  max-width: var(--measure);
+  margin: 0 auto;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(18px, 3vw, 46px) clamp(14px, 2.4vw, 32px);
+  align-items: start;
+}
+
+.plate {
+  position: relative;
+  margin: 0;
+}
+
+.plateFrame {
+  position: relative;
+  aspect-ratio: var(--ratio, 4 / 5);
+  overflow: hidden;
+  background: var(--vs-bg-deep);
+}
+
+.plateImage {
+  object-fit: cover;
+  filter: saturate(0.72) contrast(1.03);
+  transform: scale(1.03);
+  transition:
+    transform 1.1s var(--e-out),
+    filter 0.7s var(--e-out);
+}
+
+.plate:hover .plateImage {
+  transform: scale(1.075);
+  filter: saturate(0.95) contrast(1.06);
+}
+
+.plateCaption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  color: var(--vs-ink-faint);
+}
+
+.plateCaptionText {
+  font-size: var(--fs-small);
+  color: var(--vs-ink-soft);
+}
+
+/* Deliberate, uneven composition — overlaps and crops, not a 3-up grid. */
+.plate[data-area="a"] {
+  grid-column: 1 / span 4;
+}
+
+.plate[data-area="b"] {
+  grid-column: 6 / span 7;
+  margin-top: clamp(40px, 9vw, 150px);
+}
+
+.plate[data-area="c"] {
+  grid-column: 2 / span 3;
+  margin-top: clamp(24px, 5vw, 86px);
+}
+
+.plate[data-area="d"] {
+  grid-column: 6 / span 3;
+  margin-top: clamp(-40px, -4vw, 0px);
+}
+
+.plate[data-area="e"] {
+  grid-column: 9 / span 4;
+  margin-top: clamp(30px, 6vw, 110px);
+}
+
+.gridNote {
+  grid-column: 1 / span 4;
+  align-self: end;
+  max-width: 30ch;
+  padding-bottom: clamp(8px, 2vw, 28px);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+  color: var(--vs-ink-soft);
+}
+
+.gridWord {
+  grid-column: 10 / span 3;
+  margin-top: clamp(20px, 4vw, 60px);
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: clamp(1.6rem, 3.6vw, 3.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  color: var(--vs-ink-faint);
+}
+
+/* =========================================================
+   04 — EXPERIMENTATION
+   ========================================================= */
+.experiment {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(96px, 18vh, 230px) var(--edge);
+  background: var(--vs-bg-sub);
+  border-top: 1px solid var(--vs-line-soft);
+}
+
+.experimentInner {
+  position: relative;
+  z-index: 2;
+  max-width: var(--measure);
+  margin: 0 auto;
+  pointer-events: none;
+}
+
+.experimentInner a {
+  pointer-events: auto;
+}
+
+.madeWith {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.3em;
+  margin-top: clamp(16px, 3vw, 30px);
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: clamp(2.1rem, 7.6vw, 6.6rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.madeWithStatic {
+  color: var(--vs-ink);
+}
+
+.madeWithSlot {
+  position: relative;
+  display: inline-block;
+  min-width: 7.2em;
+  height: 1em;
+}
+
+.madeWithWord {
+  position: absolute;
+  inset: 0;
+  color: var(--vs-ink-soft);
+  opacity: 0;
+  transform: translate3d(0, 0.26em, 0);
+  transition:
+    opacity 0.52s var(--e-out),
+    transform 0.62s var(--e-out);
+  will-change: opacity, transform;
+}
+
+.madeWithWord[data-on="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+.madeWithWord[data-rest="true"] {
+  opacity: 0;
+}
+
+.experimentCols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: clamp(18px, 3vw, 56px);
+  max-width: 76ch;
+  margin-top: clamp(40px, 7vh, 86px);
+  margin-left: auto;
+  font-size: clamp(0.95rem, 1.15vw, 1.0625rem);
+  line-height: 1.6;
+  color: var(--vs-ink-soft);
+}
+
+.experimentHint {
+  margin-top: clamp(40px, 7vh, 96px);
+  color: var(--vs-ink-faint);
+}
+
+/* Image Trail — inert layer, GPU transforms only. */
+.trailHost {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.trailImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: clamp(130px, 14vw, 210px);
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  opacity: 0;
+  filter: saturate(0.6) contrast(1.05);
+  transform: translate3d(calc(var(--tx, 0px) - 50%), calc(var(--ty, 0px) - 50%), 0)
+    rotate(var(--tr, 0deg)) scale(0.88);
+  transition:
+    opacity 0.62s var(--e-out),
+    transform 0.72s var(--e-out);
+  will-change: transform, opacity;
+}
+
+.trailImage[data-on="true"] {
+  opacity: 0.9;
+  transform: translate3d(calc(var(--tx, 0px) - 50%), calc(var(--ty, 0px) - 50%), 0)
+    rotate(var(--tr, 0deg)) scale(1);
+  transition:
+    opacity 0.16s var(--e-out),
+    transform 0.42s var(--e-out);
+}
+
+/* =========================================================
+   05 — PHOTOGRAPHY
+   ========================================================= */
+.photography {
+  position: relative;
+  padding: clamp(96px, 18vh, 230px) var(--edge) clamp(96px, 16vh, 210px);
+  background: var(--vs-frame-bg);
+  border-top: 1px solid var(--vs-line-soft);
+}
+
+.photographyHead {
+  max-width: var(--measure);
+  margin: 0 auto clamp(56px, 11vh, 140px);
+}
+
+.cinemaPlate {
+  max-width: var(--measure);
+  margin: 0 auto clamp(80px, 16vh, 200px);
+}
+
+.cinemaFrame {
+  position: relative;
+  aspect-ratio: var(--ratio, 16 / 10);
+  overflow: hidden;
+  background: var(--vs-bg-deep);
+}
+
+.cinemaImage {
+  object-fit: cover;
+  filter: saturate(0.74) contrast(1.04);
+  transform: scale(1.02);
+  transition: transform 1.4s var(--e-out);
+}
+
+.cinemaPlate:hover .cinemaImage {
+  transform: scale(1.045);
+}
+
+.cinemaPlate[data-align="left"] {
+  width: min(100%, 62ch);
+  margin-left: 0;
+}
+
+.cinemaPlate[data-align="right"] {
+  width: min(100%, 86ch);
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.cinemaCaption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  color: var(--vs-ink-faint);
+}
+
+.cinemaTitle {
+  font-size: clamp(0.95rem, 1.2vw, 1.125rem);
+  color: var(--vs-ink);
+}
+
+.photographyTail {
+  max-width: var(--measure);
+  margin: 0 auto;
+  font-size: clamp(0.95rem, 1.2vw, 1.125rem);
+  color: var(--vs-ink-soft);
+}
+
+.inlineLink {
+  color: var(--vs-ink);
+  box-shadow: inset 0 -1px 0 var(--vs-line);
+  transition: box-shadow 0.3s var(--e-out);
+}
+
+.inlineLink:hover {
+  box-shadow: inset 0 -1px 0 var(--vs-ink);
+}
+
+/* =========================================================
+   06 — VOYAGERSCAPE
+   ========================================================= */
+.statement {
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: clamp(22px, 4vh, 46px);
+  min-height: min(86svh, 760px);
+  padding: clamp(96px, 16vh, 200px) var(--edge) clamp(80px, 14vh, 180px);
+  background: var(--vs-bg);
+  border-top: 1px solid var(--vs-line-soft);
+  text-align: center;
+}
+
+.statementTitle {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: clamp(1.9rem, 10.4vw, 9rem);
+  line-height: 0.92;
+  letter-spacing: clamp(0.01em, 0.4vw, 0.08em);
+  color: var(--vs-ink);
+}
+
+.statementTriad {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2.4vw, 34px);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  color: var(--vs-ink-soft);
+}
+
+.statementTriad li + li::before {
+  content: "/";
+  margin-right: clamp(10px, 2.4vw, 34px);
+  color: var(--vs-ink-faint);
+}
+
+.statementClose {
+  font-size: clamp(0.95rem, 1.2vw, 1.0625rem);
+  color: var(--vs-ink-faint);
+}
+
+/* =========================================================
+   RESPONSIVE — tablet
+   ========================================================= */
+@media (max-width: 1100px) {
+  .plate[data-area="a"] {
+    grid-column: 1 / span 6;
+  }
+  .plate[data-area="b"] {
+    grid-column: 4 / span 9;
+  }
+  .plate[data-area="c"] {
+    grid-column: 1 / span 5;
+  }
+  .plate[data-area="d"] {
+    grid-column: 7 / span 5;
+  }
+  .plate[data-area="e"] {
+    grid-column: 3 / span 8;
+  }
+  .gridNote {
+    grid-column: 1 / span 7;
+  }
+  .gridWord {
+    grid-column: 9 / span 4;
+  }
+  .arrivalFragment {
+    right: clamp(12px, 6vw, 60px);
+    width: clamp(140px, 26vw, 260px);
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — mobile composition (not a shrunken desktop)
+   ========================================================= */
+@media (max-width: 767px) {
+  .arrival {
+    min-height: calc(100svh - 16px);
+    padding-top: calc(var(--header-h) + 54px);
+    gap: 26px;
+  }
+
+  /* The hero stacks hard-left and the fragment drops below the type,
+     bleeding off the right edge instead of hiding behind it. */
+  .arrivalTitle {
+    font-size: clamp(2.9rem, 19vw, 5.4rem);
+    line-height: 0.88;
+  }
+
+  .arrivalRow[data-row="b"],
+  .arrivalRow[data-row="c"] {
+    padding-left: 0;
+  }
+
+  .arrivalFragment {
+    position: relative;
+    z-index: 0;
+    top: auto;
+    right: auto;
+    width: 62%;
+    margin-left: auto;
+    margin-right: calc(var(--edge) * -1);
+    aspect-ratio: 4 / 5;
+    translate: none;
+  }
+
+  .arrivalFoot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .disciplineRow {
+    grid-template-columns: 2.4rem minmax(0, 1fr);
+    row-gap: 2px;
+  }
+
+  .disciplineNote {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 28px 12px;
+  }
+
+  /* Mobile keeps the off-grid logic but at a readable scale: plates
+     alternate between full bleed and inset, never two-up. */
+  .plate[data-area="a"] {
+    grid-column: 1 / span 5;
+  }
+  .plate[data-area="b"] {
+    grid-column: 1 / span 6;
+    margin-top: 6px;
+  }
+  .plate[data-area="c"] {
+    grid-column: 3 / span 4;
+    margin-top: 0;
+  }
+  .plate[data-area="d"] {
+    grid-column: 1 / span 4;
+    margin-top: 0;
+  }
+  .plate[data-area="e"] {
+    grid-column: 2 / span 5;
+    margin-top: 0;
+  }
+  .gridNote,
+  .gridWord {
+    grid-column: 1 / span 6;
+    margin-top: 0;
+  }
+
+  .madeWithSlot {
+    min-width: 100%;
+    height: 1.05em;
+  }
+
+  .cinemaPlate[data-align="left"],
+  .cinemaPlate[data-align="right"] {
+    width: 100%;
+  }
+
+  .cinemaCaption {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .statement {
+    min-height: 70svh;
+    text-align: left;
+  }
+
+  .statementTriad {
+    justify-content: flex-start;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION — stillness, not jank
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .page [data-reveal],
+  .arrivalNote,
+  .scrollHint,
+  .splitChar {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .scrollHintRule {
+    animation: none;
+  }
+
+  .arrivalFragment {
+    translate: none;
+  }
+
+  .madeWithWord[data-on="true"] {
+    opacity: 1;
+  }
+}
