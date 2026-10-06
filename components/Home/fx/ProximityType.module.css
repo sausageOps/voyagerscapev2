@@ -1,0 +1,73 @@
+.root {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.88;
+  color: var(--vs-ink);
+}
+
+.visual {
+  display: block;
+}
+
+.line {
+  display: block;
+  white-space: nowrap;
+}
+
+.space {
+  display: inline-block;
+}
+
+/* One glyph box. The box never changes size: the heavy cut is laid over
+   the resting cut rather than replacing it, so weight can change without
+   a single pixel of reflow. */
+.char {
+  --p: 0;
+  position: relative;
+  display: inline-block;
+  transform:
+    translate3d(calc(var(--p) * var(--dir, 0) * 3px), calc(var(--p) * -0.07em), 0)
+    scale(calc(1 + var(--p) * 0.05));
+  transform-origin: 50% 75%;
+  will-change: transform;
+  color: color-mix(in srgb, var(--vs-ink) calc(74% + var(--p) * 26%), transparent);
+}
+
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .char {
+    color: var(--vs-ink);
+    opacity: calc(0.76 + var(--p) * 0.24);
+  }
+}
+
+.face {
+  display: block;
+}
+
+/* The genuinely heavier cut of the same face. */
+.heavy {
+  position: absolute;
+  inset: 0;
+  display: block;
+  font-weight: 600;
+  opacity: var(--p);
+  pointer-events: none;
+}
+
+/* Entrance state — set by the chapter, cleared once the line has landed. */
+.root[data-enter="pending"] .char {
+  opacity: 0;
+  transform: translate3d(0, 0.5em, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .char {
+    transform: none !important;
+  }
+
+  .heavy {
+    opacity: 0 !important;
+  }
+}

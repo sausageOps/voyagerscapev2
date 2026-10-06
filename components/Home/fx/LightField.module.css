@@ -1,0 +1,40 @@
+.host {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--vs-frame-bg);
+  font-family: var(--font-mono);
+}
+
+/* 1 — the photograph */
+.photo {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: var(--home-grade);
+  will-change: opacity;
+}
+
+/* 2 — paper, drawn over the photograph as the field takes hold, so the
+       dots are always ink on paper and never a double exposure */
+.paper {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--vs-frame-bg);
+  opacity: 0;
+  will-change: opacity;
+  pointer-events: none;
+}
+
+/* 3 — the field itself */
+.canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: block;
+}

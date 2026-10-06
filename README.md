@@ -1,12 +1,12 @@
-# Voyagerscape — Connect
+# Voyagerscape
 
-An interactive `/connect` experience: a warm ivory canvas, an original retro
-answer-machine centrepiece, an Apple-Liquid-Glass-inspired control layer and a
-hidden `/` command terminal.
+A visual practice's site: an art-directed, interactive homepage (`/`), an
+interactive `/connect` experience with an original retro answer-machine
+centrepiece, a physical navigation shell and a hidden `/` command terminal.
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000/connect
+npm run dev      # http://localhost:3000
 npm run build && npm run start
 ```
 
@@ -27,87 +27,77 @@ the nav order. Connect is such an entry: it keeps the `connect` terminal command
 pointing at `/` without appearing as a pill. Home carries `match: ["/connect"]`,
 so the HOME pill stays active on the alias too.
 
-**The connect experience _is_ the homepage.** `app/page.tsx` and
-`app/connect/page.tsx` both render the one implementation,
-`components/HomeConnect/HomeConnect.tsx` — no duplicated markup, `/connect`
-kept as an alias with a canonical link back to `/`. The nav keeps
-SERVICES / WORK / CONNECT / STORE with no separate HOME item: the CONNECT route
-declares `href: "/"`, and `isRouteActive()` reads the alias list so the pill
-stays active on both paths. Terminal `home` and `connect` both land on `/`.
+**The homepage is the Voyagerscape experience.** `app/page.tsx` renders
+`components/Home/Home.tsx`; `/connect` is its own route and own implementation
+(`components/ConnectPage.tsx`), and the connect composition
+(`components/HomeConnect/**`) is still mounted there.
 
-Only `/` is implemented; the others render `PlaceholderPage`. Adding a real page
-means writing `app/<route>/page.tsx` and flipping `ready: true`; the shell,
-terminal, cursor, visual modes and route transition already apply.
+Only `/` and `/connect` are implemented; the others render `PlaceholderPage`.
+Adding a real page means writing `app/<route>/page.tsx` and flipping
+`ready: true`; the shell, terminal, cursor, visual modes and route transition
+already apply.
 
-## Composition
+## Homepage
 
-The homepage follows an art-directed layout per range rather than one desktop
-sheet with a mobile override:
+Six chapters, one continuous passage, all inside the existing shell (header,
+physical navigation, mobile menu, cursor, theme and footer are untouched):
 
-- **Desktop (>1100px)** — the object is absolutely centred in the viewport and
-  everything else is pinned around it: the statement upper-left, the message
-  control upper-right, and the two information cards at the lower corners.
-- **Tablet (768–1099px)** — the same idea relaxed into a column, cards side by
-  side.
-- **Mobile (<768px)** — a deliberate vertical narrative reordered with
-  `order`: statement → object → information card → wide CTA → footer.
-
-The statement is set as **word capsules** (`primitives/WordBlocks`), a data-driven
-run shared with the footer statement — not every word is blocked, which is what
-keeps the rhythm from looking mechanical. Type roles are explicit
-(`--font-display` Space Grotesk, `--font-body` Inter Tight, `--font-mono`
-JetBrains Mono) so mobile never falls back to a system face, and hero metrics are
-tuned separately per range rather than scaled.
-
-`SiteFooter` is mounted in `AppShell`, so every future route inherits it: a
-secondary warm-grey band with a centred word-block statement and metadata
-distributed left/centre/right, re-stacked and centred on mobile.
-
-## The camera
-
-The hero object is an original camera — Voyagerscape's observation unit — built
-as layered SVG in `components/HomeConnect/Camera.tsx` (no Three.js, no bitmap).
-One continuous moulded silhouette with an integrated prism hump, an ivory top
-deck over a leatherette front, knurled mode dial, seated shutter, viewfinder and
-tally lamp, an edge grip and a strap on a keeper.
-
-**The object carries no typography of any kind** — no wordmark, model number or
-label. State is communicated only through physical signals: the tally lamp
-colour, four lit segments and a level bar on the readout, and a row of recessed
-tick marks that advances with each shutter press. The bottom-left shell is
-deliberately blank apart from two recessed screws.
-The lens is the focal point: barrel, knurled focus ring, coated glass, iris,
-aperture facets, two internal reflections and a rim light.
-
-Pointer response is **layered**, which is what sells the depth — each element
-has its own travel and settle time, driven by `gsap.quickTo`:
-
-| layer | travel | settle |
+| | chapter | what it does |
 | --- | --- | --- |
-| shell (`--tilt-x/y/r`) | 10px / 7px / 0.9° | 0.9s |
-| lens | +3.4px (further, same way) | 0.62s |
-| specular | 13px, opposite | 0.38s |
-| contact shadow | 5px, opposite | 1.25s |
+| 01 | **Arrival** | `IMAGES BECOME WORLDS.` Letters answer the pointer (real weight change, zero reflow); the photograph develops out of an ordered dither; a pinned stage opens its clip-path from a portrait panel to full bleed and dissolves into paper. |
+| 02 | **Identity** | `This is not only photography.` — ink arrives word by word with the scroll. Below it the six disciplines are one typographic index whose dominance follows the pointer, with a live preview showing each as a *treatment of the same image*. |
+| 03 | **Visual world** | `A wall, not a feed.` An explicit overlapping grid, six depths from one variable, a second state per frame — and the signature mechanic: photographic fragments left behind the pointer. |
+| 04 | **Made with light** | A pinned plate where the photograph is sampled into light, taken apart into data and form, and put back. The pointer is the light source. One 2D canvas. |
+| 05 | **Photographs** | Three frames at three different weights, uncovered by scroll, each with a loupe: the only place the house grade lifts. |
+| 06 | **Voyagerscape** | Stillness. A justified wordmark, three words, two ways onward. |
 
-A smoothstep proximity falloff means the object reacts near the pointer and
-eases back to neutral once it leaves — it never tracks the cursor forever.
-Parallax is gated behind `(pointer: fine)`, so touch keeps only the idle float.
+A single sticky **viewfinder** object reads the page — chapter, film counter
+from the scroll, aperture and shutter from the pointer. It is sticky rather
+than fixed because the shell translates on the X axis when the terminal or the
+mobile menu opens, which reparents fixed descendants.
 
-Pressing it runs a shutter timeline — the button depresses, the shell drops 3px
-and tilts 0.5°, the contact shadow compresses, the iris blinks and a flash ring
-expands — then settles back. It advances the tick indicator and nothing else: it
-never opens a gallery. If a recording is running it stops it; if a clip exists it previews it.
-The status screen mirrors the recorder (`VS-01/STANDBY`, `REC/LISTENING`,
-`PLAY/OUTPUT`, `WAIT/ENCODING`, `ERR/NO INPUT`) and the tally lamp colour
-follows. Cursor labels come from the existing cursor contract: the body is
-`data-cursor-label="Look"`, and the shutter group overrides it with `"Click"`.
+```
+components/Home/
+  Home.tsx            chapter registry, active-chapter observer, atmosphere handover
+  data.ts             every frame and every string on the page
+  lib/engine.ts       ONE scroll source + ONE pointer source + ONE ticker
+  lib/dither.ts       ordered Bayer dither as 17 baked canvas patterns
+  chapters/           Arrival · Identity · VisualWorld · LightLab · Photographs · Signoff
+  fx/                 ProximityType · DustCursor · DnaPreview · ImageTrail · LightField
+  objects/Viewfinder  the page's one art object
+```
+
+**Why an engine.** Eight components each with their own `requestAnimationFrame`
+and scroll listener is how a page like this becomes an effects monster.
+`lib/engine.ts` measures element geometry once (and on resize / document
+resize), gates every scene behind an `IntersectionObserver`, runs on the same
+`gsap.ticker` Lenis uses, writes only CSS variables and transforms, and
+**removes itself from the ticker the moment nothing is moving**. Pointer field
+geometry is read in one batched pass per frame, before any style is written, so
+a frame costs a single layout flush.
+
+**Performance.** No new dependencies. The frame's WebGL atmosphere (Pattern
+Waves) is scoped to chapter 01 and is taken out of the compositor past it;
+every later effect is one 2D canvas, paused offscreen, redrawn only when a
+value actually changes. Images are plain `<img>` with intrinsic dimensions
+reserved and `loading="lazy"` below the fold.
+
+**Responsive.** Mobile is composed, not scaled: the hero becomes a vertical
+narrative, the wall becomes a column of varying widths and alignments, hover
+states become permanent, and the trail, dust and loupe are disabled on coarse
+pointers. `prefers-reduced-motion` unpins every track and holds each
+composition still.
+
+The selection record — section → component → source library → why → what
+changed — is in `docs/homepage-component-map.md`.
 
 ## Architecture
 
 ```
 app/                 routes + metadata (RSC by default)
 components/          AppShell, SiteHeader, NavMenu, BrandMark, CommandTerminal,
-components/HomeConnect/  HomeConnect (the home/connect composition), Camera,
+components/Home/     the homepage experience (see above)
+components/HomeConnect/  the connect composition, rendered by /connect,
                      MessageCTA, RecorderPanel, AudioVisualizer, Directory,
                      CommandTerminal, CommandInput, Cursor, PageLoader,
                      RouteTransition, VisualModeProvider, SmoothScroll

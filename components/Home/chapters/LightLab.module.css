@@ -1,0 +1,213 @@
+/* =========================================================
+   04 — MADE WITH LIGHT
+   ========================================================= */
+
+.chapter {
+  position: relative;
+}
+
+/* Long enough for four readable stages, short enough that the plate never
+   outstays its welcome: roughly 0.7 of a screen per stage. */
+.track {
+  position: relative;
+  height: 290vh;
+}
+
+.stage {
+  --p: 0;
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  min-height: 560px;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.1fr);
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  gap: clamp(20px, 4vw, 72px) clamp(28px, 5vw, 90px);
+  padding: clamp(84px, 12vh, 132px) var(--home-gutter) clamp(28px, 5vh, 56px);
+}
+
+.head {
+  grid-column: 1;
+  grid-row: 1;
+  max-width: 42ch;
+  align-self: center;
+}
+
+.index {
+  display: block;
+  color: var(--vs-ink-faint);
+  margin-bottom: 18px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: clamp(32px, 4.6vw, 72px);
+  line-height: 1;
+  letter-spacing: -0.042em;
+}
+
+.note {
+  max-width: 36ch;
+  margin: clamp(16px, 2.4vh, 26px) 0 0;
+  color: var(--vs-ink-soft);
+  font-size: clamp(13px, 1vw, 15px);
+  line-height: 1.62;
+}
+
+/* ---------- the plate ---------- */
+
+.plate {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  height: min(66vh, 620px);
+  overflow: hidden;
+}
+
+.plate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px var(--vs-line-soft);
+}
+
+/* ---------- readout ---------- */
+
+.readout {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  border-top: 1px solid var(--vs-line-soft);
+  padding-top: 14px;
+}
+
+.stages {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.4vw, 36px);
+}
+
+.stageItem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--vs-ink-faint);
+  transition: color 420ms var(--e-out);
+}
+
+.stageItem[data-active="true"] {
+  color: var(--vs-ink);
+}
+
+.stageDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+  transition:
+    opacity 420ms var(--e-out),
+    transform 420ms var(--e-out);
+}
+
+.stageItem[data-active="true"] .stageDot {
+  opacity: 1;
+  transform: scale(1.3);
+}
+
+.hint {
+  color: var(--vs-ink-faint);
+  text-align: right;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1099px) {
+  .track {
+    height: 260vh;
+  }
+
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    align-items: start;
+    gap: 22px;
+  }
+
+  .head {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .note {
+    max-width: 52ch;
+  }
+
+  .plate {
+    grid-column: 1;
+    grid-row: 2;
+    height: min(46vh, 460px);
+    width: 100%;
+  }
+
+  .readout {
+    grid-row: 3;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .track {
+    height: 230vh;
+  }
+
+  .stage {
+    padding-top: clamp(76px, 13vh, 110px);
+    gap: 18px;
+  }
+
+  .plate {
+    height: 42vh;
+  }
+
+  .readout {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .hint {
+    text-align: left;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION — the plate simply holds the photograph
+   ========================================================= */
+
+.chapter[data-reduced="true"] .track {
+  height: auto;
+}
+
+.chapter[data-reduced="true"] .stage {
+  position: relative;
+  top: auto;
+  height: auto;
+  min-height: 0;
+}
+
+.chapter[data-reduced="true"] .plate {
+  height: min(56vh, 460px);
+}

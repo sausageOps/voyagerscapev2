@@ -1,0 +1,189 @@
+/* =========================================================
+   VIEWFINDER — sticky art object
+   ---------------------------------------------------------
+   Sticky, not fixed: the app shell translates on the X axis when the
+   terminal or the mobile menu opens, which makes every fixed descendant
+   position against the shell instead of the viewport. Sticky travels
+   with the shell and still reads as pinned.
+   ========================================================= */
+
+.layer {
+  position: sticky;
+  top: 0;
+  height: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.object {
+  position: absolute;
+  top: calc(100svh - 118px);
+  left: var(--home-gutter);
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 16px 9px 11px;
+  border-radius: var(--r-pill);
+  pointer-events: auto;
+  transition:
+    transform 420ms var(--e-out),
+    padding 420ms var(--e-out);
+  will-change: transform;
+}
+
+.object:hover {
+  transform: translateY(-2px);
+}
+
+/* ---------- the dial ---------- */
+
+.dial {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  color: var(--vs-ink);
+}
+
+.ringBase {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  opacity: 0.28;
+}
+
+.ticks {
+  transform-origin: 20px 20px;
+  stroke: currentColor;
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.pupil {
+  fill: currentColor;
+  opacity: 0.9;
+  transform-origin: 20px 20px;
+  animation: breathe 6.5s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(0.78);
+    opacity: 0.6;
+  }
+}
+
+/* ---------- readout ---------- */
+
+.readout {
+  display: grid;
+  grid-template-rows: auto 0fr;
+  transition: grid-template-rows 460ms var(--e-out);
+}
+
+.object[data-open="true"] .readout {
+  grid-template-rows: auto 1fr;
+}
+
+.rowTop {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+}
+
+.chapterIndex {
+  color: var(--vs-ink-faint);
+}
+
+/* A clip window with every state stacked in one cell: the pill keeps a
+   constant width and the state rolls, the way the identity line does. */
+.window {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  height: 1em;
+}
+
+.state {
+  grid-area: 1 / 1;
+  color: var(--vs-ink);
+  opacity: 0;
+  transform: translateY(105%);
+  transition:
+    transform 520ms var(--e-out),
+    opacity 320ms var(--e-out);
+}
+
+.state[data-active="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.rowBottom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  min-height: 0;
+  opacity: 0;
+  color: var(--vs-ink-soft);
+  white-space: nowrap;
+  transition: opacity 280ms var(--e-out);
+}
+
+.object[data-open="true"] .rowBottom {
+  opacity: 1;
+  padding-top: 6px;
+}
+
+.cell {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.cell + .cell::before {
+  content: "·";
+  margin-right: 6px;
+  color: var(--vs-ink-faint);
+}
+
+/* =========================================================
+   MOBILE — smaller, and it opens on tap focus only
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .object {
+    top: calc(100svh - 92px);
+    padding: 7px 13px 7px 9px;
+    gap: 9px;
+  }
+
+  .dial {
+    width: 22px;
+    height: 22px;
+  }
+
+  .dial svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pupil {
+    animation: none;
+  }
+
+  .state,
+  .readout,
+  .object {
+    transition-duration: 0.12s;
+  }
+}

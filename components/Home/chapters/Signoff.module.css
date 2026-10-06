@@ -1,0 +1,153 @@
+/* =========================================================
+   06 — VOYAGERSCAPE  ·  stillness
+   ========================================================= */
+
+.chapter {
+  --drift: 0;
+  position: relative;
+  min-height: 92svh;
+  display: flex;
+  align-items: center;
+  padding: clamp(100px, 18vh, 220px) var(--home-gutter) clamp(60px, 10vh, 120px);
+  overflow: hidden;
+}
+
+.inner {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 6vh, 72px);
+}
+
+.index {
+  color: var(--vs-ink-faint);
+}
+
+.mark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 0.82;
+  letter-spacing: -0.03em;
+  transform: translate3d(calc(var(--drift) * -1.6%), 0, 0);
+  will-change: transform;
+}
+
+/* Justified wordmark: twelve letters distributed across the measure. The
+   size is chosen so the natural run is always narrower than the container
+   — space-between then spreads it, instead of overflowing the frame. */
+.markVisual {
+  display: flex;
+  justify-content: space-between;
+  font-size: clamp(38px, 7.4vw, 148px);
+}
+
+.letter {
+  display: inline-block;
+}
+
+.foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 20px clamp(20px, 4vw, 64px);
+  align-items: end;
+  border-top: 1px solid var(--vs-line-soft);
+  padding-top: clamp(18px, 2.6vh, 28px);
+}
+
+.disciplines {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--vs-ink-soft);
+}
+
+.disciplines i {
+  font-style: normal;
+  color: var(--vs-ink-faint);
+}
+
+.unfinished {
+  margin: 0;
+  color: var(--vs-ink-soft);
+  font-size: clamp(13px, 1vw, 15px);
+  letter-spacing: -0.01em;
+}
+
+.ways {
+  display: flex;
+  gap: clamp(16px, 2.4vw, 34px);
+  justify-self: end;
+}
+
+.way {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  color: var(--vs-ink-soft);
+  transition: color var(--t-fast) var(--e-out);
+}
+
+.way i {
+  font-style: normal;
+  transition: transform var(--t-med) var(--e-out);
+}
+
+.way:hover,
+.way:focus-visible {
+  color: var(--vs-ink);
+}
+
+.way:hover i {
+  transform: translateX(5px);
+}
+
+@media (max-width: 1099px) {
+  .foot {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .ways {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 767px) {
+  .chapter {
+    min-height: 0;
+  }
+
+  .markVisual {
+    display: block;
+    font-size: clamp(38px, 15vw, 72px);
+    letter-spacing: -0.02em;
+  }
+
+  .mark {
+    transform: none;
+  }
+
+  .foot {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .ways {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark {
+    transform: none !important;
+  }
+}

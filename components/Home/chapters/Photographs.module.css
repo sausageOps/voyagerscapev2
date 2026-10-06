@@ -1,0 +1,274 @@
+/* =========================================================
+   05 — PHOTOGRAPHS
+   ========================================================= */
+
+.chapter {
+  position: relative;
+  padding: clamp(90px, 16vh, 200px) var(--home-gutter) clamp(90px, 14vh, 170px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(84px, 16vh, 220px);
+}
+
+.head {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.index {
+  display: block;
+  color: var(--vs-ink-faint);
+}
+
+.title {
+  margin: 16px 0 0;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: clamp(32px, 5vw, 78px);
+  line-height: 1;
+  letter-spacing: -0.042em;
+}
+
+.note {
+  max-width: 34ch;
+  margin: 18px 0 0;
+  color: var(--vs-ink-soft);
+  font-size: clamp(13px, 1vw, 15px);
+  line-height: 1.6;
+}
+
+/* ---------- one photograph ---------- */
+
+.figure {
+  --in: 0;
+  --depth: 0;
+  position: relative;
+  margin: 0;
+  display: grid;
+  gap: 16px clamp(20px, 3vw, 48px);
+}
+
+/* Three deliberately different weights — wide, small and offset, centred. */
+.figure[data-slot="1"] {
+  width: min(100%, 1500px);
+  margin-inline: auto;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.22fr);
+  align-items: end;
+}
+
+.figure[data-slot="1"] .box {
+  aspect-ratio: 21 / 9;
+}
+
+.figure[data-slot="2"] {
+  width: min(100%, 1180px);
+  margin-inline: auto;
+  grid-template-columns: minmax(0, 0.5fr) minmax(0, 0.38fr);
+  justify-content: end;
+  align-items: end;
+}
+
+.figure[data-slot="2"] .box {
+  grid-column: 2;
+  aspect-ratio: 3 / 4;
+}
+
+.figure[data-slot="2"] .plate {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: end;
+  text-align: right;
+  align-self: end;
+  padding-bottom: 6px;
+}
+
+.figure[data-slot="3"] {
+  width: min(100%, 1180px);
+  margin-inline: auto;
+  grid-template-columns: minmax(160px, 0.24fr) minmax(0, 1fr);
+  align-items: end;
+}
+
+.figure[data-slot="3"] .box {
+  grid-column: 2;
+  aspect-ratio: 16 / 9;
+}
+
+.figure[data-slot="3"] .plate {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: end;
+  padding-bottom: 6px;
+}
+
+.box {
+  --lx: 0.5;
+  --ly: 0.5;
+  --lens: 0;
+  --fw: 800px;
+  --fh: 600px;
+  --zoom: 1.85;
+  position: relative;
+  overflow: hidden;
+  background: var(--vs-bg-deep);
+  /* the frame is uncovered, not faded */
+  clip-path: inset(calc((1 - var(--in)) * 100%) 0 0 0);
+  will-change: clip-path;
+}
+
+.image {
+  position: absolute;
+  inset: -6% 0;
+  width: 100%;
+  height: 112%;
+  object-fit: cover;
+  filter: var(--home-grade);
+  transform: translate3d(0, calc(var(--depth) * -3.2%), 0)
+    scale(calc(1.06 - var(--in) * 0.06));
+  will-change: transform;
+}
+
+/* ---------- the loupe ---------- */
+
+.lens {
+  position: absolute;
+  left: calc(var(--lx) * 100%);
+  top: calc(var(--ly) * 100%);
+  width: clamp(150px, 15vw, 240px);
+  height: clamp(150px, 15vw, 240px);
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--lens);
+  transform: translate(-50%, -50%) scale(calc(0.86 + var(--lens) * 0.14));
+  /* a lens has an edge: this hairline is the component's own reason, not
+     the glass system's (see AGENTS.md — glass never implies a border). */
+  box-shadow: 0 0 0 1px rgba(255, 253, 249, 0.42);
+  will-change: transform, opacity;
+}
+
+.lensInner {
+  position: absolute;
+  display: block;
+  width: calc(var(--fw) * var(--zoom));
+  height: calc(var(--fh) * var(--zoom));
+  left: calc(50% - var(--lx) * var(--fw) * var(--zoom));
+  top: calc(50% - var(--ly) * var(--fh) * var(--zoom));
+}
+
+.lensImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* full tonal contrast inside the lens — the page's grade lifts */
+  filter: grayscale(0.05) saturate(0.95) contrast(1.06);
+}
+
+/* ---------- the plate ---------- */
+
+.plate {
+  display: grid;
+  gap: 3px;
+  align-content: end;
+  opacity: calc(0.25 + var(--in) * 0.75);
+}
+
+.plateIndex {
+  color: var(--vs-ink-faint);
+}
+
+.plateTitle {
+  font-size: var(--fs-small);
+  color: var(--vs-ink);
+  letter-spacing: -0.012em;
+}
+
+.plateMeta,
+.plateExposure {
+  color: var(--vs-ink-faint);
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1099px) {
+  .figure[data-slot="2"] {
+    grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.55fr);
+  }
+
+  .figure[data-slot="3"] {
+    grid-template-columns: minmax(130px, 0.3fr) minmax(0, 1fr);
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .figure[data-slot="1"],
+  .figure[data-slot="2"],
+  .figure[data-slot="3"] {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .figure[data-slot="1"] .box {
+    aspect-ratio: 16 / 10;
+  }
+
+  .figure[data-slot="2"] .box,
+  .figure[data-slot="3"] .box {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .figure[data-slot="2"] .box {
+    aspect-ratio: 4 / 5;
+    width: 88%;
+    margin-left: auto;
+  }
+
+  .figure[data-slot="3"] .box {
+    aspect-ratio: 3 / 2;
+  }
+
+  .figure[data-slot="2"] .plate,
+  .figure[data-slot="3"] .plate {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    text-align: left;
+    padding-bottom: 0;
+  }
+
+  .lens {
+    display: none;
+  }
+
+  .plate {
+    opacity: 1;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .lens {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .box {
+    clip-path: none;
+  }
+
+  .image {
+    transform: none !important;
+  }
+
+  .plate {
+    opacity: 1;
+  }
+}

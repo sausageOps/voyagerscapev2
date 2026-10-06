@@ -1,0 +1,30 @@
+/* =========================================================
+   HOMEPAGE — scoped tokens
+   ---------------------------------------------------------
+   Everything the chapters share lives here: one gutter, one photographic
+   grade, one motion vocabulary. Nothing global is touched.
+   ========================================================= */
+
+.home {
+  /* editorial margin — wider than the shell's, the page is a plate */
+  --home-gutter: clamp(20px, 5.2vw, 96px);
+
+  /* ONE grade for every photograph on the page, so six images shot in
+     six places still read as one practice's eye. The lens in chapter 05
+     is the only place it lifts — that is the point of the lens. */
+  --home-grade: grayscale(0.24) saturate(0.82) contrast(1.02) brightness(1.01);
+
+  /* motion language (ms):
+       micro 120–250 · ui 300–600 · scene 600–1200 · cinematic 1000–1800 */
+  --home-micro: 200ms;
+  --home-ui: 460ms;
+  --home-scene: 900ms;
+
+  position: relative;
+  display: block;
+  color: var(--vs-ink);
+}
+
+:global(html[data-theme="dark"]) .home {
+  --home-grade: grayscale(0.26) saturate(0.78) contrast(1.04) brightness(0.98);
+}

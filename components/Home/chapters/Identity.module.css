@@ -1,0 +1,222 @@
+/* =========================================================
+   02 — IDENTITY
+   ========================================================= */
+
+.chapter {
+  position: relative;
+  padding: clamp(96px, 16vh, 190px) var(--home-gutter) clamp(90px, 14vh, 170px);
+}
+
+.head {
+  position: relative;
+  max-width: 1180px;
+  margin: 0 auto clamp(64px, 11vh, 140px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr);
+  gap: clamp(24px, 4vw, 72px);
+  align-items: end;
+}
+
+.index {
+  grid-column: 1 / -1;
+  color: var(--vs-ink-faint);
+}
+
+.statement {
+  margin: 18px 0 0;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: clamp(32px, 5.4vw, 86px);
+  line-height: 1.02;
+  letter-spacing: -0.038em;
+  text-wrap: balance;
+}
+
+/* Ink arrives word by word as the statement passes the reader. */
+.word {
+  --w: 0;
+  display: inline-block;
+  color: color-mix(in srgb, var(--vs-ink) calc(14% + var(--w) * 86%), transparent);
+  transform: translate3d(0, calc((1 - var(--w)) * 0.1em), 0);
+  will-change: transform;
+}
+
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .word {
+    color: var(--vs-ink);
+    opacity: calc(0.18 + var(--w) * 0.82);
+  }
+}
+
+.lede {
+  max-width: 44ch;
+  margin: 0;
+  padding-bottom: 8px;
+  color: var(--vs-ink-soft);
+  font-size: clamp(13px, 1.05vw, 15px);
+  line-height: 1.6;
+}
+
+/* ---------- the index field ---------- */
+
+.field {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.46fr);
+  gap: clamp(28px, 5vw, 88px);
+  /* items stretch on purpose: the preview sticks *inside* its column, and
+     a column shrunk to its content would have nothing to travel through */
+  align-items: stretch;
+}
+
+.list {
+  position: relative;
+  border-top: 1px solid var(--vs-line-soft);
+}
+
+.row {
+  --near: 0;
+  position: relative;
+  border-bottom: 1px solid var(--vs-line-soft);
+}
+
+.rowButton {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px minmax(0, auto) minmax(0, 1fr);
+  align-items: baseline;
+  gap: clamp(10px, 2vw, 28px);
+  width: 100%;
+  padding: clamp(14px, 1.9vh, 22px) 0;
+  text-align: left;
+}
+
+.rowButton::after {
+  content: "";
+  position: absolute;
+  left: -2.5%;
+  right: -2.5%;
+  top: 0;
+  bottom: 0;
+  background: var(--vs-ink);
+  opacity: calc(var(--near) * 0.035);
+  pointer-events: none;
+}
+
+.rowIndex {
+  color: var(--vs-ink-faint);
+  transition: color var(--t-fast) var(--e-out);
+}
+
+.rowWord {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: clamp(26px, 3.6vw, 56px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--vs-ink) calc(34% + var(--near) * 66%), transparent);
+  transform: translate3d(calc(var(--near) * 10px), 0, 0);
+  transition: none;
+  will-change: transform;
+}
+
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .rowWord {
+    color: var(--vs-ink);
+    opacity: calc(0.38 + var(--near) * 0.62);
+  }
+}
+
+.rowNote {
+  justify-self: end;
+  max-width: 30ch;
+  text-align: right;
+  color: var(--vs-ink-faint);
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  opacity: calc(0.25 + var(--near) * 0.75);
+}
+
+.row[data-active="true"] .rowIndex {
+  color: var(--vs-ink);
+}
+
+.row[data-active="true"] .rowWord {
+  color: var(--vs-ink);
+}
+
+/* The active row is marked for keyboard users too, not only by weight. */
+.row[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  width: 6px;
+  height: 1px;
+  background: var(--vs-ink);
+  transform: translateY(-50%);
+}
+
+.previewColumn {
+  position: relative;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1099px) {
+  .head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .field {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 0.5fr);
+    gap: 32px;
+  }
+
+  .rowNote {
+    display: none;
+  }
+
+  .rowButton {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .field {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 26px;
+  }
+
+  .previewColumn {
+    position: relative;
+    width: 64%;
+    margin-left: auto;
+  }
+
+  .rowWord {
+    font-size: clamp(28px, 9vw, 42px);
+    transform: none;
+  }
+
+  .rowButton {
+    padding: 15px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word,
+  .rowWord {
+    transform: none !important;
+  }
+}
