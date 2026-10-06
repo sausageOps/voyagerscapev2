@@ -1,0 +1,68 @@
+/* =========================================================
+   ROUTE TRANSITION VARIANTS — overlay surfaces
+   ---------------------------------------------------------
+   Codrops-inspired GSAP transition variants (adapted from
+   github.com/Ibaliqbal/codrops-barbajs-page-transition —
+   the Barba/GSAP motion mechanics only, none of the
+   Astro/Barba routing) rendered inside the existing
+   RouteTransition layer (components/RouteTransition.tsx).
+
+   All surfaces are pale, soft and editorial — the brief's
+   palette — and every element is transform/clip-path only:
+   no layout, no scroll, no horizontal overflow (the layer
+   root is fixed + overflow:hidden already).
+   ========================================================= */
+
+/* The brief's pale transition palette, scoped to the overlay that
+   carries the animated surfaces. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+
+  --transition-ivory: #f3f0e8;
+  --transition-parchment: #e8e2d7;
+  --transition-lavender: #ddd9e8;
+  --transition-sage: #dce1d8;
+  --transition-blush: #e9dcd2;
+  --transition-blue-grey: #d9dfe2;
+}
+
+/* Single full-viewport surface (curtain / clip / band variants). */
+.surface {
+  position: absolute;
+  inset: 0;
+  will-change: transform, clip-path;
+}
+
+/* Full-height column (panel-sweep variant). Same seam-free geometry
+   idea as TileCurtain: each column is 1px wider than its slot so no
+   subpixel seam can open between neighbours mid-flight. */
+.column {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  will-change: transform;
+}
+
+/* Half-viewport panel (split variant). The left half carries the
+   +1px overlap so the meeting line never seams. */
+.half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  will-change: transform;
+}
+
+/* Destination name recolouring for pale surfaces. Written as
+   `span.nameOnPale` (element + class) so it deterministically wins
+   over the shared single-class `.name` rule regardless of stylesheet
+   load order. The colour is a literal (not a var) because the name
+   span is a SIBLING of the overlay, outside the palette's scope.
+   Fixed warm-dark ink: the shared .name style uses var(--vs-ink),
+   which inverts to pale in the dark theme and would vanish on these
+   pale overlays — the transitions therefore carry their own ink,
+   independent of the theme system (which is not touched). */
+span.nameOnPale {
+  color: #2b261f;
+}
