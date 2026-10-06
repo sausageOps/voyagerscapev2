@@ -1,3 +1,24 @@
+/* =========================================================
+   COMMAND/SEARCH TERMINAL — LAYER + OSMO WIPE MOTION
+   ---------------------------------------------------------
+   The open/close MOTION (borrowed, motion-language only, from
+   codepen.io/osmosupply/pen/JoPPOXj) lives in CommandTerminal.tsx:
+   the layer no longer CSS-slides. Instead:
+
+     .layer   fixed right-side frame; resting visibility states only
+     .frame   the terminal's exact border/radius/shadow, faded with
+              the wipe (animation-only chrome carrier)
+     .panel   layout + clipping; the surface color now comes from…
+     .wipe    three full-bleed slabs of the terminal's own
+              --vs-terminal-bg, stacked behind the content, swept
+              right-to-left with a stagger on open (and back out on
+              close) by GSAP.
+
+   At rest (open or closed) the terminal is visually identical to
+   the pre-animation design: same position, width, height, surfaces,
+   chrome, typography and content.
+   ========================================================= */
+
 .layer {
   position: fixed;
   top: 0;
@@ -7,18 +28,29 @@
   width: var(--terminal-panel-w, clamp(320px, 24vw, 380px));
   visibility: hidden;
   pointer-events: none;
-  transform: translate3d(100%, 0, 0);
-  transition:
-    transform 620ms cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s linear 620ms;
-  will-change: transform;
 }
 
+/* Resting OPEN state. GSAP normally holds visibility/pointer-events
+   inline while the wipe plays (and leaves them after open so the close
+   animation remains visible after data-open flips); this rule is the
+   no-JS / post-cleanup resting state. */
 .layer[data-open="true"] {
   visibility: visible;
   pointer-events: auto;
-  transform: translate3d(0, 0, 0);
-  transition-delay: 0s;
+}
+
+/* Animation-only chrome carrier — the exact border, corner radius and
+   shadow the .panel used to paint itself, so they can fade with the
+   wipe. Sits above the panel (DOM order), never takes pointer events,
+   and paints nothing the old chrome did not. */
+.frame {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-left: 1px solid var(--vs-terminal-border);
+  border-radius: 22px 0 0 22px;
+  box-shadow: var(--vs-terminal-shadow);
+  pointer-events: none;
 }
 
 .panel {
@@ -34,15 +66,29 @@
     20px;
   overflow: hidden;
   border: 0;
-  border-left: 1px solid var(--vs-terminal-border);
+  /* Clips the wipe slabs to the terminal's rounded shape. The surface
+     color now lives on the .wipe slabs; the border/shadow live on the
+     .frame — resting appearance unchanged. */
   border-radius: 22px 0 0 22px;
-  background: var(--vs-terminal-bg);
-  box-shadow: var(--vs-terminal-shadow);
 }
 
 .panel > * {
   position: relative;
   z-index: 1;
+}
+
+/* Osmo background wipe panels: full-bleed slabs of the terminal's own
+   surface color, stacked behind the content. GSAP slides them from
+   xPercent 101 → 0 with a stagger on open and back out on close. The
+   left radius gives each slab the same rounded leading edge as the
+   reference motion while it sweeps. */
+.panel .wipe {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 22px 0 0 22px;
+  background: var(--vs-terminal-bg);
+  will-change: transform;
 }
 
 /* ---- Head ---- */
@@ -349,7 +395,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .layer,
+  /* The layer's open/close motion is handled in CommandTerminal.tsx
+     (plain fade, no wipe/stagger/transforms). */
   .close,
   .prompt {
     transition-duration: 0.01ms;
