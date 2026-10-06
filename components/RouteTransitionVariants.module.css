@@ -1,95 +1,84 @@
 /* =========================================================
    ROUTE TRANSITION VARIANTS — overlay surfaces
    ---------------------------------------------------------
-   Codrops-inspired GSAP transition variants (adapted from
-   github.com/Ibaliqbal/codrops-barbajs-page-transition —
-   the Barba/GSAP motion mechanics only, none of the
-   Astro/Barba routing) rendered inside the existing
-   RouteTransition layer (components/RouteTransition.tsx).
+   Destination-based Codrops-inspired GSAP variants (adapted from
+   the Codrops Barba/GSAP article + repo — motion only, no Astro,
+   no Barba) rendered inside the existing RouteTransition layer
+   (components/RouteTransition.tsx):
 
-   All surfaces are pale, soft and editorial — the brief's
-   palette — and every element is transform/clip-path only:
-   no layout, no scroll, no horizontal overflow (the layer
-   root is fixed + overflow:hidden already).
+     HOME      → synced-reveal  (Codrops #1 — clip-path + scale sync)
+     ART       → svg-draw       (Codrops #5 — truus.co stroke draw)
+     CONNECT   → svg-morph      (Codrops #3 — path morph)
+     ABOUT     → the original tile curtain (in RouteTransition.tsx;
+                 null variant here — also the fallback for unknown
+                 destinations)
+
+   The COLOR is chosen per navigation by the registry (random,
+   theme-aware, no immediate repeats) and injected as
+   --transition-surface on the transition layer root; every surface
+   below consumes it. All elements are transform/clip-path/stroke
+   only: no layout, no scroll, no horizontal overflow.
    ========================================================= */
 
-/* The brief's pale transition palette, scoped to the overlay that
-   carries the animated surfaces.
-
-   DAY palette (defaults below) and the coordinated NIGHT palette — the
-   same five surfaces viewed through a darker, softer atmosphere. The
-   override keys off the EXISTING theme attribute the site already
-   maintains on <html> (lib/theme-provider + the boot script); the theme
-   system itself is not modified — the overlays simply read it. Geometry
-   and timing are identical in both modes; only these colours change.
-
-   Mapping (variant → day → night):
-     pale-curtain      → ivory  #F3F0E8 → moon ivory    #A9A49A
-     pale-clip-reveal  → lavender #DDD9E8 → dust lavender #918D9D
-     pale-panel-sweep  → parchment #E8E2D7 → smoked parchment #9D9689
-     pale-split-mask   → sage   #DCE1D8 → muted sage    #929A91
-     pale-band         → blush  #E9DCD2 → dusty rose    #9B8987 */
+/* The overlay row that carries the animated surfaces. */
 .overlay {
   position: absolute;
   inset: 0;
   overflow: hidden;
-
-  /* DAY */
-  --transition-ivory: #f3f0e8;
-  --transition-parchment: #e8e2d7;
-  --transition-lavender: #ddd9e8;
-  --transition-sage: #dce1d8;
-  --transition-blush: #e9dcd2;
-  --transition-blue-grey: #d9dfe2;
 }
 
-/* NIGHT — same vars, dusty/muted/moonlit values. Subdued enough to sit
-   against the dark Voyagerscape page while remaining clearly visible:
-   no pastel brightness, no cream flash. */
-:global(html[data-theme="dark"]) .overlay {
-  --transition-ivory: #a9a49a;
-  --transition-parchment: #9d9689;
-  --transition-lavender: #918d9d;
-  --transition-sage: #929a91;
-  --transition-blush: #9b8987;
-  --transition-blue-grey: #8e9499;
-}
-
-/* Single full-viewport surface (curtain / clip / band variants). */
+/* Single full-viewport surface (synced-reveal variant). */
 .surface {
   position: absolute;
   inset: 0;
+  background: var(--transition-surface, #f3f0e8);
   will-change: transform, clip-path;
 }
 
-/* Full-height column (panel-sweep variant). Same seam-free geometry
-   idea as TileCurtain: each column is 1px wider than its slot so no
-   subpixel seam can open between neighbours mid-flight. */
-.column {
+/* ---- SVG draw (ART) ---- */
+.drawSvg {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  will-change: transform;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
 }
 
-/* Half-viewport panel (split variant). The left half carries the
-   +1px overlap so the meeting line never seams. */
-.half {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  will-change: transform;
+.drawPath {
+  fill: none;
+  stroke: var(--transition-surface, #f3f0e8);
+  stroke-linecap: round;
+  will-change: stroke-dashoffset, stroke-width, opacity;
 }
 
-/* Destination name recolouring for pale surfaces. Written as
-   `span.nameOnPale` (element + class) so it deterministically wins
-   over the shared single-class `.name` rule regardless of stylesheet
-   load order. The colour is a literal (not a var) because the name
-   span is a SIBLING of the overlay, outside the palette's scope.
-   Fixed warm-dark ink: the shared .name style uses var(--vs-ink),
-   which inverts to pale in the dark theme and would vanish on these
-   pale overlays — the transitions therefore carry their own ink,
-   independent of the theme system (which is not touched). */
+/* ---- SVG morph (CONNECT) ---- */
+.morphSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.morphPath {
+  fill: var(--transition-surface, #f3f0e8);
+  stroke: none;
+  will-change: d;
+}
+
+/* Destination name ink on transition surfaces.
+   DAY: the fixed warm-dark transition ink.
+   NIGHT: the palette is now deliberately dark/smoked, so the ink
+   lifts to a soft moonlit off-white for contrast (the brief allows
+   exactly this change "if necessary for contrast" — the dark
+   #2B261F would be unreadable on the #51–#59 surfaces).
+   Written as `span.nameOnPale` (element + class) so it wins over the
+   shared single-class `.name` rule regardless of stylesheet order. */
 span.nameOnPale {
   color: #2b261f;
+}
+
+:global(html[data-theme="dark"]) span.nameOnPale {
+  color: #edeae1;
 }

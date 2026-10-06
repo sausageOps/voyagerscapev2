@@ -16,7 +16,11 @@ import { ROUTES } from "@/lib/routes";
 import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { useUI } from "@/lib/ui-store";
 import TileCurtain from "./TileCurtain";
-import { nextTransitionVariant, variantById } from "./RouteTransitionVariants";
+import {
+  getTransitionColor,
+  variantById,
+  variantForDestination,
+} from "./RouteTransitionVariants";
 import variantStyles from "./RouteTransitionVariants.module.css";
 import styles from "./RouteTransition.module.css";
 
@@ -199,14 +203,16 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [destName, setDestName] = useState<string | null>(null);
   const [reduced, setReduced] = useState(false);
-  /* Codrops-inspired variant for THIS transition (see
-     RouteTransitionVariants.tsx). null → the existing Vertical Tiles
-     curtain, which stays the fallback/safety transition. The rotation
-     cursor lives at module scope in the registry, so the index
-     persists across mounts: nav #1 → ivory curtain, #2 → lavender
-     clip, #3 → parchment sweep, #4 → sage split, #5 → blush band,
-     #6 → ivory again. Never random, never reset by a remount. */
+  /* Destination-based variant for THIS transition (see
+     RouteTransitionVariants.tsx). The ANIMATION is fixed per
+     destination — HOME → synced clip reveal (Codrops #1), ART → SVG
+     draw (Codrops #5), CONNECT → SVG morph (Codrops #3), ABOUT and
+     anything unknown → null, i.e. the ORIGINAL Voyagerscape tile
+     curtain, which stays the fallback/safety transition. The COLOR is
+     random per navigation (theme-aware, no immediate repeats) and is
+     injected onto the layer as --transition-surface / --tile-bg. */
   const [variantId, setVariantId] = useState<string | null>(null);
+  const [surfaceColor, setSurfaceColor] = useState<string | null>(null);
 
   const routerRef = useRef(router);
   routerRef.current = router;
@@ -254,16 +260,18 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       // If the mobile menu is open, its own close animation starts NOW —
       // alongside the tile sweep — instead of only after the commit.
       if (mobileMenuOpenRef.current) setMobileMenuOpenRef.current(false);
-      // Pick this transition's variant ONLY when a transition actually
-      // starts (idle → covering). Navigations that arrive while already
-      // transitioning are absorbed by the in-flight one, so the rotation
-      // cursor advances exactly once per visible transition — the
-      // deterministic 0 → 1 → 2 → 3 → 4 → 0 sequence across the session.
+      // Resolve THIS transition only when it actually starts (idle →
+      // covering): the ANIMATION comes from the destination (fixed
+      // mapping, never random) and the COLOR is drawn randomly from the
+      // current theme's palette (never the previous color twice in a
+      // row). Navigations that arrive while already transitioning are
+      // absorbed by the in-flight one, so nothing advances mid-flight.
       if (phaseRef.current === "idle") {
-        const variant = nextTransitionVariant();
+        const variant = variantForDestination(href);
         variantRef.current = variant;
         emergencyRef.current = false;
-        setVariantId(variant.id);
+        setVariantId(variant ? variant.id : "tiles");
+        setSurfaceColor(getTransitionColor());
         setPhaseBoth("covering");
       }
     },
@@ -681,8 +689,17 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     [navigate, phase],
   );
 
-  /* Active registry variant (null → the existing Vertical Tiles fallback). */
+  /* Active registry variant (null → the original tile curtain). */
   const activeVariant = variantById(variantId);
+  /* The randomly chosen surface color, injected for both the Codrops
+     variant surfaces (--transition-surface) and the tile curtain
+     (--tile-bg; TileCurtain falls back to var(--vs-bg) when unset). */
+  const layerStyle = surfaceColor
+    ? ({
+        "--transition-surface": surfaceColor,
+        "--tile-bg": surfaceColor,
+      } as Record<string, string>)
+    : undefined;
 
   return (
     <RouteTransitionContext.Provider value={contextValue}>
@@ -691,6 +708,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         <div
           ref={layerRef}
           className={styles.root}
+          style={layerStyle}
           aria-hidden="true"
           data-transition-layer
           data-variant={activeVariant ? activeVariant.id : "tiles"}
@@ -705,13 +723,12 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
           {!reduced && destName ? (
             <span
               ref={nameRef}
-              /* On pale variant surfaces the name carries its own warm-dark
-                 ink (theme-independent; see RouteTransitionVariants.module.css). */
-              className={
-                activeVariant
-                  ? `${styles.name} ${variantStyles.nameOnPale}`
-                  : styles.name
-              }
+              /* Transition-local ink on the (randomly colored) surfaces:
+                 warm-dark in day, moonlit off-white in night — see
+                 RouteTransitionVariants.module.css. Applied to the tile
+                 path too, since the tiles now also carry the random
+                 transition color. */
+              className={`${styles.name} ${variantStyles.nameOnPale}`}
               data-name
             >
               {destName.split("").map((ch, i) => (

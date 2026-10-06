@@ -18,9 +18,12 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  /* The Voyagerscape cream — the curtain is a native surface, and the
-     ink identity/name sits on it (see PageLoader / RouteTransition). */
-  background: var(--vs-bg);
+  /* The Voyagerscape cream by default; the route-transition layer
+     overrides this per navigation with the randomly chosen transition
+     color (see RouteTransition.tsx / RouteTransitionVariants.tsx).
+     The startup PageLoader never sets the var, so it keeps the exact
+     original background. */
+  background: var(--tile-bg, var(--vs-bg));
   will-change: transform;
 }
 
@@ -29,5 +32,5 @@
 .tileFallback {
   position: absolute;
   inset: 0;
-  background: var(--vs-bg);
+  background: var(--tile-bg, var(--vs-bg));
 }
