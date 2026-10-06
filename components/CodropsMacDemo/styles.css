@@ -534,99 +534,101 @@
 }
 
 /* ============================================================
-   VOYAGERSCAPE PORT NOTE — Tailwind utility translation
+   VOYAGERSCAPE INTEGRATION LAYOUT + Tailwind utility translation
    ------------------------------------------------------------
-   The source demo is styled with Tailwind CSS v4 on top of the CSS
-   above. Voyagerscape does not use Tailwind (and adding it would
-   restyle the whole site via its preflight reset), so ONLY the handful
-   of utility classes the demo's JSX actually uses are translated
-   1:1 below, scoped to `.codrops-mac-demo` so they can never leak
-   into the rest of Voyagerscape. The demo markup keeps its original
-   class names untouched.
+   1) HERO REGION (see index.tsx). The source demo is a standalone
+      page with a fixed fullscreen canvas; here the Mac lives in a
+      dedicated hero container inside the site's existing hero-object
+      slot (HomeConnect's .stage). Sizing on tablet/mobile follows the
+      site's own hero-object track tokens (--crt-compose-w /
+      --crt-type-anchor, set on .composition) so the Mac occupies
+      exactly the envelope the composition was designed around.
+
+   2) The source demo is styled with Tailwind CSS v4 on top of the CSS
+      above. Voyagerscape does not use Tailwind (and adding it would
+      restyle the whole site via its preflight reset), so ONLY the
+      handful of utility classes the demo's JSX actually uses are
+      translated 1:1 below, scoped to `.codrops-mac-hero` so they can
+      never leak into the rest of Voyagerscape. The demo markup keeps
+      its original class names untouched. (The Codrops
+      GridBackground/blue utilities were removed with the grid itself.)
    ============================================================ */
 
-.codrops-mac-demo .fixed {
-  position: fixed;
-}
-
-.codrops-mac-demo .absolute {
-  position: absolute;
-}
-
-.codrops-mac-demo .relative {
+/* ---------- Dedicated hero region (no global fixed overlay) ---------- */
+.codrops-mac-hero {
   position: relative;
+  /* Desktop: large cinematic presence, centred by the .stage slot. */
+  width: 1060px;
+  max-width: 100%;
+  height: clamp(520px, 74svh, 780px);
+  /* Clips the un-reparented #computer_screen element (900px wide) in
+     browsers without HTML-in-Canvas; the WebGL canvas itself fits the
+     region exactly, so nothing the Mac renders is ever clipped. */
+  overflow: hidden;
+  /* Keeps the Mac's stacking (canvas + re-parented screen element) inside
+     the hero slot — below the site's headline (.head, z-index 3) and far
+     below the fixed SiteHeader (z-index var(--z-header)). */
+  isolation: isolate;
 }
 
-.codrops-mac-demo .inset-0 {
+/* Mount point for the real #computer_screen element. Hidden: the element is
+   either re-parented into the WebGL canvas (supported browsers) or reported
+   as unsupported in the console (see index.tsx / scene.tsx). */
+.codrops-mac-screen-mount {
+  position: absolute;
   inset: 0;
-}
-
-.codrops-mac-demo .h-svh {
-  height: 100svh;
-}
-
-.codrops-mac-demo .p-2 {
-  padding: 0.5rem;
-}
-
-.codrops-mac-demo .\-z-10 {
-  z-index: -10;
-}
-
-.codrops-mac-demo .flex {
-  display: flex;
-}
-
-.codrops-mac-demo .flex-col {
-  flex-direction: column;
-}
-
-.codrops-mac-demo .justify-between {
-  justify-content: space-between;
-}
-
-.codrops-mac-demo .pointer-events-none {
+  overflow: hidden;
+  visibility: hidden;
   pointer-events: none;
 }
 
-.codrops-mac-demo .overflow-hidden {
-  overflow: hidden;
-}
-
-.codrops-mac-demo .opacity-50 {
-  opacity: 0.5;
-}
-
-/* Source theme token: @theme base { --color-codrops: #253ddd; }
-   used as GridBackground's className="bg-codrops". */
-.codrops-mac-demo .bg-codrops {
-  background-color: #253ddd;
-}
-
-/* Source (Tailwind arbitrary-value utilities on the grid layer's ::after):
-     after:absolute after:-inset-47 after:-top-0.5 after:left-0
-     after:bg-[url(/grid.svg)] after:bg-center after:opacity-40
-     after:mask-[radial-gradient(circle_at_calc(50%-94px)_calc(50%-93px),
-                                   #fff_40%,transparent_75%)]
-   Tailwind v4 spacing scale: 1 unit = 0.25rem → -inset-47 = -11.75rem,
-   -top-0.5 = -0.125rem. */
-.codrops-mac-demo .codrops-grid-layer::after {
-  content: "";
+/* The 3D stage fills the hero region (replaces the source's
+   `fixed inset-0 h-svh` fullscreen overlay). */
+.codrops-mac-stage {
   position: absolute;
-  inset: -11.75rem;
-  top: -0.125rem;
-  left: 0;
-  background-image: url("/grid.svg");
-  background-position: center;
-  opacity: 0.4;
-  -webkit-mask-image: radial-gradient(
-    circle at calc(50% - 94px) calc(50% - 93px),
-    #fff 40%,
-    transparent 75%
-  );
-  mask-image: radial-gradient(
-    circle at calc(50% - 94px) calc(50% - 93px),
-    #fff 40%,
-    transparent 75%
-  );
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* R3F sets `touch-action: none` inline on the canvas, which would block
+   page scrolling under a finger on mobile. With OrbitControls disabled for
+   coarse pointers (scene.tsx), restoring pan-y + pinch-zoom keeps mobile
+   scrolling and browser zoom native. Desktop (mouse) is unaffected. */
+.codrops-mac-stage canvas {
+  touch-action: pan-y pinch-zoom !important;
+}
+
+/* Tablet/mobile: fill the site's own hero-object track so the Mac sits in
+   the envelope the composition was designed for and never overflows it. */
+@media (max-width: 1099px) {
+  .codrops-mac-hero {
+    width: var(--crt-compose-w, 360px);
+    height: var(--crt-type-anchor, 300px);
+  }
+}
+
+/* ---------- Tailwind utility translation (scoped) ---------- */
+.codrops-mac-hero .relative {
+  position: relative;
+}
+
+.codrops-mac-hero .p-2 {
+  padding: 0.5rem;
+}
+
+.codrops-mac-hero .\-z-10 {
+  z-index: -10;
+}
+
+.codrops-mac-hero .flex {
+  display: flex;
+}
+
+.codrops-mac-hero .flex-col {
+  flex-direction: column;
+}
+
+.codrops-mac-hero .justify-between {
+  justify-content: space-between;
 }

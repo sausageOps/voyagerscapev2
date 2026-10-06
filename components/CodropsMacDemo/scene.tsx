@@ -2,7 +2,7 @@
 
 import { ContactShadows, Float, OrbitControls, Stage } from "@react-three/drei";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { HTMLTexture, Mesh, type ShaderMaterial } from "three";
 import { InteractionManager } from "three/addons/interaction/InteractionManager.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -74,12 +74,40 @@ const Mac = () => {
   );
 };
 
-/* VOYAGERSCAPE PORT NOTE: the source renders <main className="fixed inset-0 h-svh">.
-   Voyagerscape's AppShell already provides the document's single <main id="main">
-   wrapper, so the demo layer is a <div> with the exact same classes to avoid
-   nesting <main> inside <main>. No visual or behavioural change. */
-export const Scene = () => (
-  <div className="fixed inset-0 h-svh">
+/* VOYAGERSCAPE INTEGRATION NOTES (layout only — the 3D scene is untouched):
+   - The source renders <main className="fixed inset-0 h-svh">, a fullscreen
+     page overlay appropriate to the standalone Codrops demo. Inside
+     Voyagerscape the Mac is a hero OBJECT, so the stage is an absolutely
+     positioned layer that fills the dedicated hero container
+     (.codrops-mac-hero — see index.tsx / styles.css). No global fixed layer.
+   - enableZoom={false}: the source's OrbitControls owned the wheel (zoom +
+     preventDefault) over the whole fixed viewport, which hijacked page
+     scrolling. With zoom disabled, OrbitControls' wheel handler returns
+     before preventDefault, so the wheel always bubbles to the page (Lenis)
+     and normal Voyagerscape scrolling works — including over the Mac.
+   - enableRotate={!coarsePointer}: on touch devices the one-finger orbit
+     gesture is turned off (combined with `touch-action: pan-y pinch-zoom`
+     on the canvas, styles.css) so mobile scrolling stays native. IMPORTANT:
+     the controls component itself must stay mounted with enabled=true —
+     drei only calls controls.update() while enabled, and that update() is
+     what aims the camera at the Mac (camera.lookAt(target)). Disabling the
+     controls entirely leaves the camera un-aimed, the Mac out of frame and
+     the screen mesh culled — which stops HTMLTexture from ever uploading.
+   - The Mac, camera, Stage, Float, ContactShadows, HTMLTexture,
+     InteractionManager and the screen plane are the original implementation. */
+export const Scene = () => {
+  const [coarsePointer, setCoarsePointer] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const update = () => setCoarsePointer(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return (
+    <div className="codrops-mac-stage">
     <Canvas
       shadows
       dpr={[1, 2]}
@@ -108,11 +136,14 @@ export const Scene = () => (
       <OrbitControls
         enableDamping
         enablePan={false}
+        enableZoom={false}
+        enableRotate={!coarsePointer}
         minDistance={2}
         maxDistance={8}
         minPolarAngle={Math.PI / 6}
         maxPolarAngle={Math.PI / 2}
       />
-    </Canvas>
-  </div>
-);
+      </Canvas>
+    </div>
+  );
+};
