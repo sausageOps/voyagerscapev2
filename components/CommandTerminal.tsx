@@ -26,30 +26,43 @@ const COMMAND_DESCRIPTIONS: Record<string, string> = {
 };
 
 /* ==================================================================
-   OSMO WIPE OPEN/CLOSE MOTION (motion language only)
+   OSMO WIPE OPEN/CLOSE MOTION — THREE DISTINCT COLORED PANELS
    ==================================================================
    Reference: codepen.io/osmosupply/pen/JoPPOXj ("Side Navigation with
-   Wipe Effect" by Osmo). ONLY the choreography is borrowed — the
+   Wipe Effect" by Osmo). ONLY the motion language is borrowed — the
    terminal's own visual design (position, size, surfaces, typography,
-   content, chrome) is untouched:
+   content, chrome) is untouched. The signature Osmo visual — three
+   VISUALLY DISTINCT background panels — is preserved:
 
      • the exact custom ease 0.65, 0.01, 0.05, 0.99 (registered below
        as a GSAP CustomEase — a free, non-club plugin);
-     • staggered full-bleed background panels wiping right-to-left on
-       open (xPercent 101 → 0, stagger 0.12, duration 0.575), here
-       rendered as three animation-only .wipe slabs in the terminal's
-       own surface color (see CommandTerminal.module.css);
-     • the terminal contents settling in AFTER the wipe begins
-       (fade + small rise + 1–1.5° settle, conservative adaptation of
-       the reference's yPercent 140 / rotate 10 link entrance);
-     • the reverse choreography on close (contents retract, wipe
-       panels travel back out toward the right, then the layer hides).
+     • OPEN: three distinctly colored full-bleed sheets sweep in from
+       the RIGHT (xPercent 101 → 0, stagger 0.12, duration 0.575 — the
+       reference's exact numbers), each with the terminal's rounded
+       leading edge, clearly reading as three physical slabs unfolding
+       the terminal;
+     • the contents then rise in AFTER the wipe has begun (fade + small
+       rise + 1–1.5° settle, stagger 0.04–0.045 — the reference's
+       yPercent 140 / rotate 10 link entrance, conservatively adapted);
+     • the sheets then dissolve into the terminal's own resting surface
+       (.base), so the settled terminal looks EXACTLY like the approved
+       design (the colored panels are temporary, per the brief);
+     • CLOSE is the exact physical reverse: the contents retract into
+       the wipe, the SAME three sheets fold back out toward the right
+       (topmost first — reversed stagger), and only once the last sheet
+       is fully outside does the layer hide. Never a whole-panel slide.
 
-   The layer itself no longer CSS-slides; GSAP owns visibility and
-   pointer-events inline, with the stylesheet rules as the resting
-   states. One timeline ref, killed and rebuilt on every toggle —
-   rapid open/close/open can never stack animations or leave stale
-   inline styles (a final cleanup clears everything GSAP touched).
+   The three sheet colors are chosen per open from the approved
+   Voyagerscape page-transition palettes (mirrored below — the
+   transition system itself is not touched): three DISTINCT colors,
+   harmonious by construction, a fresh combination each open, never the
+   previous combination twice. The animation geometry/timing is
+   identical every time — only the colors vary.
+
+   One timeline ref, killed and rebuilt on every toggle; every timeline
+   explicitly establishes its start state; a final cleanup clears every
+   inline style GSAP touched — rapid open/close/open can never stack
+   animations or leave stale transforms, colors or pointer-events.
    ================================================================== */
 
 const WIPE_EASE_NAME = "vs-terminal-wipe";
@@ -62,6 +75,38 @@ function ensureWipeEase(): string {
     wipeEaseRegistered = true;
   }
   return WIPE_EASE_NAME;
+}
+
+/* ------------------------------------------------------------------
+   WIPE COLOR SELECTION — the approved Voyagerscape page-transition
+   palettes, mirrored here so the terminal can reuse them without
+   touching the transition system (RouteTransitionVariants.tsx).
+   Day: pale editorial. Night: the dark smoked set — no bright pastel
+   flash at night.
+   ------------------------------------------------------------------ */
+const WIPE_PALETTE_DAY = ["#f3f0e8", "#ddd9e8", "#e8e2d7", "#dce1d8", "#e9dcd2"] as const;
+const WIPE_PALETTE_NIGHT = ["#5a564e", "#514d5b", "#595247", "#515950", "#594b4a"] as const;
+
+/** The combination handed out last — the no-immediate-repeat guard. */
+let lastWipeCombo: string | null = null;
+
+/**
+ * A fresh harmonious wipe combination for THIS open: THREE DISTINCT
+ * colors from the current theme's approved palette, in a random order.
+ * Never the immediately previous combination. No invented colors, no
+ * random RGB — only approved palette values.
+ */
+function nextWipeCombo(): string[] {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  const palette = [...(dark ? WIPE_PALETTE_NIGHT : WIPE_PALETTE_DAY)];
+  for (let i = palette.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [palette[i], palette[j]] = [palette[j], palette[i]];
+  }
+  let combo = palette.slice(0, 3);
+  if (combo.join() === lastWipeCombo) combo = [combo[1], combo[2], combo[0]];
+  lastWipeCombo = combo.join();
+  return combo;
 }
 
 interface LogLine {
@@ -132,16 +177,21 @@ export default function CommandTerminal() {
      no flash of the settled terminal, no flash of the closed one. ---- */
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const wasOpenRef = useRef(false);
+  /* The three palette colors chosen for the current open. The CLOSE
+     re-uses exactly these — the same three physical sheets fold back
+     out (never a different combination mid-flight). */
+  const comboRef = useRef<string[] | null>(null);
 
   useLayoutEffect(() => {
     const layer = layerRef.current;
     if (!layer) return undefined;
     const panel = layer.querySelector<HTMLElement>("[data-term-panel]");
     const frame = layer.querySelector<HTMLElement>("[data-term-frame]");
+    const base = layer.querySelector<HTMLElement>("[data-term-base]");
     const wipes = Array.from(layer.querySelectorAll<HTMLElement>("[data-term-wipe]"));
     const blocks = Array.from(layer.querySelectorAll<HTMLElement>("[data-term-item]"));
     const rows = Array.from(layer.querySelectorAll<HTMLElement>("[data-term-row]"));
-    if (!panel || !frame || wipes.length === 0) return undefined;
+    if (!panel || !frame || !base || wipes.length !== 3) return undefined;
 
     /* Interruption safety: ONE timeline ref, always killed first. The new
        timeline re-specifies every animated property (fromTo / explicit
@@ -175,7 +225,7 @@ export default function CommandTerminal() {
        animation stays visible after data-open flips); after CLOSE the
        layer is cleared too, landing exactly on the CSS closed state. */
     const cleanupContent = () => {
-      gsap.set([frame, ...wipes, ...blocks, ...rows, panel], { clearProps: "all" });
+      gsap.set([frame, base, ...wipes, ...blocks, ...rows, panel], { clearProps: "all" });
     };
     const cleanupClosed = () => {
       cleanupContent();
@@ -206,16 +256,31 @@ export default function CommandTerminal() {
 
     if (terminalOpen) {
       /* ================= OPEN =================
-         1. layer becomes visible at its resting position
-         2. chrome (border/radius/shadow) fades in
-         3. wipe slabs sweep right-to-left, staggered
-         4. contents rise in after the wipe begins
+         1. layer becomes visible at its resting position (it never
+            slides — the PANELS create the reveal)
+         2. three DISTINCTLY COLORED sheets sweep in from the right,
+            staggered, on the Osmo ease — the terminal's rounded chrome
+            fades in with the first sheet, so there is never an empty
+            shell
+         3. the contents rise in after the wipe has begun
+         4. the sheets dissolve into the terminal's own resting surface
          5. cleanup → the exact settled terminal UI */
+      const combo = nextWipeCombo();
+      comboRef.current = combo;
+      wipes.forEach((wipe, i) => {
+        wipe.style.background = combo[i];
+      });
+
       const tl = gsap.timeline();
       timelineRef.current = tl;
       tl.set(layer, { x: 0, visibility: "visible", pointerEvents: "auto" }, 0)
         .set(panel, { x: 0 }, 0)
-        .fromTo(frame, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3, ease: "none" }, 0)
+        /* start state: the resting surface hidden, the colored sheets
+           parked off-right and fully opaque */
+        .set(base, { autoAlpha: 0 }, 0)
+        .set(wipes, { autoAlpha: 1 }, 0)
+        .fromTo(frame, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.18, ease: "none" }, 0)
+        /* THE WIPE — the reference's exact numbers */
         .fromTo(
           wipes,
           { xPercent: 101 },
@@ -234,6 +299,11 @@ export default function CommandTerminal() {
           { autoAlpha: 1, y: 0, rotate: 0, duration: 0.5, stagger: 0.04, ease },
           0.36,
         )
+        /* the sheets settle INTO the terminal's own surface: a short
+           crossfade behind the (already arrived) content, so the
+           resting terminal is the approved design, not a palette color */
+        .to(wipes, { autoAlpha: 0, duration: 0.26, ease: "none" }, 0.86)
+        .to(base, { autoAlpha: 1, duration: 0.26, ease: "none" }, 0.86)
         .call(cleanupContent);
       return () => {
         timelineRef.current?.kill();
@@ -248,40 +318,58 @@ export default function CommandTerminal() {
     }
 
     /* ================= CLOSE =================
-       Reverse physical action: contents retract, the wipe travels back
-       out toward the right, then the layer lands on its closed state. */
+       The exact physical reverse of the open: the contents retract
+       into the wipe, the surface re-forms as the colored sheets, and
+       the SAME three sheets fold back out toward the right — topmost
+       first (reversed stagger), each revealing the one beneath — so
+       the close reads as the open folding back. Only once the last
+       sheet is fully outside the terminal does the layer hide. */
+    const combo = comboRef.current;
+    if (combo) {
+      wipes.forEach((wipe, i) => {
+        wipe.style.background = combo[i];
+      });
+    }
+
+    const dragX = layerDragX();
     const tl = gsap.timeline();
     timelineRef.current = tl;
     tl.set(layer, { pointerEvents: "none" }, 0);
 
-    /* A swipe dismissal leaves the finger's drag on the layer (the swipe
-       hook's inline transform). The choreographed close assumes the
-       resting position, so the drag is carried by the PANEL and ridden
-       out with the gesture's momentum instead — one continuous motion,
-       no snap-back. */
-    const dragX = layerDragX();
     if (dragX > 1) {
+      /* A swipe dismissal leaves the finger's drag on the layer (the
+         swipe hook's inline transform). The drag is carried by the
+         PANEL and ridden out toward the right with the gesture's
+         momentum — one continuous motion, no snap-back. */
       tl.set(layer, { x: 0 }, 0)
         .set(panel, { x: dragX }, 0)
-        .to([frame, ...blocks, ...rows], { autoAlpha: 0, duration: 0.2, ease: "none" }, 0)
+        .to([frame, base, ...blocks, ...rows], { autoAlpha: 0, duration: 0.2, ease: "none" }, 0)
         .to(panel, { x: () => panel.clientWidth + 2, duration: 0.3, ease }, 0)
         .call(cleanupClosed);
     } else {
       tl.to(
         blocks,
-        { autoAlpha: 0, y: 18, rotate: 1, duration: 0.26, stagger: 0.018, ease },
+        { autoAlpha: 0, y: 20, rotate: 1, duration: 0.24, stagger: 0.02, ease },
         0,
       )
         .to(
           rows,
-          { autoAlpha: 0, y: 18, rotate: 1, duration: 0.24, stagger: { each: 0.016, from: "end" }, ease },
+          { autoAlpha: 0, y: 22, rotate: 1, duration: 0.24, stagger: { each: 0.016, from: "end" }, ease },
           0,
         )
-        .to(frame, { autoAlpha: 0, duration: 0.28, ease: "none" }, 0.06)
+        /* the surface re-forms as the colored sheets (base out, sheets
+           in — a quick crossfade behind the retracting content) and the
+           chrome departs with it */
+        .to(wipes, { autoAlpha: 1, duration: 0.12, ease: "none" }, 0.02)
+        .to(base, { autoAlpha: 0, duration: 0.14, ease: "none" }, 0.06)
+        .to(frame, { autoAlpha: 0, duration: 0.26, ease: "none" }, 0.16)
+        /* THE REVERSE WIPE — the same three sheets travel back out to
+           the right; from:"end" sends the topmost (last-arrived) sheet
+           first, so the layers visibly fold back in reverse order */
         .to(
           wipes,
-          { xPercent: 101, duration: 0.45, stagger: { each: 0.09, from: "end" }, ease },
-          0.08,
+          { xPercent: 101, duration: 0.575, stagger: { each: 0.12, from: "end" }, ease },
+          0.2,
         )
         .call(cleanupClosed);
     }
@@ -348,9 +436,15 @@ export default function CommandTerminal() {
         aria-label="Voyagerscape command terminal"
         data-term-panel
       >
-        {/* Osmo wipe layers — animation-only slabs of the terminal's own
-            surface color, stacked behind the content (see the motion
-            notes at the top of this file and .wipe in the module CSS). */}
+        {/* The terminal's resting surface (its own background). Hidden
+            while the colored sheets sweep, faded back in as they settle
+            — see the motion notes at the top of this file. */}
+        <span className={styles.base} data-term-base aria-hidden="true" />
+
+        {/* The three Osmo wipe sheets — animation-only slabs whose
+            colors are chosen per open from the approved Voyagerscape
+            transition palettes (three DISTINCT colors), stacked behind
+            the content and clipped to the terminal's rounded shape. */}
         <span className={styles.wipe} data-term-wipe aria-hidden="true" />
         <span className={styles.wipe} data-term-wipe aria-hidden="true" />
         <span className={styles.wipe} data-term-wipe aria-hidden="true" />
