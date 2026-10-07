@@ -264,9 +264,10 @@ export default function CommandTerminal() {
             fades in with the first sheet, so there is never an empty
             shell
          3. the contents rise in after the wipe has begun
-         4. when the wipe finishes the sheets are hidden instantly —
-            the terminal's own background (painted by .panel at all
-            times) shows underneath
+         4. the moment the LAST sheet's tween completes, that same
+            GSAP update hides the sheets — the terminal's own
+            background (painted by .panel at all times) shows
+            underneath; a landed pale sheet is never painted
          5. cleanup → the exact settled terminal UI */
       const combo = nextWipeCombo();
       comboRef.current = combo;
@@ -283,11 +284,28 @@ export default function CommandTerminal() {
            painted underneath — never cleared, never hidden */
         .set(wipes, { autoAlpha: 1 }, 0)
         .fromTo(frame, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.18, ease: "none" }, 0)
-        /* THE WIPE — the reference's exact numbers */
+        /* THE WIPE — the reference's exact numbers. The sheets' hide is
+           tied to the completion of the wipe tween itself (not a
+           timeline timestamp): GSAP fires this onComplete ONCE, when
+           the staggered tween ends = the LAST sheet's landing, inside
+           the same update that renders the sheet's final position.
+           gsap.set applies synchronously within that same update, so
+           the paint of the completing tick already has opacity 0 — a
+           fully-landed pale sheet can never be rendered, at any frame
+           rate, and even a dropped frame that jumps past the end
+           renders the completion and fires the callback together. */
         .fromTo(
           wipes,
           { xPercent: 101 },
-          { xPercent: 0, duration: 0.575, stagger: 0.12, ease },
+          {
+            xPercent: 0,
+            duration: 0.575,
+            stagger: 0.12,
+            ease,
+            onComplete: () => {
+              gsap.set(wipes, { autoAlpha: 0 });
+            },
+          },
           0,
         )
         .fromTo(
@@ -302,18 +320,6 @@ export default function CommandTerminal() {
           { autoAlpha: 1, y: 0, rotate: 0, duration: 0.5, stagger: 0.04, ease },
           0.36,
         )
-        /* The sheets hide at 0.735 — when the last sheet (start 0.24,
-           dur 0.575) is ~99% through its sweep, its edge still ~3.5px
-           from landing. The ease (0.65,0.01,0.05,0.99) decelerates so
-           hard that from ~0.75 onward the sheet is within ~2px of
-           landed and READS as a settled pale background — painting
-           those tail frames was the reported "pale flash". Hiding here
-           means the last PAINTED wipe frame still visibly reads as a
-           moving wipe (a closing sliver at the right edge), the fully
-           arrived pale panel is never painted, and the very next frame
-           is the normal terminal surface. The sweep itself (timings,
-           stagger, ease, colors) is untouched. */
-        .set(wipes, { autoAlpha: 0 }, 0.735)
         .call(cleanupContent);
       return () => {
         timelineRef.current?.kill();
