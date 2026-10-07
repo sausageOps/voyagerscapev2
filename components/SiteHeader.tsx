@@ -157,12 +157,17 @@ export default function SiteHeader() {
 
   return (
     <header className={styles.header} ref={rootRef}>
-      {/* Web + Tablet: Pure mathematical viewport-centered physical pill navigation */}
+      {/* Web + Tablet: viewport-centered pill; ROUTES toggles the shared menu surface. */}
       <div className={styles.desktopContainer} data-header-item>
-        <ColoniaPillPrototype />
+        <ColoniaPillPrototype
+          onRoutesClick={() => {
+            setTerminalOpen(false);
+            setMobileMenuOpen(!mobileMenuOpen);
+          }}
+        />
       </div>
 
-      {/* Mobile (<= 767px): Compact physical navigation pill header */}
+      {/* Mobile (<= 639px): Compact physical navigation pill header */}
       <div className={styles.mobileRow} data-header-item>
         <MobilePillHeader
           mobileMenuOpen={mobileMenuOpen}

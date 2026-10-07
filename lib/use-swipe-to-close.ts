@@ -11,14 +11,24 @@ const SNAP_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 /**
  * Touch/pen-only right-swipe dismissal for a right-side off-canvas layer.
- * Direction locking preserves vertical scrolling; the existing closed-state
- * CSS transition owns the final trip off screen after a successful gesture.
+ * Direction locking preserves vertical scrolling. By default, a successful
+ * gesture leaves the final trip to the existing closed-state CSS transition;
+ * callers with their own close animation can preserve the drag transform.
  */
 export function useSwipeToClose(
   ref: RefObject<HTMLElement>,
   open: boolean,
   onClose: () => void,
+  options: {
+    preserveTransformOnClose?: boolean;
+    activationQuery?: string;
+    horizontalDominance?: number;
+  } = {},
 ): void {
+  const preserveTransformOnClose = options.preserveTransformOnClose ?? false;
+  const activationQuery = options.activationQuery ?? "(max-width: 1099px)";
+  const horizontalDominance = options.horizontalDominance ?? 1;
+
   useEffect(() => {
     const layer = ref.current;
     if (!layer || !open) return;
@@ -31,22 +41,34 @@ export function useSwipeToClose(
     let direction: "pending" | "horizontal" | "vertical" = "pending";
     let suppressClick = false;
     let snapTimer = 0;
+    let snapFinish: ((event?: TransitionEvent) => void) | null = null;
 
-    const clearInlineMotion = () => {
+    const clearInlineMotion = (keepTransform = false) => {
       layer.style.removeProperty("transition");
-      layer.style.removeProperty("transform");
+      if (!keepTransform) layer.style.removeProperty("transform");
       layer.style.removeProperty("will-change");
     };
 
+    const cancelSnap = () => {
+      window.clearTimeout(snapTimer);
+      if (snapFinish) {
+        layer.removeEventListener("transitionend", snapFinish);
+        snapFinish = null;
+      }
+    };
+
     const snapOpen = () => {
+      cancelSnap();
       layer.style.transition = `transform ${SNAP_DURATION}ms ${SNAP_EASE}`;
       layer.style.transform = "translate3d(0, 0, 0)";
       const finish = (event?: TransitionEvent) => {
         if (event && event.target !== layer) return;
         window.clearTimeout(snapTimer);
         layer.removeEventListener("transitionend", finish);
+        if (snapFinish === finish) snapFinish = null;
         clearInlineMotion();
       };
+      snapFinish = finish;
       layer.addEventListener("transitionend", finish);
       snapTimer = window.setTimeout(finish, SNAP_DURATION + 80);
     };
@@ -60,7 +82,7 @@ export function useSwipeToClose(
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      if (!window.matchMedia("(max-width: 1099px)").matches) return;
+      if (!window.matchMedia(activationQuery).matches) return;
       if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
       if (!event.isPrimary || event.button !== 0) return;
 
@@ -84,7 +106,7 @@ export function useSwipeToClose(
 
       if (direction === "pending") {
         if (Math.hypot(dx, dy) < LOCK_DISTANCE) return;
-        if (Math.abs(dy) >= Math.abs(dx) || dx <= 0) {
+        if (Math.abs(dx) <= Math.abs(dy) * horizontalDominance || dx <= 0) {
           direction = "vertical";
           return;
         }
@@ -114,12 +136,10 @@ export function useSwipeToClose(
       if (direction === "horizontal") {
         if (shouldClose) {
           // Keep the dragged position inline until React publishes the closed
-          // state, then reveal the existing CSS close transition beneath it.
+          // state; callers may continue the gesture with their own animation.
           onClose();
           requestAnimationFrame(() => {
-            layer.style.removeProperty("transition");
-            layer.style.removeProperty("transform");
-            layer.style.removeProperty("will-change");
+            clearInlineMotion(preserveTransformOnClose);
           });
         } else {
           snapOpen();
@@ -144,13 +164,13 @@ export function useSwipeToClose(
     layer.addEventListener("click", onClickCapture, true);
 
     return () => {
-      window.clearTimeout(snapTimer);
+      cancelSnap();
       layer.removeEventListener("pointerdown", onPointerDown);
       layer.removeEventListener("pointermove", onPointerMove);
       layer.removeEventListener("pointerup", onPointerUp);
       layer.removeEventListener("pointercancel", onPointerCancel);
       layer.removeEventListener("click", onClickCapture, true);
-      clearInlineMotion();
+      clearInlineMotion(preserveTransformOnClose);
     };
-  }, [onClose, open, ref]);
+  }, [activationQuery, horizontalDominance, onClose, open, preserveTransformOnClose, ref]);
 }

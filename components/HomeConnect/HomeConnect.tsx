@@ -8,7 +8,6 @@ import WordBlocks, { type WordDef } from "@/components/primitives/WordBlocks";
 import { mountRotation } from "@/lib/rotating-words";
 import WarpTextLayer from "./WarpTextLayer";
 import CoverLayer from "./CoverLayer";
-import CodropsMacHero from "@/components/CodropsMacDemo";
 import rot from "@/components/IdentityWords.module.css";
 import GreetingPill from "./GreetingPill";
 import MessageCTA from "./MessageCTA";
@@ -317,15 +316,9 @@ export default function HomeConnect() {
         </div>
 
         <div className={styles.composition}>
-          {/* ---- Hero object slot.
-               The CRT has been moved to the About page; this space holds
-               the temporary Codrops Mac experiment (the real 3D Mac +
-               HTMLTexture live screen, see components/CodropsMacDemo/).
-               The .stage box keeps its geometry; the Mac adapts to the
-               composition, not the other way around. ---- */}
-          <div className={styles.stage}>
-            <CodropsMacHero />
-          </div>
+          {/* Preserve the existing hero composition track. The Mac demo now
+              lives in its About-page section below the archive monitor. */}
+          <div className={styles.stage} aria-hidden="true" />
 
           {/* ---- Large centered headline underneath CRT (visually static) ---- */}
           <div className={styles.head}>

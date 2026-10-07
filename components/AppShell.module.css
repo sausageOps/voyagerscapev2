@@ -16,11 +16,7 @@
   will-change: transform;
 }
 
-.frame[data-terminal-open="true"],
-.frame[data-mobile-menu-open="true"] {
-  --shell-slide-x: calc(-1 * var(--offcanvas-panel-w));
-}
-
+/* The website and header stay stationary beneath the fixed mobile menu. */
 @media (max-width: 767px) {
   .frame {
     --offcanvas-panel-w: min(88vw, 380px);

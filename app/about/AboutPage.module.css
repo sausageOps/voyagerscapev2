@@ -1,0 +1,43 @@
+/* About's existing extra slot is the page's visual-content track. Keep its
+   archive monitor and the Mac in one vertical sequence, with the established
+   site spacing scale between them. */
+.archiveContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(var(--space-4), 4svh, var(--space-5));
+  width: 100%;
+  min-width: 0;
+}
+
+/* The Codrops demo already supports a responsive hero track. Supply the
+   same proportions the site's CRT composition uses, without changing the
+   demo's HTMLTexture / InteractionManager or scene implementation. */
+.mac {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  --crt-compose-w: clamp(240px, min(50vw, 44svh), 410px);
+  --crt-type-anchor: calc(var(--crt-compose-w) * 0.82);
+}
+
+@media (max-width: 899px) {
+  .mac {
+    --crt-compose-w: min(66vw, 38svh, 360px);
+  }
+}
+
+@media (max-width: 767px) {
+  .mac {
+    --crt-compose-w: min(70vw, 34svh, 320px);
+  }
+}
+
+@media (max-width: 430px) {
+  .mac {
+    --crt-compose-w: min(75vw, 32svh, 290px);
+  }
+}
