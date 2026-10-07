@@ -1,0 +1,634 @@
+/* ============================================================
+   Codrops Mac demo — "Exploring the HTML-in-Canvas Proposal"
+   Ported 1:1 from the official source repository:
+   https://github.com/motiontx/html-in-canvas
+   app/examples/basic-ui/styles.css
+   (Classic Macintosh System 1 aesthetic — black & white, Chicago-ish)
+   ============================================================ */
+
+#computer_screen {
+  width: 900px;
+  height: 600px;
+  background-color: #c4c4c4;
+  background-image:
+    repeating-conic-gradient(#bdbdbd 0% 25%, #cccccc 0% 50%);
+  background-size: 4px 4px;
+  color: #000000;
+  font-family: "Chicago", "ChicagoFLF", "Monaco", "Geneva", "Lucida Grande",
+    Tahoma, sans-serif;
+  font-size: 12px;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+#computer_screen * {
+  box-sizing: border-box;
+}
+
+/* ---------- Menu Bar ---------- */
+.mac-menubar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 22px;
+  padding: 0 10px;
+  background: #ffffff;
+  border-bottom: 1px solid #000000;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mac-apple {
+  font-size: 14px;
+  transform: translateY(-1px);
+}
+
+.mac-menu {
+  cursor: pointer;
+  position: relative;
+  padding: 2px 4px;
+}
+
+.mac-menu:hover,
+.mac-menu.is-open {
+  background: #000000;
+  color: #ffffff;
+}
+
+.mac-apple {
+  cursor: pointer;
+}
+
+.mac-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 140px;
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #000000;
+  box-shadow: 2px 2px 0 #000000;
+  display: flex;
+  flex-direction: column;
+  padding: 2px 0;
+  font-size: 12px;
+  font-weight: 400;
+  z-index: 10;
+}
+
+.mac-dropdown-item {
+  padding: 2px 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mac-dropdown-item:hover {
+  background: #000000;
+  color: #ffffff;
+}
+
+.mac-clock {
+  margin-left: auto;
+  font-weight: 700;
+}
+
+/* ---------- Window ---------- */
+.mac-window {
+  flex: 1 1 auto;
+  margin: 12px;
+  background: #ffffff;
+  border: 1px solid #000000;
+  box-shadow: 2px 2px 0 #000000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: margin 0.15s steps(3);
+}
+
+.mac-window.is-zoomed {
+  margin: 2px;
+}
+
+.mac-close,
+.mac-zoom {
+  cursor: pointer;
+}
+
+.mac-close:hover,
+.mac-zoom:hover {
+  background: #000000;
+}
+
+.mac-titlebar {
+  flex: 0 0 auto;
+  position: relative;
+  height: 20px;
+  border-bottom: 1px solid #000000;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #000000 0,
+    #000000 1px,
+    #ffffff 1px,
+    #ffffff 3px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+}
+
+.mac-close,
+.mac-zoom {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border: 1px solid #000000;
+  transform: translateY(-50%);
+}
+
+.mac-close {
+  left: 8px;
+}
+
+.mac-close::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid #000000;
+}
+
+.mac-zoom {
+  right: 8px;
+}
+
+.mac-zoom::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid #000000;
+  background: #ffffff;
+}
+
+.mac-title {
+  background: #ffffff;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mac-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #ffffff;
+}
+
+/* ---------- Masthead ---------- */
+.codrops-masthead {
+  text-align: center;
+  padding: 18px 20px 14px;
+  border-bottom: 2px solid #000000;
+}
+
+.codrops-logo {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.codrops-logo span {
+  border-bottom: 3px solid #000000;
+}
+
+.codrops-tagline {
+  margin-top: 4px;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.codrops-nav {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.codrops-nav a {
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 1px 4px;
+}
+
+.codrops-nav a:hover {
+  background: #000000;
+  color: #ffffff;
+}
+
+.codrops-nav a.is-active {
+  background: #000000;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* ---------- Hero ---------- */
+.codrops-hero {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 20px;
+  padding: 20px;
+  border-bottom: 1px dashed #000000;
+}
+
+.codrops-hero-thumb {
+  position: relative;
+  height: 220px;
+  border: 1px solid #000000;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.codrops-hero-thumb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(#000000 1px, transparent 1.2px),
+    radial-gradient(#000000 1px, transparent 1.2px);
+  background-size: 4px 4px, 4px 4px;
+  background-position: 0 0, 2px 2px;
+  opacity: 0.55;
+  mask-image: radial-gradient(circle at 35% 40%, #000 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle at 35% 40%, #000 0%, transparent 70%);
+}
+
+.codrops-hero-thumb::after {
+  content: "";
+  position: absolute;
+  left: 20%;
+  top: 25%;
+  width: 60%;
+  height: 50%;
+  border: 2px solid #000000;
+  background:
+    linear-gradient(135deg, transparent 48%, #000 48%, #000 52%, transparent 52%),
+    repeating-linear-gradient(
+      45deg,
+      #000000 0 2px,
+      #ffffff 2px 5px
+    );
+}
+
+.mac-dither {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0 3px,
+    rgba(0, 0, 0, 0.15) 3px 4px
+  );
+  pointer-events: none;
+}
+
+.codrops-hero-body h1 {
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: 900;
+  letter-spacing: 0;
+  margin: 8px 0 10px;
+}
+
+.codrops-hero-body p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+.codrops-hero-body code {
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 12px;
+  background: #000000;
+  color: #ffffff;
+  padding: 1px 4px;
+}
+
+/* ---------- Shared ---------- */
+.codrops-kicker {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: #000000;
+  color: #ffffff;
+  padding: 2px 6px;
+}
+
+.codrops-meta {
+  font-size: 11px;
+  font-style: italic;
+  margin-top: 6px;
+}
+
+/* ---------- Section ---------- */
+.codrops-section {
+  padding: 20px;
+}
+
+.codrops-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #000000;
+}
+
+.codrops-section-head h2 {
+  font-size: 18px;
+  font-weight: 900;
+  margin: 0;
+}
+
+.codrops-more {
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------- Post List ---------- */
+.codrops-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.codrops-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #000000;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.codrops-card:hover {
+  box-shadow: 2px 2px 0 #000000;
+  transform: translate(-1px, -1px);
+}
+
+.codrops-card.is-selected {
+  background: #000000;
+  color: #ffffff;
+  box-shadow: 3px 3px 0 #000000;
+  transform: translate(-2px, -2px);
+}
+
+.codrops-card.is-selected .codrops-kicker {
+  background: #ffffff;
+  color: #000000;
+}
+
+.codrops-card.is-selected .codrops-thumb {
+  border-color: #ffffff;
+}
+
+.codrops-thumb {
+  position: relative;
+  height: 110px;
+  border: 1px solid #000000;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.codrops-thumb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    #000000 0 2px,
+    #ffffff 2px 4px
+  );
+  opacity: 0.9;
+}
+
+.codrops-card:nth-child(2n) .codrops-thumb::before {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    #000000 0 1px,
+    #ffffff 1px 4px
+  );
+}
+
+.codrops-card:nth-child(3n) .codrops-thumb::before {
+  background-image:
+    radial-gradient(#000 1px, transparent 1.5px),
+    radial-gradient(#000 1px, transparent 1.5px);
+  background-size: 4px 4px, 4px 4px;
+  background-position: 0 0, 2px 2px;
+}
+
+.codrops-card:nth-child(4n) .codrops-thumb::before {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #000000 0 2px,
+    #ffffff 2px 6px
+  );
+}
+
+.codrops-card:nth-child(5n) .codrops-thumb::before {
+  background:
+    linear-gradient(45deg, #000 25%, transparent 25%) 0 0 / 6px 6px,
+    linear-gradient(-45deg, #000 25%, transparent 25%) 0 0 / 6px 6px,
+    #ffffff;
+}
+
+.codrops-thumb::after {
+  content: "";
+  position: absolute;
+  left: 15%;
+  top: 20%;
+  right: 15%;
+  bottom: 20%;
+  border: 2px solid #000000;
+  background: #ffffff;
+}
+
+.codrops-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.codrops-card-body h3 {
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 900;
+  margin: 4px 0 2px;
+}
+
+.codrops-card-body p {
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* ---------- Footer ---------- */
+.codrops-footer {
+  padding: 14px 20px;
+  border-top: 2px solid #000000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  background: #ffffff;
+}
+
+.codrops-footer-links {
+  display: flex;
+  gap: 12px;
+}
+
+.codrops-footer-links a {
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------- Scrollbar (classic Mac style) ---------- */
+.mac-content::-webkit-scrollbar {
+  width: 15px;
+}
+
+.mac-content::-webkit-scrollbar-track {
+  background-image: repeating-conic-gradient(
+    #000000 0% 25%,
+    #ffffff 0% 50%
+  );
+  background-size: 2px 2px;
+  border-left: 1px solid #000000;
+}
+
+.mac-content::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border: 1px solid #000000;
+  box-shadow: inset -2px -2px 0 #c4c4c4;
+}
+
+.mac-content::-webkit-scrollbar-button {
+  display: block;
+  height: 15px;
+  background: #ffffff;
+  border: 1px solid #000000;
+}
+
+/* ============================================================
+   VOYAGERSCAPE INTEGRATION LAYOUT + Tailwind utility translation
+   ------------------------------------------------------------
+   1) HERO REGION (see index.tsx). The source demo is a standalone
+      page with a fixed fullscreen canvas; here the Mac lives in a
+      dedicated hero container inside the site's existing hero-object
+      slot (HomeConnect's .stage). Sizing on tablet/mobile follows the
+      site's own hero-object track tokens (--crt-compose-w /
+      --crt-type-anchor, set on .composition) so the Mac occupies
+      exactly the envelope the composition was designed around.
+
+   2) The source demo is styled with Tailwind CSS v4 on top of the CSS
+      above. Voyagerscape does not use Tailwind (and adding it would
+      restyle the whole site via its preflight reset), so ONLY the
+      handful of utility classes the demo's JSX actually uses are
+      translated 1:1 below, scoped to `.codrops-mac-hero` so they can
+      never leak into the rest of Voyagerscape. The demo markup keeps
+      its original class names untouched. (The Codrops
+      GridBackground/blue utilities were removed with the grid itself.)
+   ============================================================ */
+
+/* ---------- Dedicated hero region (no global fixed overlay) ---------- */
+.codrops-mac-hero {
+  position: relative;
+  /* Desktop: large cinematic presence, centred by the .stage slot. */
+  width: 1060px;
+  max-width: 100%;
+  height: clamp(520px, 74svh, 780px);
+  /* Clips the un-reparented #computer_screen element (900px wide) in
+     browsers without HTML-in-Canvas; the WebGL canvas itself fits the
+     region exactly, so nothing the Mac renders is ever clipped. */
+  overflow: hidden;
+  /* Keeps the Mac's stacking (canvas + re-parented screen element) inside
+     the hero slot — below the site's headline (.head, z-index 3) and far
+     below the fixed SiteHeader (z-index var(--z-header)). */
+  isolation: isolate;
+}
+
+/* Mount point for the real #computer_screen element. Hidden: the element is
+   either re-parented into the WebGL canvas (supported browsers) or reported
+   as unsupported in the console (see index.tsx / scene.tsx). */
+.codrops-mac-screen-mount {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* The 3D stage fills the hero region (replaces the source's
+   `fixed inset-0 h-svh` fullscreen overlay). */
+.codrops-mac-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* R3F sets `touch-action: none` inline on the canvas, which would block
+   page scrolling under a finger on mobile. With OrbitControls disabled for
+   coarse pointers (scene.tsx), restoring pan-y + pinch-zoom keeps mobile
+   scrolling and browser zoom native. Desktop (mouse) is unaffected. */
+.codrops-mac-stage canvas {
+  touch-action: pan-y pinch-zoom !important;
+}
+
+/* Tablet/mobile: fill the site's own hero-object track so the Mac sits in
+   the envelope the composition was designed for and never overflows it. */
+@media (max-width: 1099px) {
+  .codrops-mac-hero {
+    width: var(--crt-compose-w, 360px);
+    height: var(--crt-type-anchor, 300px);
+  }
+}
+
+/* ---------- Tailwind utility translation (scoped) ---------- */
+.codrops-mac-hero .relative {
+  position: relative;
+}
+
+.codrops-mac-hero .p-2 {
+  padding: 0.5rem;
+}
+
+.codrops-mac-hero .\-z-10 {
+  z-index: -10;
+}
+
+.codrops-mac-hero .flex {
+  display: flex;
+}
+
+.codrops-mac-hero .flex-col {
+  flex-direction: column;
+}
+
+.codrops-mac-hero .justify-between {
+  justify-content: space-between;
+}

@@ -16,6 +16,12 @@ import { ROUTES } from "@/lib/routes";
 import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { useUI } from "@/lib/ui-store";
 import TileCurtain from "./TileCurtain";
+import {
+  getTransitionColor,
+  variantById,
+  variantForDestination,
+} from "./RouteTransitionVariants";
+import variantStyles from "./RouteTransitionVariants.module.css";
 import styles from "./RouteTransition.module.css";
 
 /**
@@ -197,12 +203,27 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [destName, setDestName] = useState<string | null>(null);
   const [reduced, setReduced] = useState(false);
+  /* Destination-based variant for THIS transition (see
+     RouteTransitionVariants.tsx). The ANIMATION is fixed per
+     destination — HOME → synced clip reveal (Codrops #1), ART → SVG
+     draw (Codrops #5), CONNECT → SVG morph (Codrops #3), ABOUT and
+     anything unknown → null, i.e. the ORIGINAL Voyagerscape tile
+     curtain, which stays the fallback/safety transition. The COLOR is
+     random per navigation (theme-aware, no immediate repeats) and is
+     injected onto the layer as --transition-surface / --tile-bg. */
+  const [variantId, setVariantId] = useState<string | null>(null);
+  const [surfaceColor, setSurfaceColor] = useState<string | null>(null);
 
   const routerRef = useRef(router);
   routerRef.current = router;
   const pathnameRef = useRef(pathname);
   const phaseRef = useRef<Phase>(phase);
   const pendingRef = useRef<PendingNav | null>(null);
+  /** Variant driving the in-flight transition (set together with phase). */
+  const variantRef = useRef<ReturnType<typeof variantById>>(null);
+  /** True when a variant threw and the plain shield took over — the
+      reveal then fades the shield out instead of animating panels. */
+  const emergencyRef = useRef(false);
   /** True once the covered watchdog has re-issued a dropped push. */
   const pushRetriedRef = useRef(false);
   const coverStartedAtRef = useRef(0);
@@ -239,7 +260,20 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       // If the mobile menu is open, its own close animation starts NOW —
       // alongside the tile sweep — instead of only after the commit.
       if (mobileMenuOpenRef.current) setMobileMenuOpenRef.current(false);
-      if (phaseRef.current === "idle") setPhaseBoth("covering");
+      // Resolve THIS transition only when it actually starts (idle →
+      // covering): the ANIMATION comes from the destination (fixed
+      // mapping, never random) and the COLOR is drawn randomly from the
+      // current theme's palette (never the previous color twice in a
+      // row). Navigations that arrive while already transitioning are
+      // absorbed by the in-flight one, so nothing advances mid-flight.
+      if (phaseRef.current === "idle") {
+        const variant = variantForDestination(href);
+        variantRef.current = variant;
+        emergencyRef.current = false;
+        setVariantId(variant ? variant.id : "tiles");
+        setSurfaceColor(getTransitionColor());
+        setPhaseBoth("covering");
+      }
     },
     [setPhaseBoth],
   );
@@ -379,6 +413,18 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         overwrite: "auto",
       });
     }
+
+    /* Variant overlays hold their own covered state (idempotent set —
+       the same re-assertion the tiles get above). */
+    const variant = variantRef.current;
+    if (variant && !emergencyRef.current) {
+      try {
+        variant.hold(root);
+      } catch {
+        /* the reveal's own fallback (root fade) still completes the
+           transition safely */
+      }
+    }
   }, [phase]);
 
   /* ------------------------------------------------------------------
@@ -474,6 +520,59 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     const chars = name
       ? gsap.utils.toArray<HTMLElement>(name.querySelectorAll("[data-char]"))
       : [];
+
+    /* ---- Codrops-inspired variant path ----
+       The registry supplies the overlay's cover timeline; the commit is
+       scheduled at the variant's own full-coverage moment and the
+       destination name rises through the same masked-char treatment the
+       tile curtain uses, so every variant reads as one Voyagerscape
+       motion language. Any throw falls through to the safety shield
+       below — navigation itself can never break. */
+    const variant = variantRef.current;
+    if (variant && !emergencyRef.current) {
+      try {
+        const tl = variant.cover(root);
+        gsap.set(root, { autoAlpha: 1 });
+        if (name) gsap.set(name, { autoAlpha: 1, y: 0 });
+        if (chars.length > 0) gsap.set(chars, { yPercent: 110 });
+        tl.call(commitPending, [], Math.max(0, variant.commitAt - 0.005));
+        if (chars.length > 0) {
+          const gap = Math.min(0.014, 0.08 / chars.length);
+          tl.to(
+            chars,
+            { yPercent: 0, duration: 0.13, ease: "power3.out", stagger: gap },
+            Math.max(0, variant.commitAt - 0.12),
+          );
+        }
+        return () => {
+          tl.kill();
+        };
+      } catch (err) {
+        console.error(
+          `[RouteTransition] variant "${variant.id}" could not run; falling back to the safety shield.`,
+          err,
+        );
+        emergencyRef.current = true;
+        // fall through to the shield below
+      }
+    }
+
+    /* ---- Safety shield (variant failure path): solid cover,
+       near-immediate commit, fade reveal on the other side. ---- */
+    if (emergencyRef.current) {
+      gsap.set(root, { autoAlpha: 1, background: "var(--vs-bg)" });
+      const stuckPanels = root.querySelectorAll("[data-panel]");
+      if (stuckPanels.length > 0) gsap.set(stuckPanels, { autoAlpha: 0 });
+      if (name) gsap.set(name, { autoAlpha: 1, y: 0 });
+      if (chars.length > 0) gsap.set(chars, { yPercent: 0 });
+      const tl = gsap.timeline();
+      tl.call(commitPending, [], 0.03);
+      return () => {
+        tl.kill();
+      };
+    }
+
+    /* ---- Existing Vertical Tiles fallback (unchanged) ---- */
     if (tiles.length === 0) return;
 
     gsap.set(root, { autoAlpha: 1 });
@@ -536,7 +635,24 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     const name = nameRef.current;
 
     if (name) tl.to(name, { autoAlpha: 0, y: -6, duration: 0.07, ease: "power2.in" }, 0);
-    if (tiles.length > 0) {
+
+    /* ---- Variant reveal: the registry appends its panel tweens to the
+       shared timeline. A throw (or the emergency flag) falls back to a
+       plain layer fade — the page always comes back. ---- */
+    const variant = variantRef.current;
+    if (variant && !emergencyRef.current) {
+      try {
+        variant.reveal(root, tl);
+      } catch (err) {
+        console.error(
+          `[RouteTransition] variant "${variant.id}" reveal failed; fading the layer instead.`,
+          err,
+        );
+        tl.to(root, { autoAlpha: 0, duration: 0.2, ease: "power1.out" }, 0.015);
+      }
+    } else if (emergencyRef.current) {
+      tl.to(root, { autoAlpha: 0, duration: 0.25, ease: "power1.out" }, 0.015);
+    } else if (tiles.length > 0) {
       tl.to(
         tiles,
         {
@@ -573,14 +689,48 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     [navigate, phase],
   );
 
+  /* Active registry variant (null → the original tile curtain). */
+  const activeVariant = variantById(variantId);
+  /* The randomly chosen surface color, injected for both the Codrops
+     variant surfaces (--transition-surface) and the tile curtain
+     (--tile-bg; TileCurtain falls back to var(--vs-bg) when unset). */
+  const layerStyle = surfaceColor
+    ? ({
+        "--transition-surface": surfaceColor,
+        "--tile-bg": surfaceColor,
+      } as Record<string, string>)
+    : undefined;
+
   return (
     <RouteTransitionContext.Provider value={contextValue}>
       {children}
       {phase !== "idle" ? (
-        <div ref={layerRef} className={styles.root} aria-hidden="true" data-transition-layer>
-          {!reduced ? <TileCurtain /> : null}
+        <div
+          ref={layerRef}
+          className={styles.root}
+          style={layerStyle}
+          aria-hidden="true"
+          data-transition-layer
+          data-variant={activeVariant ? activeVariant.id : "tiles"}
+        >
+          {!reduced ? (
+            activeVariant ? (
+              activeVariant.render()
+            ) : (
+              <TileCurtain />
+            )
+          ) : null}
           {!reduced && destName ? (
-            <span ref={nameRef} className={styles.name} data-name>
+            <span
+              ref={nameRef}
+              /* Transition-local ink on the (randomly colored) surfaces:
+                 warm-dark in day, moonlit off-white in night — see
+                 RouteTransitionVariants.module.css. Applied to the tile
+                 path too, since the tiles now also carry the random
+                 transition color. */
+              className={`${styles.name} ${variantStyles.nameOnPale}`}
+              data-name
+            >
               {destName.split("").map((ch, i) => (
                 <span key={`${destName}-${i}`} className={styles.charMask}>
                   <span data-char className={styles.char}>
