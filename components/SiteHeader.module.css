@@ -20,7 +20,7 @@
 }
 
 /* =========================================================
-   WEB + TABLET (>= 768px): PURE MATHEMATICAL VIEWPORT CENTERING
+   WEB + TABLET (>= 640px): PURE MATHEMATICAL VIEWPORT CENTERING
    Positioned strictly from the frame bottom edge:
    pillTop = actualFrameBottom (16px) + var(--frame-to-pill-gap)
    ========================================================= */
@@ -36,14 +36,14 @@
 }
 
 /* =========================================================
-   MOBILE (<= 767px):
+   MOBILE (<= 639px):
    Compact centered physical navigation pill header
    ========================================================= */
 .mobileRow {
   display: none;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 639px) {
   .header {
     padding-block-start: 0;
   }

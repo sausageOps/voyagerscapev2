@@ -1,45 +1,75 @@
-/* Mobile navigation uses the same right-side sheet geometry and motion as the terminal. */
+/* Right-edge shell: palette sheets animate inside on open, then the complete
+   surface travels right as one piece on close. */
 .layer {
+  --menu-panel-top: 12svh;
+  --menu-panel-bottom: 4svh;
+
   position: fixed;
-  top: 0;
+  top: max(
+    var(--menu-panel-top),
+    calc(
+      var(--frame-edge-inset, 8px) + var(--frame-to-pill-gap, 14px) + 42px + 8px +
+        env(safe-area-inset-top, 0px)
+    )
+  );
   right: 0;
-  bottom: 0;
+  bottom: var(--menu-panel-bottom);
   z-index: 100;
   width: var(--offcanvas-panel-w, min(88vw, 380px));
-  height: 100dvh;
-  transform: translate3d(100%, 0, 0);
+  touch-action: pan-y;
   visibility: hidden;
   pointer-events: none;
-  transition:
-    transform 620ms cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s linear 620ms;
-  will-change: transform;
 }
 
 .layer[data-open="true"] {
-  transform: translate3d(0, 0, 0);
   visibility: visible;
   pointer-events: auto;
-  transition:
-    transform 620ms cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s linear 0s;
 }
 
+/* The shell owns the approved theme-aware surface, rounded clipping and shadow. */
 .surface {
+  position: relative;
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: max(20px, env(safe-area-inset-top)) 20px max(22px, env(safe-area-inset-bottom));
+  overflow: hidden;
   background: var(--vs-menu-bg);
   border-left: 1px solid var(--vs-menu-border);
   border-radius: 22px 0 0 22px;
   box-shadow: var(--vs-menu-shadow);
+  transition: background-color var(--t-fast) var(--e-out), border-color var(--t-fast) var(--e-out);
+}
+
+.paletteStack {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.palettePanel {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 22px 0 0 22px;
+  background: none;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* Keep the existing content layout/scrolling above the palette stack. */
+.contentLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: max(20px, env(safe-area-inset-top)) 20px max(22px, env(safe-area-inset-bottom));
   overflow-x: clip;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  transition: background-color var(--t-fast) var(--e-out), border-color var(--t-fast) var(--e-out);
 }
 
 .top {
@@ -148,33 +178,6 @@
 .navList li {
   display: flex;
   justify-content: center;
-  transform: translate3d(100px, 0, 0);
-}
-
-.layer[data-open="true"] .navList li {
-  animation: menuItemSlideIn 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.layer[data-open="true"] .navList li:nth-child(2) {
-  animation-delay: 180ms;
-}
-
-.layer[data-open="true"] .navList li:nth-child(3) {
-  animation-delay: 360ms;
-}
-
-.layer[data-open="true"] .navList li:nth-child(4) {
-  animation-delay: 540ms;
-}
-
-@keyframes menuItemSlideIn {
-  from {
-    transform: translate3d(100px, 0, 0);
-  }
-
-  to {
-    transform: translate3d(0, 0, 0);
-  }
 }
 
 .navItem {
@@ -375,29 +378,28 @@
   }
 }
 
-@media (max-width: 1099px) {
+@media (min-width: 768px) and (max-width: 1099px) {
   .layer {
-    touch-action: pan-y;
+    --menu-panel-top: 9svh;
+    --menu-panel-bottom: 5svh;
+
+    width: clamp(400px, 50vw, 520px);
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1100px) {
   .layer {
-    display: none;
+    --menu-panel-top: 8svh;
+    --menu-panel-bottom: 4svh;
+
+    width: min(420px, calc(100vw - 24px));
+    height: min(680px, calc(100svh - 120px));
+    margin-block: auto;
   }
 }
+
 
 @media (prefers-reduced-motion: reduce) {
-  .layer {
-    transition-duration: 0.01ms, 0s;
-  }
-
-  .navList li,
-  .layer[data-open="true"] .navList li {
-    animation: none;
-    transform: none;
-  }
-
   .close,
   .navItem {
     transition-duration: 0.01ms;
