@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gsap, prefersReducedMotion } from "@/lib/motion";
 import { CustomEase } from "gsap/CustomEase";
-import { useUI, type VisualMode } from "@/lib/ui-store";
+import { useUI } from "@/lib/ui-store";
 import { useRouteTransition } from "@/components/RouteTransition";
 import { ROUTES } from "@/lib/routes";
 import { useSwipeToClose } from "@/lib/use-swipe-to-close";
@@ -11,16 +11,13 @@ import CommandInput from "@/components/CommandInput";
 import TechLabel from "@/components/primitives/TechLabel";
 import styles from "./CommandTerminal.module.css";
 
-const EFFECT_COMMANDS = ["bw", "negative", "reset"] as const;
-const SUGGESTIONS = [...ROUTES.map((r) => r.command), ...EFFECT_COMMANDS, "clear", "close"];
+const SUGGESTIONS = [...ROUTES.map((r) => r.command), "reset", "clear", "close"];
 
 const COMMAND_DESCRIPTIONS: Record<string, string> = {
   home: "Return to the landing page",
   art: "Open the art archive",
   connect: "Open the transmission desk",
   about: "Enter the studio archive",
-  bw: "Switch to monochrome mode",
-  negative: "Invert the visual palette",
   reset: "Restore the default palette",
   clear: "Clear the terminal transcript",
   close: "Dismiss the command terminal",
@@ -31,8 +28,6 @@ const COMMAND_LABELS: Record<string, string> = {
   art: "Art",
   connect: "Connect",
   about: "About",
-  bw: "Bw",
-  negative: "Negative",
   reset: "Reset",
   clear: "Clear",
   close: "Close",
@@ -112,7 +107,7 @@ interface LogLine {
 
 export default function CommandTerminal() {
   const { navigate } = useRouteTransition();
-  const { terminalOpen, setTerminalOpen, visualMode, setVisualMode } = useUI();
+  const { terminalOpen, setTerminalOpen, setVisualMode } = useUI();
   const layerRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
@@ -351,12 +346,6 @@ export default function CommandTerminal() {
         return;
       }
 
-      if (command === "bw" || command === "negative") {
-        setVisualMode(command as VisualMode);
-        push("ok", `visual mode → ${command}`);
-        return;
-      }
-
       if (command === "reset") {
         setVisualMode("normal");
         push("ok", "visual mode → normal");
@@ -437,12 +426,6 @@ export default function CommandTerminal() {
                       className={styles.commandTag}
                       aria-description={COMMAND_DESCRIPTIONS[command]}
                       data-term-row
-                      data-active={
-                        (command === "bw" && visualMode === "bw") ||
-                        (command === "negative" && visualMode === "negative")
-                          ? "true"
-                          : undefined
-                      }
                     >
                       {COMMAND_LABELS[command] ?? command}
                     </span>
