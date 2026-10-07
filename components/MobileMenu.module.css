@@ -389,8 +389,11 @@
 
 @media (min-width: 1100px) {
   .layer {
-    --menu-panel-top: 8svh;
-    --menu-panel-bottom: 4svh;
+    --menu-panel-top: calc(
+      var(--frame-edge-inset, 16px) + var(--frame-to-pill-gap, 14px) + 42px + 8px +
+        env(safe-area-inset-top, 0px)
+    );
+    --menu-panel-bottom: auto;
 
     width: min(420px, calc(100vw - 24px));
     height: min(680px, calc(100svh - 120px));
@@ -398,6 +401,83 @@
   }
 }
 
+
+/* Tablets retain the desktop/web navigation, but the menu surface itself
+   stays a bounded physical sheet rather than filling the tablet viewport. */
+@media (max-width: 767px) {
+  .layer {
+    --mobile-tablet-panel-gap: 20px;
+    --menu-panel-top: calc(
+      var(--frame-edge-inset, 8px) + var(--frame-to-pill-gap, 14px) + 42px +
+        var(--mobile-tablet-panel-gap) + env(safe-area-inset-top, 0px)
+    );
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  .layer {
+    --mobile-tablet-panel-gap: 20px;
+    --menu-panel-top: calc(
+      var(--frame-edge-inset, 8px) + var(--frame-to-pill-gap, 14px) + 42px +
+        var(--mobile-tablet-panel-gap) + env(safe-area-inset-top, 0px)
+    );
+    --menu-panel-bottom: auto;
+    width: min(400px, calc(100vw - 24px));
+    height: min(620px, calc(100dvh - 96px));
+  }
+
+  .contentLayer {
+    overflow-y: hidden;
+  }
+}
+
+/* A conservative narrow-and-short viewport profile for compact phones. */
+@media (max-width: 390px) and (max-height: 780px) {
+  .layer {
+    --menu-panel-top: max(
+      64px,
+      calc(
+        var(--frame-edge-inset, 8px) + var(--frame-to-pill-gap, 14px) + 42px +
+          var(--mobile-tablet-panel-gap) + env(safe-area-inset-top, 0px)
+      )
+    );
+    --menu-panel-bottom: auto;
+    width: min(66vw, 300px);
+    height: min(500px, calc(100dvh - 128px));
+  }
+
+  .contentLayer {
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    overflow-y: hidden;
+  }
+
+  .nav {
+    padding-block: 16px;
+  }
+
+  .navList {
+    gap: 8px;
+    padding: 4px;
+  }
+
+  .navItem {
+    padding-block: 10px;
+  }
+
+  .footer {
+    gap: 9px;
+    padding-top: 10px;
+  }
+
+  .footBlock {
+    gap: 5px;
+  }
+
+  .legal {
+    gap: 4px;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .close,

@@ -12,7 +12,10 @@
    visible above and below. Only .panel paints the terminal surface. */
 .layer {
   position: fixed;
-  top: var(--frame-edge-inset, 16px);
+  top: calc(
+    var(--frame-edge-inset, 16px) + var(--frame-to-pill-gap, 14px) + 42px + 8px +
+      env(safe-area-inset-top, 0px)
+  );
   right: 0;
   bottom: var(--frame-edge-inset, 16px);
   z-index: var(--z-terminal);
@@ -62,7 +65,9 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
+  overflow: hidden;
   padding:
     max(32px, env(safe-area-inset-top))
     max(20px, env(safe-area-inset-right))
@@ -270,10 +275,6 @@
   opacity: 0.96;
   pointer-events: none;
 }
-.commandTag[data-active="true"] {
-  font-weight: 600;
-}
-
 /* ---- Foot ---- */
 .foot {
   display: flex;
@@ -348,9 +349,14 @@
    retain the existing frame-inset dimensions above. */
 @media (max-width: 767px) {
   .layer {
-    top: 12svh;
-    bottom: 12svh;
+    --mobile-tablet-panel-gap: 20px;
+    top: calc(
+      var(--frame-edge-inset, 8px) + var(--frame-to-pill-gap, 14px) + 42px +
+        var(--mobile-tablet-panel-gap) + env(safe-area-inset-top, 0px)
+    );
+    bottom: auto;
     width: clamp(200px, 68vw, 320px);
+    height: 76svh;
   }
 }
 
@@ -358,10 +364,69 @@
    their existing full-height geometry, even at wider landscape widths. */
 @media (min-width: 1100px) and (hover: hover) and (pointer: fine) and (not (any-pointer: coarse)) {
   .layer {
-    bottom: 20vh;
+    top: calc(
+      var(--frame-edge-inset, 16px) + var(--frame-to-pill-gap, 14px) + 42px + 8px +
+        env(safe-area-inset-top, 0px)
+    );
+    bottom: auto;
     width: min(360px, calc(100vw - 32px));
     height: min(640px, calc(100svh - var(--frame-edge-inset, 16px) - 20vh));
     margin-block: auto;
+  }
+}
+
+/* Tablets use the same bounded physical-sheet language as mobile. The
+   previous inset-only rule made the shell track the whole tablet height. */
+@media (min-width: 768px) and (max-width: 1099px) {
+  .layer {
+    --mobile-tablet-panel-gap: 20px;
+    top: calc(
+      var(--frame-edge-inset, 16px) + var(--frame-to-pill-gap, 14px) + 42px +
+        var(--mobile-tablet-panel-gap) + env(safe-area-inset-top, 0px)
+    );
+    bottom: auto;
+    width: min(380px, calc(100vw - 24px));
+    height: min(620px, calc(100dvh - 96px));
+  }
+}
+
+/* Compact phone profile: dimensions are selected from viewport geometry,
+   not device names. The small reduction leaves the approved mobile sheet
+   intact on ordinary phones while keeping short screens scrollbar-free. */
+@media (max-width: 390px) and (max-height: 780px) {
+  .layer {
+    top: max(
+      12svh,
+      calc(
+        var(--frame-edge-inset, 8px) + var(--frame-to-pill-gap, 14px) + 42px +
+          var(--mobile-tablet-panel-gap) + env(safe-area-inset-top, 0px)
+      )
+    );
+    bottom: auto;
+    width: min(66vw, 300px);
+    height: min(500px, calc(100dvh - 148px));
+  }
+
+  .contentLayer {
+    padding-top: max(26px, env(safe-area-inset-top));
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .head {
+    padding-bottom: 8px;
+  }
+
+  .body {
+    gap: 8px;
+  }
+
+  .scrollArea {
+    gap: 6px;
+  }
+
+  .foot {
+    margin-top: 5px;
+    padding-top: 6px;
   }
 }
 
