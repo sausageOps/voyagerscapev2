@@ -402,18 +402,7 @@
 }
 
 
-/* Tablets retain the desktop/web navigation, but the menu surface itself
-   stays a bounded physical sheet rather than filling the tablet viewport. */
-@media (max-width: 767px) {
-  .layer {
-    --mobile-tablet-panel-gap: 20px;
-    --menu-panel-top: calc(
-      var(--frame-edge-inset, 8px) + var(--frame-to-pill-gap, 14px) + 42px +
-        var(--mobile-tablet-panel-gap) + env(safe-area-inset-top, 0px)
-    );
-  }
-}
-
+/* Tablet stays locked to its approved, bounded sheet geometry. */
 @media (min-width: 768px) and (max-width: 1099px) {
   .layer {
     --mobile-tablet-panel-gap: 20px;
@@ -431,51 +420,286 @@
   }
 }
 
-/* A conservative narrow-and-short viewport profile for compact phones. */
-@media (max-width: 390px) and (max-height: 780px) {
+/*
+ * MOBILE GEOMETRY ONLY (<= 767px)
+ * Desktop/Web (>= 1100px) and Tablet (768-1099px) remain locked above.
+ * The reference is 390x844: 84vw panel width and 70dvh panel height. The
+ * density unit follows both dimensions, is capped on large phones, and is
+ * shared by internal spacing rather than scaling the panel with transform.
+ */
+@media (max-width: 767px) {
   .layer {
+    --menu-safe-top: env(safe-area-inset-top, 0px);
+    --menu-safe-right: env(safe-area-inset-right, 0px);
+    --menu-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --menu-safe-left: env(safe-area-inset-left, 0px);
+
+    /* Legacy viewport fallbacks; svh/dvh replace these when available. */
+    --menu-viewport-block: 100vh;
+    --menu-panel-relative-top: 12vh;
+    --menu-panel-preferred-height: min(70vh, 640px);
+    --menu-header-clearance: clamp(8px, 1.4vh, 12px);
+    --menu-bottom-clearance: clamp(18px, 4vh, 30px);
+
     --menu-panel-top: max(
-      64px,
+      calc(var(--menu-panel-relative-top) + var(--menu-safe-top)),
       calc(
         var(--frame-edge-inset, 8px) + var(--frame-to-pill-gap, 14px) + 42px +
-          var(--mobile-tablet-panel-gap) + env(safe-area-inset-top, 0px)
+          var(--menu-header-clearance) + var(--menu-safe-top)
+      )
+    );
+    --menu-available-block-size: max(
+      0px,
+      calc(
+        var(--menu-viewport-block) - var(--menu-panel-top) - var(--menu-safe-bottom) -
+          var(--menu-bottom-clearance)
       )
     );
     --menu-panel-bottom: auto;
-    width: min(66vw, 300px);
-    height: min(500px, calc(100dvh - 128px));
+
+    top: var(--menu-panel-top);
+    right: var(--menu-safe-right);
+    bottom: auto;
+    width: min(
+      380px,
+      max(
+        0px,
+        calc(84vw - var(--menu-safe-left) - var(--menu-safe-right))
+      )
+    );
+    max-width: calc(100vw - var(--menu-safe-left) - var(--menu-safe-right));
+    height: min(var(--menu-panel-preferred-height), var(--menu-available-block-size));
+    max-height: var(--menu-available-block-size);
+    min-height: 0;
+  }
+
+  .surface {
+    --menu-density-unit: clamp(0.84px, min(0.2564vw, 0.1185vh), 1.05px);
+
+    --menu-panel-radius: clamp(18px, calc(var(--menu-density-unit) * 22), 22px);
+    --menu-panel-padding-inline: clamp(12px, calc(var(--menu-density-unit) * 16), 16px);
+    --menu-panel-padding-top: clamp(16px, calc(var(--menu-density-unit) * 20), 20px);
+    --menu-panel-padding-bottom: clamp(18px, calc(var(--menu-density-unit) * 22), 22px);
+
+    --menu-top-row-height: clamp(42px, calc(var(--menu-density-unit) * 44), 44px);
+    --menu-header-control-size: clamp(36px, calc(var(--menu-density-unit) * 38), 38px);
+    --menu-header-control-gap: clamp(5px, calc(var(--menu-density-unit) * 8), 8px);
+    --menu-control-font-size: clamp(9px, calc(var(--menu-density-unit) * 10), 10px);
+    --menu-close-padding-inline: clamp(10px, calc(var(--menu-density-unit) * 14), 14px);
+    --menu-theme-icon-size: clamp(12px, calc(var(--menu-density-unit) * 14), 14px);
+
+    --menu-series-height: clamp(40px, calc(var(--menu-density-unit) * 42), 42px);
+    --menu-series-disc-size: clamp(32px, calc(var(--menu-density-unit) * 35), 35px);
+    --menu-series-icon-size: clamp(12px, calc(var(--menu-density-unit) * 14), 14px);
+    --menu-series-padding-end: clamp(12px, calc(var(--menu-density-unit) * 16), 16px);
+    --menu-series-gap: clamp(6px, calc(var(--menu-density-unit) * 8.5), 8.5px);
+
+    --menu-nav-block-padding: clamp(14px, calc(var(--menu-density-unit) * 22), 22px);
+    --menu-nav-list-padding: clamp(4px, calc(var(--menu-density-unit) * 8), 8px);
+    --menu-nav-item-gap: clamp(8px, calc(var(--menu-density-unit) * 12), 12px);
+    --menu-nav-item-height: clamp(40px, calc(var(--menu-density-unit) * 44), 44px);
+    --menu-nav-item-padding-block: clamp(8px, calc(var(--menu-density-unit) * 11), 11px);
+    --menu-nav-item-padding-inline: clamp(16px, calc(var(--menu-density-unit) * 22), 22px);
+    --menu-nav-item-font-size: clamp(15px, calc(var(--menu-density-unit) * 18), 18px);
+    --menu-nav-soft-radius: clamp(15px, calc(var(--menu-density-unit) * 18), 18px);
+    --menu-nav-block-radius: clamp(8px, calc(var(--menu-density-unit) * 10), 10px);
+    --menu-nav-circle-width: clamp(56px, calc(var(--menu-density-unit) * 64), 64px);
+
+    --menu-footer-gap: clamp(9px, calc(var(--menu-density-unit) * 14), 14px);
+    --menu-footer-padding-top: clamp(8px, calc(var(--menu-density-unit) * 16), 16px);
+    --menu-footer-block-gap: clamp(5px, calc(var(--menu-density-unit) * 8), 8px);
+    --menu-footer-label-padding-block: clamp(3px, calc(var(--menu-density-unit) * 4), 4px);
+    --menu-footer-label-padding-inline: clamp(8px, calc(var(--menu-density-unit) * 11), 11px);
+    --menu-footer-font-size: clamp(12px, calc(var(--menu-density-unit) * 13), 13px);
+    --menu-footer-small-font-size: clamp(9px, calc(var(--menu-density-unit) * 10), 10px);
+    --menu-social-gap: clamp(10px, calc(var(--menu-density-unit) * 16), 16px);
+    --menu-legal-gap: clamp(4px, calc(var(--menu-density-unit) * 6), 6px);
+    --menu-legal-margin: clamp(0px, calc(var(--menu-density-unit) * 2), 2px);
+
+    border-radius: var(--menu-panel-radius) 0 0 var(--menu-panel-radius);
+  }
+
+  .palettePanel {
+    border-radius: var(--menu-panel-radius) 0 0 var(--menu-panel-radius);
   }
 
   .contentLayer {
-    padding-top: max(16px, env(safe-area-inset-top));
-    padding-bottom: max(14px, env(safe-area-inset-bottom));
-    overflow-y: hidden;
+    padding: var(--menu-panel-padding-top) var(--menu-panel-padding-inline)
+      var(--menu-panel-padding-bottom);
+    overflow: hidden;
+  }
+
+  .top {
+    min-height: var(--menu-top-row-height);
+  }
+
+  .topRight {
+    gap: var(--menu-header-control-gap);
+  }
+
+  .themeCircle {
+    width: var(--menu-header-control-size);
+    height: var(--menu-header-control-size);
+  }
+
+  .themeIcon {
+    width: var(--menu-theme-icon-size);
+    height: var(--menu-theme-icon-size);
+  }
+
+  .close {
+    height: var(--menu-header-control-size);
+    padding-inline: var(--menu-close-padding-inline);
+    font-size: var(--menu-control-font-size);
+  }
+
+  /* This override is attached only to the menu's copy of the physical pill. */
+  .layer .menuSeriesPill {
+    height: var(--menu-series-height);
+    gap: var(--menu-series-gap);
+    padding-inline: var(--menu-series-padding-end) clamp(3px, calc(var(--menu-density-unit) * 3.5), 3.5px);
+  }
+
+  .layer .menuSeriesPill > :global(button:first-of-type) {
+    width: var(--menu-series-disc-size);
+    height: var(--menu-series-disc-size);
+  }
+
+  .layer .menuSeriesPill > :global(button:first-of-type) > :global(span:nth-of-type(2)) {
+    width: var(--menu-series-icon-size);
+    height: var(--menu-series-icon-size);
+  }
+
+  .layer .menuSeriesPill > :global(button:first-of-type) > :global(span:nth-of-type(2)) > :global(svg),
+  .layer .menuSeriesPill > :global(button:first-of-type) > :global(span:nth-of-type(2)) > :global(span) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .layer .menuSeriesPill > :global(button:nth-of-type(2)) {
+    font-size: clamp(9px, calc(var(--menu-density-unit) * 10.5), 10.5px);
   }
 
   .nav {
-    padding-block: 16px;
+    flex: 1 1 0;
+    align-items: flex-start;
+    min-height: 0;
+    padding-block: var(--menu-nav-block-padding);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .navList {
-    gap: 8px;
-    padding: 4px;
+    flex: 0 0 auto;
+    gap: var(--menu-nav-item-gap);
+    margin-block: auto;
+    padding: var(--menu-nav-list-padding);
   }
 
   .navItem {
-    padding-block: 10px;
+    min-height: var(--menu-nav-item-height);
+    padding: var(--menu-nav-item-padding-block) var(--menu-nav-item-padding-inline);
+    font-size: var(--menu-nav-item-font-size);
+    line-height: 1.2;
+  }
+
+  .navItem.tSoftSquare {
+    border-radius: var(--menu-nav-soft-radius);
+  }
+
+  .navItem.tCircle {
+    min-width: var(--menu-nav-circle-width);
+  }
+
+  .navItem.tBlock {
+    border-radius: var(--menu-nav-block-radius);
+  }
+
+  .navItem .wordSizer,
+  .navItem .rotatingWord {
+    line-height: 1.2;
   }
 
   .footer {
-    gap: 9px;
-    padding-top: 10px;
+    gap: var(--menu-footer-gap);
+    padding-top: var(--menu-footer-padding-top);
   }
 
   .footBlock {
-    gap: 5px;
+    gap: var(--menu-footer-block-gap);
+  }
+
+  .layer .footLabel {
+    padding: var(--menu-footer-label-padding-block) var(--menu-footer-label-padding-inline);
+    font-size: var(--menu-footer-small-font-size);
+  }
+
+  .socials {
+    gap: var(--menu-social-gap);
+  }
+
+  .footLink {
+    font-size: var(--menu-footer-font-size);
   }
 
   .legal {
-    gap: 4px;
+    gap: var(--menu-legal-gap);
+    margin-top: var(--menu-legal-margin);
+  }
+
+  .copy {
+    font-size: var(--menu-footer-small-font-size);
+  }
+
+  @supports (height: 100svh) {
+    .layer {
+      --menu-viewport-block: 100svh;
+      --menu-panel-relative-top: 12svh;
+      --menu-panel-preferred-height: min(70svh, 640px);
+      --menu-header-clearance: clamp(8px, 1.4svh, 12px);
+      --menu-bottom-clearance: clamp(18px, 4svh, 30px);
+    }
+
+    .surface {
+      --menu-density-unit: clamp(0.84px, min(0.2564vw, 0.1185svh), 1.05px);
+    }
+  }
+
+  @supports (height: 100dvh) {
+    .layer {
+      --menu-viewport-block: 100dvh;
+      --menu-panel-relative-top: 12dvh;
+      --menu-panel-preferred-height: min(70dvh, 640px);
+      --menu-header-clearance: clamp(8px, 1.4dvh, 12px);
+      --menu-bottom-clearance: clamp(18px, 4dvh, 30px);
+    }
+
+    .surface {
+      --menu-density-unit: clamp(0.84px, min(0.2564vw, 0.1185dvh), 1.05px);
+    }
+  }
+
+  @supports (width: 1cqw) and (height: 1cqh) {
+    .layer {
+      container-type: size;
+    }
+
+    .surface {
+      /* 390x844 reference panel measures ~328x591; cqw/cqh follow its
+         actual available box after safe-area and viewport constraints. */
+      --menu-density-unit: clamp(0.84px, min(0.3053cqw, 0.1694cqh), 1.05px);
+    }
+  }
+}
+
+/* Aspect ratio is a small secondary signal for unusually tall portraits. */
+@media (max-width: 767px) and (max-aspect-ratio: 5/11) {
+  .surface {
+    --menu-nav-block-padding: clamp(12px, calc(var(--menu-density-unit) * 20), 20px);
+    --menu-footer-gap: clamp(9px, calc(var(--menu-density-unit) * 13), 13px);
+    --menu-footer-padding-top: clamp(8px, calc(var(--menu-density-unit) * 14), 14px);
   }
 }
 

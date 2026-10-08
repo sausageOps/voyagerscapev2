@@ -335,7 +335,7 @@ export default function MobileMenu() {
         <div className={styles.contentLayer}>
           <div className={styles.top} data-menu-block>
             {/* Left: Complete Web/Tablet Left Physical Navigation Unit [ ◉ | V:/ ] */}
-            <SeriesPill onHomeClick={() => setMobileMenuOpen(false)} />
+            <SeriesPill className={styles.menuSeriesPill} onHomeClick={() => setMobileMenuOpen(false)} />
 
             {/* Right: Physical theme toggle & Close button */}
             <div className={styles.topRight}>
