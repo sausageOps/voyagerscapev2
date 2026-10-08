@@ -85,17 +85,17 @@
   -webkit-text-fill-color: var(--vs-nav-disc-ink, var(--vs-ink)) !important;
 }
 
-/* Original left-leading edge of each sheet remains; the outer shell is
-   now the single boundary that clips the full-size stack. */
+/* Each opaque sheet keeps the terminal's full physical bounds, then settles
+   at its own small x/y offset. The solid layers remain visible together as a
+   clipped stack; opacity is never part of the reveal. */
 .palettePanel {
   position: absolute;
   inset: 0;
   z-index: 0;
   border-radius: 22px 0 0 22px;
   background: none;
-  opacity: 0;
   pointer-events: none;
-  will-change: transform, opacity;
+  will-change: transform;
 }
 
 /* ---- Head ---- */
