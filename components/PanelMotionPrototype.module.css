@@ -1,0 +1,31 @@
+/* =========================================================
+   TEMPORARY VISUAL PROTOTYPE — FAKE TERMINAL PANEL
+   ---------------------------------------------------------
+   Throwaway. One fixed, solid rectangle standing in for the
+   terminal so the physical side-entry motion can be judged on
+   its own. Delete this file and PanelMotionPrototype.tsx (and
+   the one line in app/page.tsx) and the site is exactly as it
+   was.
+   ========================================================= */
+
+/* One solid object. Opaque in both themes — no blur, no blend, no wipe.
+   (The real terminal is hidden from PanelMotionPrototype.tsx, not from
+   here — CSS Modules cannot target a global id from a module file.) */
+.panel {
+  position: fixed;
+  top: 80px;
+  right: 0;
+  z-index: 100;
+  width: 360px;
+  height: 640px;
+  border-radius: 22px 0 0 22px;
+  background: #fffdf9;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform;
+}
+
+:global(html[data-theme="dark"]) .panel,
+:global(html.dark) .panel {
+  background: #171716;
+}

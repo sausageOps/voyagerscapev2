@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HomeConnect from "@/components/HomeConnect/HomeConnect";
+import PanelMotionPrototype from "@/components/PanelMotionPrototype";
 
 export const metadata: Metadata = {
   title: "Voyagerscape — Connect",
@@ -8,5 +9,11 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return <HomeConnect />;
+  return (
+    <>
+      <HomeConnect />
+      {/* TEMPORARY: fake-panel motion prototype. Remove when approved. */}
+      <PanelMotionPrototype />
+    </>
+  );
 }
