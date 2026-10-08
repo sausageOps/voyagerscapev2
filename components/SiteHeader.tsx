@@ -156,10 +156,7 @@ export default function SiteHeader() {
   }, [pathname]);
 
   return (
-    /* data-app-header: lets the shell slide (AppShell) hand the header the
-       same horizontal offset as the page body, so both translate as one
-       object when the terminal panel enters. No geometry change. */
-    <header className={styles.header} ref={rootRef} data-app-header>
+    <header className={styles.header} ref={rootRef}>
       {/* Web + Tablet: viewport-centered pill; ROUTES toggles the shared menu surface. */}
       <div className={styles.desktopContainer} data-header-item>
         <ColoniaPillPrototype

@@ -1,6 +1,7 @@
 .frame {
   --offcanvas-panel-w: clamp(320px, 24vw, 380px);
   --terminal-panel-w: var(--offcanvas-panel-w);
+  --shell-slide-x: 0px;
   position: relative;
   min-height: 100svh;
   overflow: clip;
@@ -8,13 +9,10 @@
   transition: background-color var(--t-fast) var(--e-out);
 }
 
-/* PHASE 1 — the website half of the side-panel interaction.
-   GSAP owns this element's transform (AppShell.tsx +
-   lib/terminal-panel-motion.ts), so there is no CSS transition here:
-   one owner for the movement keeps the page and the terminal panel on
-   exactly the same curve. Horizontal translation only. */
 .website {
   min-width: 0;
+  transform: translate3d(var(--shell-slide-x), 0, 0);
+  transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 
@@ -22,5 +20,11 @@
 @media (max-width: 767px) {
   .frame {
     --offcanvas-panel-w: min(88vw, 380px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .website {
+    transition-duration: 0.01ms;
   }
 }
