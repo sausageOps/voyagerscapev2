@@ -1,11 +1,10 @@
 /* =========================================================
-   COMMAND/SEARCH TERMINAL — SINGLE OUTER SHELL + PALETTE STACK
+   COMMAND/SEARCH TERMINAL — ONE SOLID SIDE PANEL
    ---------------------------------------------------------
    Motion is in CommandTerminal.tsx. The outer .panel owns the terminal's
-   bounds, original radius, background fallback, clipping and shadow.
-   Inside that shell, .backgroundStack hosts the three palette sheets and
-   .contentLayer holds the existing interface. There is no separate full-
-   size chrome carrier duplicating the shell edge.
+   bounds, original radius, solid surface, clipping and shadow, and
+   .contentLayer holds the existing interface. The panel is opaque: it
+   never samples, blurs or blends the page behind it.
    ========================================================= */
 
 /* Fixed outside normal flow; the shared frame-edge inset leaves the page
@@ -23,6 +22,7 @@
   background: transparent;
   visibility: hidden;
   pointer-events: none;
+  will-change: transform;
 }
 
 /* Resting OPEN state. GSAP normally holds visibility/pointer-events
@@ -35,7 +35,8 @@
 }
 
 /* One outer shell matches the original terminal bounds and radius. The
-   shell owns its fallback surface, edge shadow and clipping boundary. */
+   shell owns its opaque surface, edge shadow and clipping boundary — it
+   is the single solid object that slides in from the right. */
 .panel {
   --terminal-panel-radius: 22px 0 0 22px;
 
@@ -49,16 +50,8 @@
   box-shadow: var(--vs-terminal-shadow);
 }
 
-/* Transparent, full-size host only; clipping and fallback paint belong
-   to the outer shell, not a second rounded container. */
-.backgroundStack {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* Existing UI layout, now explicitly layered above the palette stack. */
+/* Existing UI layout, layered on the panel's own solid surface. The
+   shell paints the terminal; there is no palette stack behind it. */
 .contentLayer {
   position: absolute;
   inset: 0;
@@ -83,19 +76,6 @@
   color: var(--vs-nav-disc-ink, var(--vs-ink)) !important;
   opacity: 1 !important;
   -webkit-text-fill-color: var(--vs-nav-disc-ink, var(--vs-ink)) !important;
-}
-
-/* Original left-leading edge of each sheet remains; the outer shell is
-   now the single boundary that clips the full-size stack. */
-.palettePanel {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: 22px 0 0 22px;
-  background: none;
-  opacity: 0;
-  pointer-events: none;
-  will-change: transform, opacity;
 }
 
 /* ---- Head ---- */

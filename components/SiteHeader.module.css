@@ -6,16 +6,22 @@
 
 .header {
   --header-y: 0px;
+  /* Authored start value for the shell slide (GSAP animates it, see
+     AppShell.tsx + lib/terminal-panel-motion.ts). Declaring it here keeps
+     the computed start value a real length on first paint. */
+  --shell-slide-x: 0px;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: var(--z-header);
   pointer-events: none;
+  /* --shell-slide-x carries the terminal side-panel's shell slide and is
+     written by GSAP (AppShell.tsx + lib/terminal-panel-motion.ts), so it
+     carries no CSS transition of its own. The header's own --header-y
+     scroll motion is untouched and stays composed into the same
+     transform — the shell slide only ever moves the header sideways. */
   transform: translate3d(var(--shell-slide-x, 0px), var(--header-y), 0);
-  transition-property: --shell-slide-x;
-  transition-duration: 620ms;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   overflow: visible;
 }
 
