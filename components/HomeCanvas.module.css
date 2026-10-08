@@ -13,10 +13,7 @@
   transition: background-color var(--t-fast) var(--e-out);
 }
 
-/* The atmosphere is now a single layer: the frame's paper colour plus the
-   Pattern Waves canvas. The colour matches the component's own
-   backgroundColor (var(--vs-frame-bg)), so the canvas cannot seam against it and a
-   renderer failure lands on the same paper instead of a blank rectangle. */
+/* Static frame surface, separate from any optional visual effect. */
 .atmosphere {
   position: absolute;
   inset: 0;
@@ -28,27 +25,6 @@
   pointer-events: none;
   z-index: 0;
   background: var(--vs-frame-bg);
-}
-
-/* --- Pattern Waves atmosphere (WebGL2 / OGL) --------------------------------
-   Mounted by HomeAtmosphere inside .atmosphere, so it inherits the frame's
-   clip (overflow hidden + radius) and stays below the page content (z-index
-   relationships unchanged). It is the only visual frame background. */
-
-.shader {
-  position: absolute;
-  inset: 0;
-  min-width: 0;
-  overflow: hidden;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-/* The atmosphere is decorative: neither the host wrapper nor the canvas
-   itself may become a pointer target. */
-.shaderHost,
-.shaderHost canvas {
-  pointer-events: none;
 }
 
 .canvas > :not(.atmosphere) {
@@ -66,10 +42,4 @@
     margin: 8px;
     border-radius: 16px;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  /* Reduced motion: Pattern Waves freezes the surface itself (time stops
-     advancing inside the component and the cursor ripples are disabled),
-     holding a single still frame. */
 }

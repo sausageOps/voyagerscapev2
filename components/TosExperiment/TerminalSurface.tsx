@@ -52,7 +52,7 @@ export default function TerminalSurface({
     <div className={term.contentLayer} data-tos-terminal-content>
       <div className={term.head} data-term-item>
         <div className={term.headText}>
-          <p className={term.title}>V :/ Command Terminal</p>
+          <p className={term.title}>Command Terminal</p>
         </div>
         <div className={styles.headActions}>
           <button

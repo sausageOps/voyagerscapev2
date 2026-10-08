@@ -3,19 +3,18 @@
   --terminal-panel-w: var(--offcanvas-panel-w);
   --shell-slide-x: 0px;
 
-  /* ---- TOS side-panel experiment (temporary geometry) ----------------
-     ONE number defines the whole interaction: the width of the TOS test
-     page. The page's own width (TosSideSurface.module.css), the
-     composition's slide distance and the header's slide distance all
-     resolve from this value, so the website can never gap against or
-     overlap the panel.
-
-     --tos-test-slide / --tos-test-ease are the SINGLE declaration of the
-     motion: the horizontal composition and SiteHeader both transition on
-     these two values, so website and header cannot start on different
-     frames, ride different curves or land at different times. Tuning the
-     feel of the whole mechanism is a change to these two lines. */
-  --tos-test-panel-w: clamp(320px, 26vw, 420px);
+  /* Routes keeps its approved width. Terminal's inner-window formula stays
+     fixed; its outer side page is one existing responsive gap narrower, so
+     the page and its website displacement remain tied to the outer frame. */
+  --routes-panel-w: clamp(320px, 26vw, 420px);
+  --terminal-inner-width-gap: clamp(8px, calc(1.5vw - 4px), 24px);
+  --terminal-inner-window-w: calc(
+    clamp(320px, 26vw, 420px) - var(--frame-edge-inset, 16px) -
+      var(--frame-edge-inset, 16px) - var(--terminal-inner-width-gap)
+  );
+  --terminal-side-page-w: calc(
+    clamp(320px, 26vw, 420px) - var(--terminal-inner-width-gap)
+  );
   --tos-test-slide: 620ms;
   --tos-test-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -26,20 +25,15 @@
   transition: background-color var(--t-fast) var(--e-out);
 }
 
-/* SIDE PAGE OPEN — one variable moves the complete website.
-   `--shell-slide-x` is read by the horizontal composition (its transform,
-   HorizontalComposition.module.css) and by SiteHeader (SiteHeader.module
-   .css, which registers the property and transitions it on the identical
-   620ms / cubic-bezier(0.22, 1, 0.36, 1) shell curve). Both therefore start
-   interpolating in the same style recalculation, on the same curve, for the
-   same distance, and land together — header, website frame, route content
-   and footer are ONE moving body, and the TOS panel is the rigid remainder
-   of that body.
+/* SIDE PAGE OPEN — resolve displacement from the active content's width.
+   The shared `--shell-slide-x` still drives both the composition and the
+   header on the same 620ms curve; only the width token is content-specific. */
+.frame[data-tos-test-open="true"][data-mobile-menu-open="true"] {
+  --shell-slide-x: calc(var(--routes-panel-w) * -1);
+}
 
-   Nothing here reflows and nothing here can change the document's height:
-   opening or closing the panel cannot disturb vertical scrolling. */
-.frame[data-tos-test-open="true"] {
-  --shell-slide-x: calc(var(--tos-test-panel-w) * -1);
+.frame[data-tos-test-open="true"][data-terminal-open="true"] {
+  --shell-slide-x: calc(var(--terminal-side-page-w) * -1);
 }
 
 /* DORMANT (kept for reference/revert) — the website's slide used to live on

@@ -87,6 +87,23 @@
    carry for the fixed right-edge layer. Content, type, spacing and
    interactions are exactly the menu's own.
    ------------------------------------------------------------------ */
+/* Keep the approved inner width independent of the narrower outer page.
+   The host centers this window in its padded content area; vertical sizing
+   and stretch remain unchanged. */
+.window[data-tos-content="terminal"] {
+  flex: 0 0 auto;
+  width: min(
+    100%,
+    var(
+      --terminal-inner-window-w,
+      calc(
+        380px - var(--frame-edge-inset, 16px) - var(--frame-edge-inset, 16px) -
+          clamp(8px, calc(1.5vw - 4px), 24px)
+      )
+    )
+  );
+}
+
 .window [data-menu-panel] {
   background: transparent;
   border: 0;
