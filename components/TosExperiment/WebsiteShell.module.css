@@ -1,0 +1,17 @@
+/* =========================================================
+   WEBSITE SHELL
+   ---------------------------------------------------------
+   One frame-wide, non-shrinking block: the complete website
+   as a single rigid surface inside the horizontal composition.
+
+   No height, no overflow, no scrollport — the shell contributes
+   its content height to the document, so the document remains
+   the page's only vertical scroll owner.
+   ========================================================= */
+
+.shell {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+}

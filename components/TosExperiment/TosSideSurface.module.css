@@ -1,0 +1,75 @@
+/* =========================================================
+   TOS SIDE SURFACE — LAYER 1 (the page)
+   ---------------------------------------------------------
+   The right-hand page of the horizontal composition.
+
+   Vertical: exactly one viewport tall, pinned to the viewport's
+   top edge (sticky — a fixed element would be re-positioned by
+   the composition's transform). Because it is viewport-height and
+   pinned at top: 0, its top and bottom edges are always flush
+   with the viewport's top and bottom edges at every scroll
+   offset.
+
+   Horizontal: the composition's slide distance is exactly this
+   element's width (--tos-test-panel-w), so when the composition
+   has slid, this page's right edge is flush with the frame's
+   right edge.
+
+   Its only child is the terminal window, placed by this
+   element's own padding — the frame inset system, reused.
+   ========================================================= */
+
+.surface {
+  /* The page's width, and therefore the whole interaction's slide distance.
+     Declared once, in AppShell.module.css, next to the frame geometry. */
+  flex: 0 0 var(--tos-test-panel-w, 380px);
+  width: var(--tos-test-panel-w, 380px);
+
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100svh;
+
+  /* THE FRAME INSET SYSTEM, REUSED — not a new spacing invention. The
+     website frame is inset `--frame-edge-inset` inside the viewport
+     (HomeCanvas: margin 16px, min-height calc(100svh - 32px)); the terminal
+     window is inset by exactly the same amount inside this page. So the
+     window's height resolves to `100svh - 2 × --frame-edge-inset`, which is
+     the website frame's height, and both frames' top/bottom edges line up
+     across the composition. */
+  padding: var(--frame-edge-inset, 16px);
+
+  display: flex;
+  min-width: 0;
+
+  /* A page owns its whole area, including the band the fixed header's row
+     occupies (--z-header: 70). Above the header so the page's own controls
+     are reachable, below the production overlays that claim the right edge
+     (terminal 90, menu 100) and below the curtain / loader / cursor. */
+  z-index: 80;
+
+  /* Placeholder tone: the existing "deep" background token. Deliberately a
+     token and not a colour of its own — the palette system for this surface
+     is a later step. In both themes it is one step away from the site
+     backdrop, so the page reads as a distinct surface, and the window
+     inside it keeps the frame's paper. */
+  background: var(--vs-bg-deep);
+
+  /* Closed: parked in the composition (so open/close can never change a
+     layout measurement) but invisible, unfocusable and unannounced. The
+     visibility change is delayed on the way OUT by exactly one slide, so
+     the page stays painted while the composition slides back. */
+  visibility: hidden;
+  transition: visibility 0s linear var(--tos-test-slide, 620ms);
+}
+
+.surface[data-open="true"] {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface {
+    transition-delay: 0.01ms;
+  }
+}

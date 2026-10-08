@@ -35,7 +35,7 @@ import styles from "./RouteTransition.module.css";
  *     <RouteTransition>              ← content stage (subtle in/out motion)
  *       <main>{children}</main>
  *     </RouteTransition>
- *     <CommandTerminal />            ← uses useRouteTransition().navigate()
+ *     <WebsiteTosStage>…             ← the terminal uses navigate() too
  *   </RouteTransitionProvider>
  *
  * The transition is the same Vertical Tiles language as the startup

@@ -1,0 +1,31 @@
+/* =========================================================
+   HORIZONTAL COMPOSITION
+   ---------------------------------------------------------
+   The moving body of the TOS experiment: the complete website
+   and the TOS panel are its two in-flow children.
+
+   Transform only. Nothing here can change the page's layout
+   height, so vertical scrolling is not affected by opening or
+   closing the panel.
+   ========================================================= */
+
+.composition {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+  /* The single movement. `--shell-slide-x` is 0px while the panel is
+     closed and exactly minus one panel width while it is open (see the
+     frame rule in AppShell.module.css). The header reads the same
+     variable, so header and website cannot drift apart. */
+  transform: translate3d(var(--shell-slide-x, 0px), 0, 0);
+  transition: transform var(--tos-test-slide, 620ms) var(--tos-test-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composition {
+    transition-duration: 0.01ms;
+  }
+}
