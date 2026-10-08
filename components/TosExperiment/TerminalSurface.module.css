@@ -1,0 +1,31 @@
+/* =========================================================
+   TERMINAL SURFACE — the two things the side page changes
+   ---------------------------------------------------------
+   The terminal's content lives inside the approved window, and its
+   appearance is the production terminal's own
+   (`CommandTerminal.module.css`: content layer, head, body, input,
+   transcript, chips, foot). Nothing about that is restated here, and no
+   new visual language is introduced — this file carries only the two
+   adaptations the side page genuinely needs.
+   ========================================================= */
+
+/* The window's content row is the production terminal's own `.head`
+   (a flex row aligned to the start). The Close control is pushed to the
+   window's right edge with an auto margin rather than by overriding that
+   rule, so the production layout is untouched. */
+.headActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* The production overlay dismissed itself with a swipe on touch, and its
+   stylesheet swaps in a "SWIPE TO CLOSE" hint for coarse pointers. The side
+   page has no swipe dismissal (the page leaves as one piece, driven by the
+   composition), so claiming it would be a lie: the keyboard hint stays, and
+   the Close control beside it is the touch path. Higher specificity than
+   the production media query, and scoped to this surface only. */
+.escapeHint span {
+  display: inline;
+}

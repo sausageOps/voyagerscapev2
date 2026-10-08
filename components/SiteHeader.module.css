@@ -14,8 +14,13 @@
   pointer-events: none;
   transform: translate3d(var(--shell-slide-x, 0px), var(--header-y), 0);
   transition-property: --shell-slide-x;
-  transition-duration: 620ms;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  /* The shell slide's timing is declared once, by the frame that owns the
+     slot it belongs to (AppShell.module.css: --tos-test-slide / -ease), so
+     the header can never ride a different curve or land at a different time
+     than the horizontal composition it moves with. The fallbacks are the
+     values this rule always carried. */
+  transition-duration: var(--tos-test-slide, 620ms);
+  transition-timing-function: var(--tos-test-ease, cubic-bezier(0.22, 1, 0.36, 1));
   overflow: visible;
 }
 

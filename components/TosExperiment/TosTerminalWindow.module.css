@@ -1,0 +1,99 @@
+/* =========================================================
+   TOS TERMINAL WINDOW — LAYER 2 (a window inside the page)
+   ---------------------------------------------------------
+   THE VOYAGERSCAPE FRAME, DUPLICATED INSIDE THE TOS PAGE.
+
+   Geometry is unchanged from step 2 — every measurement below is
+   taken from the existing main frame, not invented:
+
+     inset    → the surface's padding is var(--frame-edge-inset),
+                the same 16px the website frame is inset by inside
+                the viewport (HomeCanvas: margin 16px,
+                min-height calc(100svh - 32px)). The window simply
+                stretches to that content box, so its box is
+                `100svh - 2 × --frame-edge-inset` — the frame's exact
+                height — and its top/bottom edges sit on the same
+                lines as the website frame's.
+     radius   → 18px, the main frame's radius (HomeCanvas.module.css
+                — not a new value, and not --r-lg: the frame's own).
+     surface  → var(--vs-frame-bg), the frame's paper, in both themes.
+
+   What is inside the window is now the real menu (`<NavSurface>`,
+   the same component the production menu renders), so this card is
+   the menu's host: it provides position, size, radius, paper and
+   clipping, and the host-scoped overrides below hand the menu's
+   overlay chrome over to it. No menu content is restyled.
+   ========================================================= */
+
+.window {
+  /* Fills the page's content box: the page's padding is the frame inset,
+     so this IS the frame's geometry — no height, inset or margin is
+     restated here. */
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+
+  /* Host for the menu surface's absolutely-positioned layers (palette
+     sheets, content layer). */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  /* Clips the palette sheets to the card, at the frame's radius. `clip`
+     rather than `hidden`: the window is never a scrollport, and the
+     document remains the page's only vertical scroller. */
+  overflow: clip;
+  border-radius: var(--tos-window-radius, 18px);
+  background: var(--vs-frame-bg);
+  color: var(--vs-ink);
+  transition: background-color var(--t-fast) var(--e-out);
+}
+
+/* ------------------------------------------------------------------
+   THE TERMINAL'S PALETTE STACK
+
+   The three full-surface sheets the terminal content is revealed by. They
+   are the same sheets the menu reveals through — same three, same
+   attributes, same hook (`useTosReveal`), same colours from the same
+   palette-selection module — rendered by the window because the terminal
+   is the window's content rather than the menu's.
+
+   No radius: the window already clips everything to the frame's 18px.
+   ------------------------------------------------------------------ */
+.paletteStack {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.palettePanel {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: none;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ------------------------------------------------------------------
+   HOST-SCOPED ADAPTATION (TOS only — production is untouched)
+
+   Outside an overlay, the card already owns the surface: its paper,
+   its 18px radius and its clip. So within this card only, the menu's
+   overlay chrome stands down — the background, the left hairline,
+   the drop shadow and the 22px left-corner radius the sheet panels
+   carry for the fixed right-edge layer. Content, type, spacing and
+   interactions are exactly the menu's own.
+   ------------------------------------------------------------------ */
+.window [data-menu-panel] {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.window [data-menu-palette-panel] {
+  border-radius: 0;
+}
