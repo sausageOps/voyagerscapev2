@@ -34,21 +34,21 @@ const COMMAND_LABELS: Record<string, string> = {
 };
 
 /* ==================================================================
-   TERMINAL MOTION — SOLID SIDE-ENTRY WINDOW + PALETTE SEQUENCE
+   TERMINAL MOTION — SOLID SIDE-ENTRY WINDOW + INTERNAL PALETTE STACK
    ==================================================================
-   The .layer/.panel pair is one physical object: the panel's theme-aware
-   surface stays solid while the complete shell enters from the right.
-   Three full-panel palette sheets then animate above that static base;
-   terminal content reveals only after the final sheet settles.
+   The .layer/.panel pair is one physical object: its theme-aware base stays
+   solid as the complete shell enters from the right. Only after it docks do
+   the three clipped palette sheets reveal inside that shell; content follows
+   after Palette 3 settles.
 
-     • OPEN: shell xPercent 100 → 0; palettes start at 0.12s with a 0.12s
-       stagger; content starts after Palette 3 settles (~0.55s).
-     • CLOSE: content hides immediately; only the complete shell moves right.
-       Palette sheets never reverse and there is no fade or color cleanup.
+     • OPEN: page shifts left as shell enters (xPercent 100 → slight overshoot
+       → 0); palettes then reveal in order inside the window.
+     • CLOSE: content hides immediately and only the whole shell moves right.
+       Palette states never reverse or reset during an interrupted exit.
 
-   A single timeline is killed/rebuilt on state changes. The current physical
-   x-position is retained when a close is interrupted by a reopen, while a
-   completed close resets all animation-only inline styles off-screen.
+   A single GSAP timeline is killed/rebuilt on state changes. In-flight shell
+   and palette poses are retained when direction changes; a completed close
+   clears motion styles only after the object is fully off-canvas.
    ================================================================== */
 
 const WIPE_EASE_NAME = "vs-terminal-wipe";
@@ -163,8 +163,8 @@ export default function CommandTerminal() {
   }, [terminalOpen]);
 
   /* ---- Open/close choreography. State and the initial visual pose are
-     committed before paint. Every phase is driven by one interruptible GSAP
-     timeline; the static .panel background is never animated. ---- */
+     committed before paint. The solid shell, page displacement, internal
+     palette reveals and content reveal share one interruptible GSAP timeline. ---- */
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const shellVisibleRef = useRef(false);
 
@@ -181,15 +181,17 @@ export default function CommandTerminal() {
     const rows = Array.from(layer.querySelectorAll<HTMLElement>("[data-term-row]"));
     if (!panel || palettePanels.length !== 3) return undefined;
 
-    /* Freeze the previous pose at its current frame. GSAP retains inline
-       transform values when a timeline is killed, so a rapid opposite toggle
-       can continue from the actual position rather than snapping. */
+    const freshEntry = !shellVisibleRef.current;
+
+    /* Freeze the previous pose at its current frame. Killing the old timeline
+       preserves inline transform values so a rapid opposite toggle continues
+       from the actual screen position instead of jumping to a start pose. */
     timelineRef.current?.kill();
     const paletteEase = ensureWipeEase();
     const contentItems = [...blocks, ...rows];
 
-    /* Swipe-to-close writes a raw translate3d. Reading the computed matrix
-       lets the shell animation take ownership without discarding that drag. */
+    /* Swipe-to-close writes a raw translate3d. Read the computed matrix before
+       handing the shell transform back to GSAP so the drag is not discarded. */
     const currentLayerX = (): number => {
       const matrix = window.getComputedStyle(layer).transform.match(/^matrix(3d)?\((.+)\)$/);
       if (!matrix) return 0;
@@ -202,8 +204,8 @@ export default function CommandTerminal() {
       gsap.set([...palettePanels, ...blocks, ...rows, panel], { clearProps: "all" });
     };
     const cleanupClosed = () => {
-      /* The shell is already off-canvas. Hide it before clearing motion
-         styles so neither the base surface nor a palette can flash in place. */
+      /* The complete object is already off-canvas. Hide it before clearing
+         palette styles so cleanup cannot expose a stationary base or flash. */
       gsap.set(layer, { visibility: "hidden" });
       cleanupContent();
       gsap.set(layer, { clearProps: "all" });
@@ -213,13 +215,15 @@ export default function CommandTerminal() {
 
     if (prefersReducedMotion()) {
       if (terminalOpen) {
-        const combo = nextWipeCombo();
-        palettePanels.forEach((palettePanel, index) => {
-          palettePanel.style.background = combo[index];
-        });
+        if (freshEntry) {
+          const combo = nextWipeCombo();
+          palettePanels.forEach((palettePanel, index) => {
+            palettePanel.style.background = combo[index];
+          });
+        }
         gsap.set(layer, { x: 0, xPercent: 0, visibility: "visible", pointerEvents: "auto" });
         if (page) gsap.set(page, { x: pageShiftX });
-        gsap.set(palettePanels, { xPercent: 0, autoAlpha: 1 });
+        gsap.set(palettePanels, { xPercent: 0, opacity: 1, visibility: "visible" });
         gsap.set(contentItems, { clearProps: "all" });
         shellVisibleRef.current = true;
       } else if (shellVisibleRef.current) {
@@ -232,70 +236,79 @@ export default function CommandTerminal() {
     }
 
     if (terminalOpen) {
-      const combo = nextWipeCombo();
-      palettePanels.forEach((palettePanel, index) => {
-        palettePanel.style.background = combo[index];
-      });
-
-      /* A first open starts just outside the right edge. If the close was
-         interrupted, retain the shell's current screen position and return
-         smoothly from there instead of restarting off-screen. */
-      if (shellVisibleRef.current) {
-        gsap.set(layer, {
-          x: currentLayerX(),
-          xPercent: 0,
-          visibility: "visible",
-          pointerEvents: "auto",
+      if (freshEntry) {
+        const combo = nextWipeCombo();
+        palettePanels.forEach((palettePanel, index) => {
+          palettePanel.style.background = combo[index];
         });
-      } else {
+        /* The base window remains exposed below these off-canvas sheets. */
+        gsap.set(palettePanels, { xPercent: 101, opacity: 1, visibility: "visible" });
+      }
+
+      /* On a reversal, keep the current physical x-position and every palette
+         pose. A fresh open alone starts with the solid terminal just off-right. */
+      if (freshEntry) {
         gsap.set(layer, {
           x: 0,
           xPercent: 100,
           visibility: "visible",
           pointerEvents: "auto",
         });
+      } else {
+        gsap.set(layer, {
+          x: currentLayerX(),
+          xPercent: 0,
+          visibility: "visible",
+          pointerEvents: "auto",
+        });
       }
       shellVisibleRef.current = true;
+      gsap.set(contentItems, { visibility: "hidden", y: 0, yPercent: 0, rotate: 0 });
 
-      /* Keep the cream/dark base exposed beneath the palette sheets until
-         each right-entering color layer covers it. Content remains above
-         the stack, but hidden until the last sheet has settled. */
-      gsap.set(palettePanels, { xPercent: 101, autoAlpha: 1 });
-      gsap.set(contentItems, { autoAlpha: 0, y: 0, yPercent: 0, rotate: 0 });
-
-      const paletteStart = 0.12;
-      const paletteDuration = 0.18;
-      const paletteStagger = 0.12;
-      const paletteEnd = paletteStart + paletteDuration + paletteStagger * (palettePanels.length - 1);
+      const shellEntryDuration = 0.44;
+      const shellSettleDuration = 0.06;
+      const paletteStart = shellEntryDuration + shellSettleDuration;
+      const paletteDuration = 0.12;
+      const paletteStagger = 0.09;
+      const pendingPaletteIndices = palettePanels.reduce<number[]>((pending, palettePanel, index) => {
+        const position = Number(gsap.getProperty(palettePanel, "xPercent"));
+        if (Number.isFinite(position) && Math.abs(position) > 0.5) pending.push(index);
+        return pending;
+      }, []);
+      const paletteEnd = pendingPaletteIndices.length
+        ? paletteStart + paletteDuration + paletteStagger * (pendingPaletteIndices.length - 1)
+        : paletteStart;
       const contentStart = paletteEnd + 0.012;
+
       const tl = gsap.timeline();
       timelineRef.current = tl;
+      if (page) tl.to(page, { x: pageShiftX, duration: 0.5, ease: EASE.out }, 0);
 
-      if (page) {
-        tl.to(page, { x: pageShiftX, duration: 0.56, ease: EASE.out }, 0);
-      }
-      tl.to(
+      tl.to(layer, { x: 0, xPercent: -1, duration: shellEntryDuration, ease: EASE.out }, 0).to(
         layer,
-        { x: 0, xPercent: 0, duration: 0.56, ease: EASE.out },
-        0,
-      ).fromTo(
-        palettePanels,
-        { xPercent: 101 },
-        { xPercent: 0, duration: paletteDuration, stagger: paletteStagger, ease: paletteEase },
-        paletteStart,
-      )
-        .fromTo(
-          blocks,
-          { autoAlpha: 0, y: 8 },
-          { autoAlpha: 1, y: 0, duration: 0.16, stagger: 0.035, ease: EASE.out },
-          contentStart,
-        )
-        .fromTo(
-          rows,
-          { autoAlpha: 0, yPercent: 40 },
-          { autoAlpha: 1, yPercent: 0, duration: 0.15, stagger: 0.012, ease: EASE.out },
-          contentStart + 0.035,
+        { x: 0, xPercent: 0, duration: shellSettleDuration, ease: EASE.inOut },
+        shellEntryDuration,
+      );
+
+      pendingPaletteIndices.forEach((paletteIndex, order) => {
+        tl.to(
+          palettePanels[paletteIndex],
+          { xPercent: 0, duration: paletteDuration, ease: paletteEase },
+          paletteStart + paletteStagger * order,
         );
+      });
+
+      tl.fromTo(
+        blocks,
+        { visibility: "hidden", y: 4 },
+        { visibility: "visible", y: 0, duration: 0.13, stagger: 0.025, ease: EASE.out },
+        contentStart,
+      ).fromTo(
+        rows,
+        { visibility: "hidden", yPercent: 18 },
+        { visibility: "visible", yPercent: 0, duration: 0.13, stagger: 0.01, ease: EASE.out },
+        contentStart + 0.025,
+      );
 
       return () => {
         timelineRef.current?.kill();
@@ -308,19 +321,19 @@ export default function CommandTerminal() {
       };
     }
 
-    /* Close is intentionally one-way: hide content now, leave the settled or
-       in-flight palettes untouched, and tuck the complete solid shell right. */
+    /* Close is deliberately not the reverse palette sequence: content hides
+       now while the complete solid shell and page move to their closed poses. */
     gsap.set(layer, {
       x: currentLayerX(),
       xPercent: 0,
       visibility: "visible",
       pointerEvents: "none",
     });
-    gsap.set(contentItems, { autoAlpha: 0, y: 0, yPercent: 0, rotate: 0 });
+    gsap.set(contentItems, { visibility: "hidden", y: 0, yPercent: 0, rotate: 0 });
 
     const tl = gsap.timeline();
     timelineRef.current = tl;
-    if (page) tl.to(page, { x: 0, duration: 0.56, ease: EASE.inOut }, 0);
+    if (page) tl.to(page, { x: 0, duration: 0.5, ease: EASE.inOut }, 0);
     tl.to(layer, { x: 0, xPercent: 120, duration: 0.5, ease: EASE.inOut }, 0).call(cleanupClosed);
 
     return () => {
