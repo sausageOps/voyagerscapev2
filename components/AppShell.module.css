@@ -9,10 +9,12 @@
   transition: background-color var(--t-fast) var(--e-out);
 }
 
+/* CommandTerminal's GSAP timeline owns this translation so the page shift
+   stays in lockstep with the physical terminal shell. */
 .website {
   min-width: 0;
   transform: translate3d(var(--shell-slide-x), 0, 0);
-  transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: none;
   will-change: transform;
 }
 

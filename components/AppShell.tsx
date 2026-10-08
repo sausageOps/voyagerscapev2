@@ -46,7 +46,7 @@ function AppFrame({ children }: { children: ReactNode }) {
       <AppBackdrop />
       <PageLoader />
       <SiteHeader />
-      <div className={styles.website}>
+      <div className={styles.website} data-terminal-page>
         {isHome ? <HomeCanvas>{page}</HomeCanvas> : page}
         <SiteFooter />
       </div>
