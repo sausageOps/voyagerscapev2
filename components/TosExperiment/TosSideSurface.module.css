@@ -10,21 +10,15 @@
    with the viewport's top and bottom edges at every scroll
    offset.
 
-   Horizontal: the composition's slide distance is exactly this
-   element's width (--tos-test-panel-w), so when the composition
-   has slid, this page's right edge is flush with the frame's
-   right edge.
+   Horizontal: the active content's width token also sets the
+   composition's slide distance, so when the composition has
+   slid, this page's right edge is flush with the frame's right edge.
 
    Its only child is the terminal window, placed by this
    element's own padding — the frame inset system, reused.
    ========================================================= */
 
 .surface {
-  /* The page's width, and therefore the whole interaction's slide distance.
-     Declared once, in AppShell.module.css, next to the frame geometry. */
-  flex: 0 0 var(--tos-test-panel-w, 380px);
-  width: var(--tos-test-panel-w, 380px);
-
   position: sticky;
   top: 0;
   align-self: flex-start;
@@ -61,6 +55,18 @@
      the page stays painted while the composition slides back. */
   visibility: hidden;
   transition: visibility 0s linear var(--tos-test-slide, 620ms);
+}
+
+/* The page geometry is shared; its width belongs to the active content. */
+.surface[data-tos-content="menu"] {
+  flex: 0 0 var(--routes-panel-w, 380px);
+  width: var(--routes-panel-w, 380px);
+}
+
+.surface[data-tos-content="terminal"] {
+  flex: 0 0 var(--terminal-side-page-w, 380px);
+  width: var(--terminal-side-page-w, 380px);
+  justify-content: center;
 }
 
 .surface[data-open="true"] {

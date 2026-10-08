@@ -18,11 +18,10 @@ import styles from "./HorizontalComposition.module.css";
  * the complete website sits immediately to the LEFT of the TOS panel.
  *
  * The composition is exactly one viewport wide, so its own children push
- * the panel past the right edge by design (the shell is `flex: 0 0 100%`,
- * the panel is `flex: 0 0 var(--tos-test-panel-w)`). Sliding the whole
- * composition left by exactly the panel's width therefore lands the panel
- * flush in the right-hand slot and pushes the website's left edge out of
- * the frame — the two move together, at the same rate, as one mechanism.
+ * the page past the right edge by design (the shell is `flex: 0 0 100%`).
+ * The page uses the Routes or Terminal width token according to its content;
+ * the shared slide resolves from that same active token, landing the page
+ * flush in the right-hand slot while the website moves as one mechanism.
  *
  * VERTICAL SCROLLING IS UNTOUCHED BY THIS COMPONENT. The composition is a
  * normal block in normal document flow: it has no height, no overflow and

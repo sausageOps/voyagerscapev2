@@ -1,8 +1,5 @@
 /* =========================================================
-   HOME — art-directed per range.
-   Desktop (>1100px): Unified hero composition:
-   CRT sits directly above and slightly overlaps the upper edge
-   of the dense, centered, oversized typography blocks.
+   HOME — layout and controls, art-directed per range.
    ========================================================= */
 
 .hero {
@@ -80,12 +77,12 @@
   z-index: var(--z-float);
 }
 
-/* ---------------- CRT + hero words composition ---------------- */
+/* ---------------- Existing composition track ---------------- */
 .composition {
   display: contents;
 }
 
-/* ---------------- CRT Hero Object (upper/center, behind typography) ---------------- */
+/* ---------------- Existing CRT hero-object track ---------------- */
 .stage {
   position: absolute;
   left: 50%;
@@ -101,78 +98,6 @@
   display: flex;
   justify-content: center;
   width: 100%;
-}
-
-/* ---------------- Large centered headline (in front of CRT) ---------------- */
-.head {
-  position: absolute;
-  top: calc(50% + clamp(62px, 7.2vw, 100px) - 24px);
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  width: 100%;
-  max-width: 1440px;
-  pointer-events: none;
-}
-
-.title {
-  margin: 0;
-  font-weight: 400;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.tmBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: top;
-  /* Handjet is a pixel face: measured with fontTools, both "e" and "™"
-     have ZERO side bearings — their ink fills the advance. So the whole
-     visible gap was this margin (0.10em) plus the trailing 0.02em of
-     hero letter-spacing that lands after the final glyph: 0.12em, about
-     11px at desktop size. Pulling the margin to -0.01em cancels the
-     margin and most of that trailing track, leaving ~0.01em of air so
-     the mark sits against the "e" the way normal typography would set
-     it. Letter-spacing itself is untouched, and this margin belongs to
-     the ™ badge alone — no other hero gap can see it. */
-  margin-left: -0.01em;
-  transform: translateY(-0.18em);
-  line-height: 1;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* Plain ™ glyph — replaces the former circled badge SVG. No border, no
-   background, no container: just the display face's own trademark mark,
-   sized to the word's scale. Sized on an inner element so .tmBadge's
-   em-based offset and lift keep resolving against the word's font-size,
-   holding the mark in its established spot above the x-height. */
-.tmMark {
-  font-size: 0.38em;
-  /* Handjet's font box is 1.1176em (hhea 7200/-1920 over upm 8160).
-     As a flex item this span is blockified, so with line-height 1 its
-     border box is 1em and the glyph's font box overhangs it by half the
-     difference — which the warp rasteriser, reading the box top and
-     adding the font ascent, would turn into a ~2px drop on canvas only.
-     Matching the line-height to the font box removes the half-leading,
-     and the equal negative shift puts the box back exactly where it was,
-     so DOM and texture agree and the mark does not move. */
-  line-height: 1.1176;
-  transform: translateY(-0.0588em);
-}
-
-.head * {
-  pointer-events: none !important;
-  cursor: default !important;
-  user-select: none;
 }
 
 /* ---------------- Breakpoints ---------------- */
@@ -193,10 +118,9 @@
     order: 2;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    /* Keep the typography track tied to the CRT layout box rather than to
-       the tablet viewport height. This preserves the attached overlap used
-       by the working desktop and narrow-mobile compositions. */
-    grid-template-rows: var(--crt-type-anchor) auto;
+    /* Keep the now-empty text track open so downstream controls stay put. */
+    --open-space-height: clamp(80px, calc(16vw + 5px), 175px);
+    grid-template-rows: var(--crt-type-anchor) var(--open-space-height);
     justify-items: center;
     align-items: start;
     width: 100%;
@@ -212,21 +136,6 @@
     margin: 0 auto;
     order: initial;
     z-index: 1;
-  }
-  .head {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    grid-column: 1;
-    grid-row: 2;
-    align-self: start;
-    transform: none;
-    margin: 0 auto;
-    order: initial;
-    max-width: 100%;
-    z-index: 3;
   }
   .controls {
     position: relative;
@@ -262,6 +171,7 @@
   }
   .composition {
     --crt-compose-w: min(70vw, 34svh, 320px);
+    --open-space-height: clamp(58px, calc(16.4vw + 5px), 89px);
   }
   .stage {
     position: relative;
@@ -274,21 +184,6 @@
     margin: 0 auto;
     order: initial;
     z-index: 1;
-  }
-  .head {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    grid-column: 1;
-    grid-row: 2;
-    align-self: start;
-    transform: none;
-    margin: 0 auto;
-    order: initial;
-    max-width: 100%;
-    z-index: 3;
   }
   .controls {
     position: relative;
@@ -317,6 +212,12 @@
   }
 }
 
+@media (max-width: 380px) {
+  .composition {
+    --open-space-height: clamp(56px, calc(16.2vw + 4px), 66px);
+  }
+}
+
 /* Short desktop viewports (e.g. 1100px+ with height < 760px) */
 @media (min-width: 1100px) and (max-height: 760px) {
   .inner {
@@ -325,9 +226,5 @@
   .stage {
     top: 43%;
     z-index: 1;
-  }
-  .head {
-    top: calc(48% + clamp(50px, 6vw, 82px));
-    z-index: 3;
   }
 }

@@ -175,9 +175,7 @@
   padding: 0.10em 0.207em 0.14em;
   border-radius: clamp(4px, 0.08em, 6px);
   min-height: 1.1em;
-  /* The hero composition is white over Pattern Waves. Inherited by the
-     rotating words and read by the warp rasteriser as the ink colour,
-     so canvas and DOM fallback are the same #FFFFFF. */
+  /* Keep the hero words' light ink consistent with their former fallback. */
   color: #ffffff;
   pointer-events: none !important;
   cursor: default !important;

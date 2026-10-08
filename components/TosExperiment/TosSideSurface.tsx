@@ -59,6 +59,7 @@ export default function TosSideSurface({
       ref={surfaceRef}
       className={styles.surface}
       data-open={open ? "true" : "false"}
+      data-tos-content={content}
       data-tos-surface
       aria-label="TOS page"
     >

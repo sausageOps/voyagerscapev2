@@ -64,9 +64,9 @@ import styles from "./AppShell.module.css";
  *   • AppBackdrop is the environment the website slides on, not part of the
  *     website itself.
  *
- * The frame also carries the menu's open state as a data attribute. Every
- * geometric consequence of that attribute is CSS (AppShell.module.css);
- * no component measures or animates a position in JS.
+ * The frame also carries the page's menu/terminal open state as data
+ * attributes. Every geometric consequence of those attributes is CSS
+ * (AppShell.module.css); no component measures or animates a position in JS.
  */
 function AppFrame({ children }: { children: ReactNode }) {
   const isHome = usePathname() === "/";
