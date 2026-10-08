@@ -185,15 +185,10 @@ export default function CommandTerminal() {
       return Number.isFinite(value) ? value : 0;
     };
 
-    const cleanupContent = () => {
-      gsap.set([...palettePanels, ...blocks, ...rows, panel], { clearProps: "all" });
-    };
-    const cleanupClosed = () => {
-      /* The full object is off-canvas; hide it before removing sheet transforms
-         so clearing inline palette colors cannot expose a flash in place. */
-      gsap.set(layer, { visibility: "hidden" });
-      cleanupContent();
-      gsap.set(layer, { clearProps: "all" });
+    const finishClosed = () => {
+      /* The full object is off-canvas. Keep its harmless closed pose; the next
+         fresh open assigns its entry pose before paint. */
+      gsap.set(layer, { visibility: "hidden", pointerEvents: "none" });
       if (page) gsap.set(page, { clearProps: "transform" });
       shellVisibleRef.current = false;
     };
@@ -222,7 +217,7 @@ export default function CommandTerminal() {
         gsap.set(contentItems, { clearProps: "all" });
         shellVisibleRef.current = true;
       } else if (shellVisibleRef.current) {
-        cleanupClosed();
+        finishClosed();
       }
 
       return () => {
@@ -356,7 +351,7 @@ export default function CommandTerminal() {
         tl.to(page, { x: 0, duration: closeDuration, ease: EASE.inOut }, 0);
       }
     }
-    tl.to(layer, { x: shellEntryX, duration: closeDuration, ease: EASE.inOut }, 0).call(cleanupClosed);
+    tl.to(layer, { x: shellEntryX, duration: closeDuration, ease: EASE.inOut }, 0).call(finishClosed);
 
     return () => {
       timelineRef.current?.kill();
