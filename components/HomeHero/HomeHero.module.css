@@ -1,0 +1,344 @@
+/* =========================================================
+   HOME HERO — editorial masthead composition (Stage 1)
+   Consumes existing Voyagerscape tokens only.
+   ========================================================= */
+
+.stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - 32px);
+  padding-top: calc(var(--header-h) + clamp(18px, 3.2vh, 46px));
+  padding-bottom: clamp(20px, 3vh, 36px);
+  --hero-plate-w: clamp(230px, 27vw, 420px);
+}
+
+/* ---------------- Metadata hung from the top edge ---------------- */
+.metaTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding-inline: var(--gutter);
+  margin-bottom: clamp(14px, 2.4vh, 32px);
+}
+
+.meta {
+  opacity: 0;
+}
+
+/* ---------------- Composition grid ---------------- */
+.composition {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--hero-plate-w);
+  grid-template-rows: auto auto 1fr;
+  column-gap: clamp(20px, 3vw, 52px);
+  padding-inline: var(--gutter);
+}
+
+/* ---------------- Masthead ----------------
+   The run is sized from its own container's width and the measured
+   advances of Handjet 900 ("VOYAGERSCAPE" = 4.7059em bare, 4.9459em at
+   +0.02em tracking), so it fills the frame exactly at every width and is
+   deliberately oversized 4% — the frame cuts the outer stems. */
+.masthead {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  margin-inline: calc(-1 * var(--gutter));
+}
+
+.mastheadClip {
+  display: block;
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.mastheadInner {
+  display: block;
+  width: max-content;
+  font-family: var(--font-hero-display), var(--font-display);
+  font-size: calc(104cqw / 4.9459);
+  font-weight: 900;
+  line-height: 0.98;
+  letter-spacing: 0.02em;
+  color: var(--vs-ink);
+  transform: translateX(-2%);
+  user-select: none;
+}
+
+.brandLine {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.char {
+  display: inline-block;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* ---------------- Photographic plate ----------------
+   Bleeds off the frame's right edge; the masthead crosses over it. */
+.plate {
+  grid-column: 2;
+  grid-row: 2 / 4;
+  position: relative;
+  z-index: 1;
+  align-self: stretch;
+  margin-top: clamp(-170px, -13vh, -70px);
+  margin-right: calc(-1 * var(--gutter));
+  margin-bottom: clamp(92px, 12vh, 140px);
+  overflow: hidden;
+  border-radius: var(--r-lg) 0 0 var(--r-lg);
+  clip-path: inset(0 0 100% 0);
+}
+
+.plate img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 42%;
+  user-select: none;
+}
+
+/* Night mode: hold the plate a step darker so the pale display run keeps
+   its contrast where it crosses the photograph. */
+:global(html[data-theme="dark"]) .plate img,
+:global(html.dark) .plate img {
+  filter: brightness(0.86) saturate(0.92);
+}
+
+/* ---------------- Statement ---------------- */
+.statement {
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
+  z-index: 2;
+  align-self: start;
+  margin-top: clamp(22px, 4.2vh, 54px);
+  max-width: 22ch;
+  font-family: var(--font-body);
+  font-size: clamp(1.15rem, 1.75vw, 1.7rem);
+  font-weight: 400;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.24;
+  color: var(--vs-ink);
+  opacity: 0;
+}
+
+/* ---------------- Contact dock (bottom-right) ---------------- */
+.dock {
+  position: absolute;
+  inset-inline-end: var(--frame-corner-space);
+  inset-block-end: var(--frame-corner-space);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 5;
+  opacity: 0;
+}
+
+.dockCta {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sayHi {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 10px;
+  text-align: right;
+}
+
+.sayHiText {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: clamp(4px, 0.08em, 6px);
+  border: 1px solid var(--vs-line-soft);
+  background-color: var(--vs-email-bg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-tight);
+  color: var(--vs-email-ink);
+  transition:
+    background-color var(--t-fast) var(--e-out),
+    color var(--t-fast) var(--e-out),
+    border-color var(--t-fast) var(--e-out);
+}
+
+.panelFloat {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-end: calc(100% + 12px);
+  z-index: var(--z-float);
+}
+
+/* ---------------- Scroll cue (bottom-left) ---------------- */
+.scrollCue {
+  position: absolute;
+  inset-inline-start: var(--gutter);
+  inset-block-end: var(--frame-corner-space);
+  opacity: 0;
+}
+
+/* =========================================================
+   SHORT DESKTOP — keep the fold intact on low displays
+   ========================================================= */
+@media (min-width: 1100px) and (max-height: 760px) {
+  .stage {
+    padding-top: calc(var(--header-h) + 12px);
+    padding-bottom: 14px;
+  }
+  .metaTop {
+    margin-bottom: 12px;
+  }
+  .statement {
+    margin-top: 18px;
+    font-size: clamp(1.05rem, 1.5vw, 1.35rem);
+  }
+  .plate {
+    margin-top: clamp(-120px, -10vh, -60px);
+    margin-bottom: 84px;
+  }
+}
+
+/* =========================================================
+   TABLET (768–1099px) — composition preserved, scale reduced
+   ========================================================= */
+@media (max-width: 1099px) {
+  .stage {
+    --hero-plate-w: clamp(190px, 28vw, 300px);
+    padding-top: calc(var(--header-h) + clamp(14px, 2.4vh, 30px));
+  }
+  .mastheadInner {
+    font-size: calc(104cqw / 4.9459);
+  }
+  .statement {
+    font-size: clamp(1.05rem, 2.1vw, 1.45rem);
+    max-width: 18ch;
+  }
+  .plate {
+    margin-top: clamp(-110px, -11vh, -48px);
+    margin-bottom: clamp(88px, 11vh, 120px);
+  }
+}
+
+/* =========================================================
+   MOBILE (<768px) — a deliberate flow composition:
+   stacked brand run → bleeding plate → statement. Not a squeezed desktop.
+   ========================================================= */
+@media (max-width: 767px) {
+  .stage {
+    min-height: calc(100svh - 16px);
+    padding-top: calc(var(--header-h) + 10px);
+    /* clears the corner-anchored contact dock so content never collides */
+    padding-bottom: 122px;
+    --hero-plate-w: auto;
+  }
+
+  .metaTop {
+    margin-bottom: 18px;
+  }
+
+  .metaTop .meta:last-child {
+    display: none;
+  }
+
+  .composition {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    column-gap: 0;
+    padding-inline: var(--gutter);
+    /* leave clear space for the fixed contact dock */
+    padding-bottom: 24px;
+  }
+
+  /* Two-line brand run: VOYAGER fills the width, SCAP E hangs ragged. */
+  .mastheadInner {
+    font-size: calc(104cqw / 2.9047);
+    line-height: 0.94;
+  }
+
+  .brandLine {
+    display: block;
+  }
+
+  .plate {
+    order: 2;
+    align-self: stretch;
+    height: min(38svh, 340px);
+    margin-top: 26px;
+    margin-right: calc(-1 * var(--gutter));
+    margin-bottom: 0;
+    border-radius: var(--r-lg) 0 0 var(--r-lg);
+  }
+
+  /* Wide crop: recentre so the figure stays in frame. */
+  .plate img {
+    object-position: 50% 52%;
+  }
+
+  .statement {
+    order: 3;
+    margin-top: 26px;
+    max-width: 20ch;
+    font-size: 1.22rem;
+  }
+
+  .scrollCue {
+    display: none;
+  }
+
+  .panelFloat {
+    position: fixed;
+    inset-inline-end: auto;
+    inset-block-end: max(14px, env(safe-area-inset-bottom));
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    z-index: 80;
+  }
+}
+
+@media (max-width: 380px) {
+  .mastheadInner {
+    line-height: 0.92;
+  }
+  .statement {
+    font-size: 1.12rem;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION — content stays visible and coherent
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .char,
+  .meta,
+  .statement,
+  .dock,
+  .scrollCue {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .plate {
+    clip-path: none !important;
+  }
+
+  .plate img {
+    transform: none !important;
+  }
+}

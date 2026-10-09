@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import HomeConnect from "@/components/HomeConnect/HomeConnect";
+import HomeHero from "@/components/HomeHero/HomeHero";
 
 export const metadata: Metadata = {
-  title: "Voyagerscape — Connect",
   description:
-    "Voyagerscape is an independent design practice building considered digital objects. Leave us a message.",
+    "Voyagerscape — a visual field archive. Photography, exploration and quiet observation from the long way round.",
 };
 
 export default function HomePage() {
-  return <HomeConnect />;
+  return <HomeHero />;
 }
