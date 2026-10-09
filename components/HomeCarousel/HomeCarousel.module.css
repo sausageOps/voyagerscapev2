@@ -1,0 +1,78 @@
+/* =========================================================
+   HOME CAROUSEL — region hosting the React Bits Flex Carousel.
+   Sized by HomeConnect's `.carousel` track (flex:1 inside the
+   homepage column); this component fills that track absolutely,
+   so no percentage-height resolution is required and no
+   transform: scale() is ever used to adapt the component —
+   the engine re-lays-out from the real container metrics.
+   ========================================================= */
+
+.region {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+}
+
+/* Quiet autoplay control, bottom-left — mirrors the bordered chip treatment
+   of the say-hi address (same tokens, same scale), never the glass system. */
+.pause {
+  position: absolute;
+  inset-block-end: clamp(10px, 2svh, 20px);
+  inset-inline-start: clamp(2px, 0.6vw, 10px);
+  z-index: 6;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 3px 8px;
+  border-radius: clamp(4px, 0.08em, 6px);
+  border: 1px solid var(--vs-line-soft);
+  background-color: var(--vs-email-bg);
+  color: var(--vs-email-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  line-height: 1.4;
+  letter-spacing: var(--tracking-tech);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color var(--t-fast) var(--e-out),
+    color var(--t-fast) var(--e-out),
+    border-color var(--t-fast) var(--e-out),
+    opacity var(--t-fast) var(--e-out);
+}
+
+.pause:hover {
+  border-color: var(--vs-line);
+}
+
+.pause:focus-visible {
+  outline: 2px solid var(--vs-ink);
+  outline-offset: 2px;
+}
+
+.pauseWord {
+  font-weight: 500;
+}
+
+.pauseHint {
+  font-size: var(--fs-nano);
+  letter-spacing: var(--tracking-tech);
+  opacity: 0.55;
+}
+
+@media (max-width: 767px) {
+  .pause {
+    inset-block-end: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pause {
+    transition: none;
+  }
+}

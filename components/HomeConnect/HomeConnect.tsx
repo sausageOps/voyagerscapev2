@@ -7,6 +7,7 @@ import { gsap, revealUp } from "@/lib/motion";
 import GreetingPill from "./GreetingPill";
 import MessageCTA from "./MessageCTA";
 import RecorderPanel from "./RecorderPanel";
+import HomeCarousel from "@/components/HomeCarousel/HomeCarousel";
 import styles from "./HomeConnect.module.css";
 
 const GENERAL_EMAIL = "hello@voyagerscape";
@@ -88,10 +89,13 @@ export default function HomeConnect() {
           )}
         </div>
 
-        <div className={styles.composition}>
-          {/* Preserve the existing hero composition track. The Mac demo now
-              lives in its About-page section below the archive monitor. */}
-          <div className={styles.stage} aria-hidden="true" />
+        {/* Primary homepage visual: the React Bits Flex Carousel (autoplay
+            true, interval 1.5s, cardHeight 0.55, dispersion 1, gap 10px),
+            mounted in the main content area below the header. It replaces
+            the retired hero-object track; the rejected oversized masthead
+            (PR #50) was never merged and stays out of this tree. */}
+        <div className={styles.carousel}>
+          <HomeCarousel />
         </div>
       </div>
     </div>
