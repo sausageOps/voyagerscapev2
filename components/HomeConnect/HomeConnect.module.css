@@ -24,7 +24,11 @@
   max-width: 1440px;
   margin: 0 auto;
   min-height: calc(100svh - 32px);
-  padding: calc(var(--header-h) + clamp(14px, 2svh, 28px)) 0 clamp(20px, 3svh, 36px);
+  /* Bottom padding is 0 on desktop so the carousel track can run flush to
+     the frame's bottom edge; tablet and mobile restore their own bottom
+     padding below (their contact edge is the track bottom, which sits
+     above the in-flow contact controls). */
+  padding: calc(var(--header-h) + clamp(14px, 2svh, 28px)) 0 0;
 }
 
 /* ---------------- Say hi (top-left) ---------------- */
@@ -80,18 +84,37 @@
 }
 
 /* ---------------- Carousel track (primary homepage visual) ----------------
-   The React Bits Flex Carousel lives here. The track takes the full column
-   left between the header padding and the page bottom; the component sizes
-   its cards from the real container metrics (cardHeight is a fraction of
-   this height), so responsive adaptation never needs transform: scale(). */
+   The React Bits Flex Carousel lives here, deliberately flush with the
+   frame: the track bleeds out of the gutter (and out of the 1440px
+   column's centring) to the HomeCanvas edges, so the wave's silhouette —
+   cards exiting left/right, the lifted band bleeding off the top edge,
+   the sunk band bleeding off the bottom edge — meets the frame boundaries
+   instead of floating inside them. The canvas keeps its rounded corners
+   and clips the bleed (overflow: hidden is already on .canvas).
+
+   Geometry is measured, not guessed: for the frame's aspect the engine's
+   lens displacement puts the row's resting card top ~0.225×track-height
+   below the top on the trough (left) side while the lifted (right) side
+   and the sunk bottom-left reach the track's own edges — so no vertical
+   oversizing is applied on desktop; the wave shape stays the preset's. */
 .carousel {
   position: relative;
   flex: 1 1 auto;
-  width: 100%;
   min-width: 0;
   min-height: clamp(300px, 46svh, 620px);
-  margin-top: clamp(8px, 1.4svh, 18px);
+  margin: 0 calc(-1 * var(--vs-carousel-bleed));
+  width: calc(100% + 2 * var(--vs-carousel-bleed));
+  overflow: hidden;
   z-index: 1;
+  /* Escape .hero's gutter, then the 1440px column's centring surplus —
+     the same 100vw-vs-scrollbar accounting .controls already uses — so
+     the track lands exactly on the frame's inner left/right edges at
+     every viewport width. */
+  --vs-carousel-frame-inset: 32px;
+  --vs-carousel-bleed: calc(
+    var(--gutter) +
+    max(0px, (100vw - var(--vs-scrollbar-w) - var(--vs-carousel-frame-inset) - 2 * var(--gutter) - 1440px) / 2)
+  );
 }
 
 /* ---------------- Breakpoints ---------------- */
@@ -140,6 +163,12 @@
     flex: 0 0 auto;
     min-height: clamp(240px, 38svh, 380px);
     margin-top: 0;
+    /* Mobile frame margin is 8px per side (inset 16px total), and the
+       smaller lens displacement gets a 1.1x bottom-anchored container
+       (--vs-carousel-rise, consumed by HomeCarousel) so the sunk band
+       still lands on the track's bottom edge. */
+    --vs-carousel-frame-inset: 16px;
+    --vs-carousel-rise: 1.1;
   }
   .controls {
     position: relative;

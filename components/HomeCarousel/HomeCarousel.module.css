@@ -11,11 +11,22 @@
   position: absolute;
   inset: 0;
   min-width: 0;
+  /* Clips the optional bottom-anchored oversized stage (--vs-carousel-rise)
+     and any focus-mode growth, so the WebGL surface never paints outside
+     the track. */
+  overflow: hidden;
 }
 
 .stage {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
+  /* 1 by default; breakpoints that need the wave pulled down to the track's
+     bottom edge set --vs-carousel-rise on the track (see
+     HomeConnect.module.css). The container grows upward, bottom-aligned. */
+  height: calc(100% * var(--vs-carousel-rise, 1));
   min-width: 0;
 }
 
