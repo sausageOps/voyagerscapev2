@@ -90,3 +90,19 @@
     gap: 20px;
   }
 }
+
+/* NIGHT — same scoped treatment as PlaceholderPage: this page sits on the
+   warm-charcoal shader. Primary text and contact links use the Night ink
+   token; labels and body copy use the Night soft-ink token (AA on charcoal).
+   Global tokens and the recorder panel (a separate dialog) are untouched. */
+:global(html[data-theme="dark"]) .title,
+:global(html[data-theme="dark"]) .contactLink {
+  color: var(--vs-ink);
+}
+
+:global(html[data-theme="dark"]) .index,
+:global(html[data-theme="dark"]) .note,
+:global(html[data-theme="dark"]) .contactLabel,
+:global(html[data-theme="dark"]) .hint {
+  color: var(--vs-ink-soft);
+}

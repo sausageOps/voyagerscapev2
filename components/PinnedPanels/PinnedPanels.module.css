@@ -1,0 +1,133 @@
+/* =========================================================
+   PINNED PANELS — GSAP demo "Pinned panels with overscroll"
+   ---------------------------------------------------------
+   Values follow the demo's CSS (.section, .section-inner,
+   .section-2 .section-inner, .section h1, .image, p).
+   Colours and type map to the site's tokens; the copy and the
+   photography are placeholders for a later pass.
+
+   Pinned geometry only applies while the root carries
+   data-pinned="true", which the component sets when motion is
+   allowed and JavaScript is running. Without it (JavaScript
+   off, reduced motion) the panels are ordinary stacked content.
+   ========================================================= */
+
+.root {
+  --pinned-top: 64px;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  /* No horizontal overflow from the panels, the scaled outgoing panel or the
+     wide image rules. Vertical overflow stays with the document. */
+  overflow-x: clip;
+}
+
+.panel {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1.5em;
+  line-height: 1.45;
+  font-weight: 400;
+  text-align: center;
+  color: var(--vs-ink);
+  /* Opaque, so the panel that follows cleanly covers the one pinned under it. */
+  background: var(--vs-frame-bg);
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px var(--vs-line-soft);
+}
+
+/* The demo's section-2 background (its pink) becomes the page's secondary
+   surface. Opaque, like every panel. */
+.panelLong {
+  background: var(--vs-bg);
+}
+
+/* Night: panels take the warm-charcoal surfaces. Day keeps the frame paper
+   and ground above. Both rules are scoped to this module. */
+:global(html[data-theme="dark"]) .panel {
+  background: var(--vs-bg-deep);
+}
+
+:global(html[data-theme="dark"]) .panelLong {
+  background: var(--vs-bg);
+}
+
+/* The demo's .section-content is a plain block: a flex item of the panel, not
+   a flex container itself. Making it a flex container would stretch the inner
+   column to the panel height and hide the overscroll measurement. */
+.content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.title {
+  margin: 0 auto;
+  font-family: var(--font-display);
+  /* The demo's h1 size, unchanged. */
+  font-size: max(4rem, min(12vw + 1rem, 16rem));
+  /* Geist Pixel Square has a single weight; the demo's 600 would be
+     synthesised, so the title uses the face's own 400. */
+  font-weight: 400;
+  line-height: 1;
+  color: var(--vs-ink);
+  overflow-wrap: anywhere;
+}
+
+.image {
+  display: block;
+  width: 50%;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  margin-top: 2.5rem;
+  border-radius: 8px;
+}
+
+.text {
+  max-width: 40ch;
+  padding: 2rem;
+  margin: 0;
+  font-family: var(--font-body);
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------
+   Pinned geometry (JavaScript on, motion allowed)
+   --------------------------------------------------------- */
+.root[data-pinned="true"] .panel {
+  /* The demo: calc(100vh - 64px). svh keeps the panel inside the visible
+     viewport when mobile browser toolbars are shown. */
+  height: calc(100vh - var(--pinned-top));
+  height: calc(100svh - var(--pinned-top));
+  overflow: hidden;
+}
+
+.root[data-pinned="true"] .inner {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* The demo: .section-2 .section-inner { height: auto; padding-bottom: 20vh }.
+   It is the panel taller than the window, so its content is what scrolls. */
+.root[data-pinned="true"] .panelLong .inner {
+  height: auto;
+  padding-bottom: 20vh;
+}

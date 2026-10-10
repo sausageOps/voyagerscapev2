@@ -56,6 +56,11 @@ const MENU_WORD_SETS = [
  * trail keeps the first word rolls editorial rather than simultaneous. */
 const ROTATION_LEAD_INS = [1.25, 1.57, 1.89, 2.21] as const;
 
+function assignRef<T>(ref: Ref<T> | undefined, node: T | null) {
+  if (typeof ref === "function") ref(node);
+  else if (ref) (ref as { current: T | null }).current = node;
+}
+
 export interface NavSurfaceProps {
   /** On screen? Focusability and the rotation engine follow this. */
   active: boolean;
@@ -86,6 +91,54 @@ export default function NavSurface({
   const { isDark, toggleTheme } = useTheme();
   const themeButtonRef = useRef<HTMLButtonElement | null>(null);
   const rotationRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  /* Focus hand-off: where focus was when the menu opened, and whether the
+     menu is closing because a destination was chosen (focus then belongs to
+     the new page, not to the trigger). */
+  const openerRef = useRef<HTMLElement | null>(null);
+  const navigatingRef = useRef(false);
+
+  /* Keyboard hand-off. Opening moves focus to Close (inside the menu). Closing
+     by Escape or Close returns focus to the control that opened it, so a
+     keyboard visitor is not dropped on the page body. Choosing a destination
+     does not return focus, because the destination page takes it. */
+  useEffect(() => {
+    const root = surfaceRef.current;
+    if (active) {
+      navigatingRef.current = false;
+      const previous = document.activeElement as HTMLElement | null;
+      openerRef.current = previous && root && !root.contains(previous) ? previous : null;
+
+      /* The Close control sits in the reveal's top block, which is hidden until
+         the approved palette sequence brings it in. A hidden control cannot take
+         focus, so retry each frame until it is focusable (bounded, and cancelled
+         if the menu closes first). */
+      let frame = 0;
+      let attempts = 0;
+      const focusClose = () => {
+        const button = closeButtonRef.current;
+        if (!button) return;
+        button.focus({ preventScroll: true });
+        if (document.activeElement === button || attempts++ > 90) return;
+        frame = window.requestAnimationFrame(focusClose);
+      };
+      focusClose();
+      return () => {
+        if (frame) window.cancelAnimationFrame(frame);
+      };
+    }
+    const opener = openerRef.current;
+    openerRef.current = null;
+    if (!root || navigatingRef.current || !opener?.isConnected) return undefined;
+    if (root.contains(document.activeElement)) opener.focus({ preventScroll: true });
+    return undefined;
+  }, [active]);
+
+  const handleNavigate = () => {
+    navigatingRef.current = true;
+    onNavigate();
+  };
 
   /* Reuse the hero/footer rotation engine only while the surface is on
      screen — exactly the lifecycle the menu always had. */
@@ -114,7 +167,9 @@ export default function NavSurface({
   return (
     <div
       id={id}
+      ref={surfaceRef}
       className={styles.surface}
+      data-menu-surface
       data-menu-panel
       role={dialog ? "dialog" : "region"}
       aria-modal={dialog ? "true" : undefined}
@@ -128,7 +183,7 @@ export default function NavSurface({
       <div className={styles.contentLayer}>
         <div className={styles.top} data-menu-block>
           {/* Left: Complete Web/Tablet Left Physical Navigation Unit [ ◉ | V:/ ] */}
-          <SeriesPill onHomeClick={onNavigate} />
+          <SeriesPill onHomeClick={handleNavigate} />
 
           {/* Right: Physical theme toggle & Close button */}
           <div className={styles.topRight}>
@@ -176,7 +231,10 @@ export default function NavSurface({
               )}
             </button>
             <button
-              ref={closeRef}
+              ref={(node) => {
+                closeButtonRef.current = node;
+                assignRef(closeRef, node);
+              }}
               type="button"
               className={styles.close}
               onClick={onClose}
@@ -208,7 +266,7 @@ export default function NavSurface({
                     aria-current={isActive ? "page" : undefined}
                     aria-label={slot.words[0]}
                     tabIndex={active ? 0 : -1}
-                    onClick={onNavigate}
+                    onClick={handleNavigate}
                   >
                     <span className={styles.wordWindow} data-identity-window aria-hidden="true">
                       <span className={styles.wordSizer}>{slot.words[0]}</span>
@@ -278,7 +336,7 @@ export default function NavSurface({
               className={styles.footLink}
               href="/privacy"
               tabIndex={active ? 0 : -1}
-              onClick={onNavigate}
+              onClick={handleNavigate}
             >
               Privacy Policy
             </Link>

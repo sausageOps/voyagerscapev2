@@ -74,6 +74,16 @@
   transition-delay: 0s;
 }
 
+/* NIGHT — the side page keeps its own near-black Night tone. The shared deep
+   token moved to the warm-charcoal palette (#34322D), which would lift this
+   page above the site ground; pinning it here keeps the terminal and routes
+   page on their previous Night tone. The window inside keeps the frame's
+   paper. Day is untouched. */
+:global(html[data-theme="dark"]) .surface,
+:global(html.dark) .surface {
+  background: #0d0d0c;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .surface {
     transition-delay: 0.01ms;

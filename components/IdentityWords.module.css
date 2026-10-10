@@ -23,9 +23,10 @@
   align-items: center;
   gap: clamp(5px, 0.44vw, 8px);
   font-family: var(--font-display);
-  /* Same presence decisions as the statement run: a rasterised face
-     needs weight and a touch of looseness to sit calmly. */
-  font-weight: 600;
+  /* Geist Pixel Square ships one weight (400). It is requested as 400 so the
+     browser never synthesises bold on the pixel grid; presence comes from the
+     chip treatment and the letter-spacing below, not from a heavier weight. */
+  font-weight: 400;
   font-size: clamp(0.9rem, 1.62vw, 1.38rem);
   line-height: 1;
   letter-spacing: -0.008em;

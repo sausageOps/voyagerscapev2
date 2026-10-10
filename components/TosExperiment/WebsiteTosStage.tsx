@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useUI } from "@/lib/ui-store";
 import HorizontalComposition from "./HorizontalComposition";
 import TosSideSurface, { type PanelContent } from "./TosSideSurface";
+import { useMenuChoreography } from "./useMenuChoreography";
 
 /**
  * WEBSITE / SIDE-PAGE STAGE — the host of the right-hand page.
@@ -56,6 +57,10 @@ export default function WebsiteTosStage({
   const { terminalOpen, setTerminalOpen } = useUI();
   /* Where focus was before "/" opened the terminal, so it can be handed back. */
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+  /* Everything the menu choreography touches is found inside this element. */
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  /* The Giats menu timeline runs while the MENU (not the terminal) is shown. */
+  useMenuChoreography(stageRef, open && content === "menu");
 
   /* ---- The page's keyboard entry points ----------------------------------
      "/" opens the terminal (ignoring keystrokes aimed at a field), and
@@ -78,12 +83,20 @@ export default function WebsiteTosStage({
         setTerminalOpen(true);
       } else if (event.key === "Escape" && open) {
         event.preventDefault();
+        // The open page owns Escape. Stop it here so a bubble-phase listener
+        // elsewhere (the recorder sheet, which can sit hidden under the
+        // mobile menu) cannot take the key and leave this page open.
+        event.stopImmediatePropagation();
         onClose();
       }
     };
 
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    // Capture phase on window: this runs before any bubble-phase Escape
+    // listener. A bubble listener that re-renders React synchronously can
+    // otherwise remove and re-add this one mid-dispatch, and then it misses
+    // the key.
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [terminalOpen, open, setTerminalOpen, onClose]);
 
   /* Give focus back once a "/" entry is over — never on a pointer close. */
@@ -94,7 +107,7 @@ export default function WebsiteTosStage({
   }, [open]);
 
   return (
-    <div data-tos-stage>
+    <div data-tos-stage ref={stageRef}>
       <HorizontalComposition>
         {children}
         <TosSideSurface open={open} content={content} onClose={onClose} />

@@ -1,25 +1,19 @@
 /* =========================================================
-   STARTUP LOADER — Voyagerscape shimmer intro
-   The surface is TileCurtain (cream tiles, var(--vs-bg)); this
-   layer's only content is the centered "Voyagerscape" wordmark
-   (Pixelify Sans, the existing display role). Characters rest at
-   --vs-ink-soft and the GSAP wave ripples them to --vs-ink with a
-   tiny 3D lift, center-out. A pure-CSS failsafe guarantees the
-   curtain can never permanently cover the site.
+   STARTUP LOADER — Voyagerscape, Giats loader choreography
+   The root is a transparent fixed layer holding the failsafe. The
+   PANEL is the cover: a theme-aware sheet (var(--vs-bg)) that the
+   loader's GSAP exit shrinks to a rounded card and slides off to the
+   left. Name and counter sit inside masks (overflow hidden) and lift
+   out of them, as Giats' lines do. Day and Night both come from the
+   existing tokens (--vs-bg, --vs-ink); no colour is hard-coded.
    ========================================================= */
 
 .root {
   position: fixed;
   inset: 0;
   z-index: var(--z-loader);
-  display: grid;
-  place-items: center;
-  /* The tiles are the surface — the root itself adds no colour. */
+  /* The panel is the surface; the root adds no colour of its own. */
   background: transparent;
-  /* CSS-only failsafe: if scripts never run (or die before the exit),
-     the curtain removes itself after 6s — visibility, so no reflow.
-     Normal loads unmount the loader long before this fires. */
-  animation: vs-loader-failsafe 0.01s 6s forwards;
 }
 
 @keyframes vs-loader-failsafe {
@@ -28,38 +22,105 @@
   }
 }
 
-/* The wordmark — Pixelify Sans on the cream, centered by the root's
-   grid, independent of the page beneath. Base colour is the soft ink;
-   the wave brightens each character to full ink as it passes. */
-.word {
-  position: relative;
-  padding: 0 24px;
+/* PRE-HYDRATION SCROLL LOCK, for JavaScript that never runs (the layout
+   script sets no data-loader attribute then). While the server-rendered cover
+   is in the DOM, `html` holds `overflow: hidden` for 6s. The animation has no
+   fill mode, so it ends by itself at 6s. Removing the cover also ends the
+   match, so the lock ends with it. With JavaScript on, the lock is held by
+   data-loader="pending" in styles/globals.css and then by lib/scroll-lock.ts. */
+:global(html:not([data-loader])):has(.root) {
+  animation: vs-loader-scroll-lock 6s linear;
+}
+
+@keyframes vs-loader-scroll-lock {
+  from {
+    overflow: hidden;
+  }
+  to {
+    overflow: hidden;
+  }
+}
+
+/* CSS-only failsafe, for JavaScript that never runs. After 6s the cover hides
+   itself, with no reflow. With JavaScript on, the loader owns the cover: it
+   stays up until the loader finishes, or until the 10s ceiling sets
+   data-loader="expired". */
+:global(html:not([data-loader])) .root {
+  animation: vs-loader-failsafe 0.01s 6s forwards;
+}
+
+:global(html[data-loader="expired"]) .root {
+  visibility: hidden;
+}
+
+/* The cover. Rendered by the server, so the first paint is already
+   covered. Transformed by GSAP (scale, radius, xPercent) for the exit. */
+.panel {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--vs-bg);
+  transform-origin: 50% 50%;
+  will-change: transform, border-radius;
+}
+
+/* The name's mask. Geist Pixel Square, the display role. The mask
+   is the h2 itself, so the lines lift out of its box. Vertical padding
+   (cancelled by the negative margin) keeps descenders from being
+   clipped by the mask. */
+.name,
+.shortName {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-block;
+  overflow: hidden;
+  width: max-content;
+  max-width: calc(100% - 48px);
+  margin: 0;
+  padding: 0.12em 24px;
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 4.8vw, 2.4rem);
   font-weight: 400;
   letter-spacing: -0.04em;
   line-height: 1.2;
-  color: var(--vs-ink-soft);
-  /* Gives the wave's tiny rotateY/z lift its depth. */
-  perspective: 700px;
-  will-change: transform, opacity;
+  color: var(--vs-ink);
+  text-align: center;
+  white-space: normal;
 }
 
-.chars {
-  display: inline;
-  white-space: nowrap;
+/* Each split line is a block; the splitter sets its display inline, this
+   documents the contract so the lift has room to travel. */
+.name > span,
+.shortName > span {
+  position: relative;
 }
 
-/* Each character is its own inline-block so GSAP can translate, scale,
-   rotate and recolour it independently; letter-spacing between the
-   atomic inline boxes keeps the display tracking intact. */
-.char {
+/* The short name sits in the wordmark's slot, hidden until the exit fades it
+   in (Giats: opacity 0 until the completion handler). */
+.shortName {
+  opacity: 0;
+}
+
+/* The counter, bottom corner (Giats: bottom 2svh). Its own mask, so the
+   number lifts out of the corner the way Giats' progress lines do. */
+.progress {
+  position: absolute;
+  right: clamp(16px, 2.5vw, 40px);
+  bottom: calc(2svh + env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+}
+
+.progressValue {
   display: inline-block;
-  transform-origin: 50% 50%;
-  transform-style: preserve-3d;
-  will-change: transform, color;
+  min-width: 3.2em;
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--vs-ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  will-change: transform;
 }
-
-/* Reduced motion: the failsafe animation above is a visibility toggle,
-   not motion, so it stays; the wave itself is skipped in JS (the word
-   renders as a still, fully-ink wordmark). */

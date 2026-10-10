@@ -42,7 +42,7 @@ import styles from "./RouteTransition.module.css";
  * loader: a curtain of cream tiles (TileCurtain, var(--vs-bg)) sweeps
  * down over the current page from the top, staggered CENTER-OUT (middle
  * tiles first, outer tiles following), the destination PAGE NAME
- * (Pixelify Sans, title case, nothing else — ink on the cream) settles
+ * (Geist Pixel Square, title case, nothing else — ink on the cream) settles
  * in the middle while the route commits underneath, then the same tiles
  * continue downward off the screen to reveal the new page — one
  * continuous top-to-bottom flow. The startup PageLoader is a separate

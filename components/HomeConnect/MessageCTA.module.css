@@ -96,3 +96,29 @@
     gap: 12px;
   }
 }
+
+/* NIGHT — the CTA sits on the pale dusk-parchment shader. Its label inherits
+   the global light --vs-ink from GlassControl, so the dark ink is set here on
+   this control only. The prompt tag keeps its translucent surface; only its
+   glyph colour changes. The shared .vs-glass classes are not modified. */
+/* NIGHT — the lavender tint is poured over the warm-charcoal ground, which
+   darkens the composite. Dark ink on the Day-strength tint dropped to 4.1:1,
+   so the tint's alpha is raised in Night only (0.5 -> 0.65 idle, 0.56 -> 0.71
+   hover, the same +0.06 step as the base hover). The lavender colour, the ink
+   and the control's shape are unchanged. Composite contrast: 5.7:1 on the page
+   ground, 5.9:1 on the deep surface. */
+:global(html[data-theme="dark"]) :global(.vs-glass--clear).cta {
+  --glass-alpha: 0.65;
+}
+
+:global(html[data-theme="dark"]) :global(.vs-glass--clear).cta:hover {
+  --glass-alpha: 0.71;
+}
+
+:global(html[data-theme="dark"]) .cta {
+  color: #111111;
+}
+
+:global(html[data-theme="dark"]) .prompt {
+  color: #111111;
+}

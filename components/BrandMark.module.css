@@ -1,10 +1,4 @@
-@font-face {
-  font-family: "Geist Pixel Square Brand";
-  src: url("/fonts/geist-pixel/GeistPixel-Square.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
+/* Geist Pixel Square is declared once, in app/layout.tsx (--font-display-face). */
 
 /* The header measures only this compact footprint. The live glass object is
    anchored over it and expands rightward without moving the header row. */
@@ -85,7 +79,7 @@
   width: 100%;
   box-sizing: border-box;
   color: var(--vs-ink);
-  font-family: "Geist Pixel Square Brand", ui-monospace, monospace;
+  font-family: var(--font-display);
   font-size: 13px;
   font-weight: 500;
   line-height: 1;
@@ -119,7 +113,7 @@
   position: relative;
   z-index: 1;
   color: var(--vs-ink);
-  font-family: "Geist Pixel Square Brand", ui-monospace, monospace;
+  font-family: var(--font-display);
   font-size: 15px;
   font-weight: 400;
   letter-spacing: 0.015em;

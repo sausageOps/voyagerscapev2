@@ -398,6 +398,7 @@ export default function ColoniaPillPrototype({
                 onClick={handleRoutesClick}
                 aria-label={mobileMenuOpen ? "Close routes menu" : "Open routes menu"}
                 aria-expanded={mobileMenuOpen}
+                aria-controls="vs-mobile-nav"
                 data-cursor="link"
               >
                 <RollText text="ROUTES" />

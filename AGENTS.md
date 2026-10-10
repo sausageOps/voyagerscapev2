@@ -1,46 +1,29 @@
 # VOYAGERSCAPE — PROJECT RULES
 
-## TYPOGRAPHY LOCK
+## TYPOGRAPHY LOCK: APPROVED THREE-FAMILY SYSTEM
 
-The current typography is part of the approved Voyagerscape foundation.
+The site uses exactly three font families, one role each. The owner approved this system and it is the only permitted typography.
 
-DO NOT modify, replace, remove, rename, or regenerate:
-
-- Pixelify Sans
-
-- Inter Tight
-
-- JetBrains Mono
-
-DO NOT modify:
-
-- /public/fonts/
-
-- app/layout.tsx font-loading configuration
-
-- typography tokens in styles/globals.css
-
-Do not introduce a replacement font.
-
-Do not add Google Fonts.
-
-Do not use a similar substitute font.
-
-The following font families and roles are fixed:
-
-Pixelify Sans
-
-→ Display / hero typography
+Geist Pixel Square
+→ Brand and display: wordmark and navigation branding, page headings and titles, footer identity statement, loader typography, route-transition titles, display menu headings, deliberate brand moments. Token: `--font-display`. Weight 400 only.
 
 Inter Tight
-
-→ Body / general UI text
+→ Body and readable prose: paragraphs, descriptions, page notes, long-form content, informational pages, proportional interface text. Token: `--font-body`. Weight 400 only.
 
 JetBrains Mono
+→ Technical UI: command terminal and input, CRT and canvas readouts, metadata, counters, technical labels, footer metadata, technical CTAs, skip links. Tokens: `--font-mono` and the runtime variable `--font-mono-tech`. Weights 400 and 500.
 
-→ Technical / navigation / labels / terminal typography
+Rules:
 
-Any future task involving visual design must preserve the existing typography unless the user explicitly asks to change the typography.
+- Do not add, replace or introduce any other font family, Google Fonts, external font services, or similar substitute fonts.
+- Do not add a font file or weight unless live typography demonstrably needs it. Do not synthesise bold or italic for these families. Geist Pixel Square has one weight, so display rules request 400.
+- Each family is declared once, in `app/layout.tsx`, through `next/font/local`, and exposed as `--font-display-face`, `--font-body-face` and `--font-mono-tech`. Components use the role tokens in `styles/globals.css`; they do not load fonts of their own.
+- System fallbacks in the role tokens cover only glyphs or scripts the family does not carry, such as the multilingual greeting. They are not a substitute for the family.
+- Pixelify Sans and Handjet are retired. Do not reintroduce them, their files, or their declarations.
+- Licences: each family is SIL OFL 1.1. Keep `public/fonts/<family>/OFL.txt` and the attributions in `THIRD_PARTY_NOTICES.md` up to date with any font file change.
+- Any change to these roles, families, weights or font files needs explicit owner approval.
+
+Any future task involving visual design must preserve this typography unless the user explicitly asks to change the typography.
 
 ## SCOPE RULE
 
