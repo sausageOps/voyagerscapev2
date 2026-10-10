@@ -2,113 +2,163 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useUI } from "@/lib/ui-store";
-import { gsap, prefersReducedMotion } from "@/lib/motion";
+import { gsap, prefersReducedMotion, splitLines } from "@/lib/motion";
 import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
-import TileCurtain from "./TileCurtain";
+import { useSmoothScroll } from "@/components/SmoothScroll";
 import styles from "./PageLoader.module.css";
 
 const WORD = "Voyagerscape";
+/** The short name that rises into the wordmark's place (Giats: "Call me Giats"). */
+const SHORT_NAME = "Stay Curious";
 
-/* ---- Timing ---------------------------------------------------------
-   The shimmer is governed by READINESS, never by a fixed timeout: the
-   wave loops for as long as the document needs, with a small minimum
-   presentation hold so a fast load still shows one full ripple (and a
-   slow load simply keeps shimmering). */
+/* ---- Readiness ------------------------------------------------------
+   Exit is gated by READINESS, never by a fixed timer: the document must be
+   loaded (and the display font settled) AND the minimum hold must have
+   elapsed. The counter below is presentation only. */
 const MIN_HOLD_MS = 700;
 /** Reduced motion: hold briefly, then clear without animating. */
 const REDUCED_HOLD_MS = 200;
+/** The display font is awaited, but never longer than this. */
+const FONTS_MAX_WAIT_MS = 2500;
 
-/* ---- Shimmer wave (character-level, Motion Primitives reference) ----
-   One ripple travels through the word, staggered FROM THE CENTER — the
-   same direction the tile curtain exits, so the intro hands off to the
-   reveal as one continuous motion. Peak values follow the reference's
-   vocabulary (zDistance 10, xDistance 2, yDistance −2, rotateY ~10,
-   subtle scale) deliberately dialed back a notch for the cream/ink
-   editorial palette. */
-const WAVE_CHAR_DURATION = 0.45;
-const WAVE_CHAR_STAGGER = 0.05;
-const WAVE_REPEAT_DELAY = 0.55;
+/* ---- Counter (Giats Loader: a 0 → 100% count, bottom-right) ----------
+   While waiting for readiness the count climbs but is capped BELOW 100, so
+   it never claims completion before the document is ready. On readiness it
+   snaps to 100% (COUNTER_FINISH) and the exit begins. */
+const COUNTER_WAIT_CAP = 90;
+const COUNTER_WAIT_DURATION = 2.4;
+const COUNTER_WAIT_EASE = "power1.out";
+const COUNTER_FINISH = 0.4;
 
-/* ---- Exit: text → tiles handoff ----
-   The wave decelerates into a flat settle, the word fades with a slight
-   rise, and the EXISTING curtain exit begins while the fade is still
-   finishing — the reveal reads as the wave's continuation. */
-const EXIT_SETTLE = 0.3;
-const EXIT_FADE = 0.34;
-const EXIT_TILES_AT = 0.4;
+/* ---- Exit (Giats Loader.jsx onComplete choreography) ----------------
+   Giats runs these relative to the moment its counter reaches 100%. That is
+   T0 here. Values are Giats' own: lines lift `top: -12vw` over 1s
+   (power4.inOut); the window shrinks to 0.9 with a 1.3888888889vw radius
+   (0.8s delay, 0.5s, power2.inOut); the window then slides off to the left
+   (1.7s delay, 0.5s, power2.inOut). */
+const T0 = COUNTER_FINISH;
+const LIFT_Y = "-12vw";
+const LIFT_DURATION = 1;
+const LIFT_EASE = "power4.inOut";
+const SHRINK_AT = T0 + 0.8;
+const SHRINK_DURATION = 0.5;
+const SHRINK_SCALE = 0.9;
+const SHRINK_RADIUS = "1.3888888889vw";
+const EXIT_AT = T0 + 1.7;
+const EXIT_DURATION = 0.5;
+const EXIT_EASE = "power2.inOut";
+/** markLoaded fires as the window starts to leave: the page's entrances
+    (hero, header) rise into the space it uncovers. */
+const ENTRANCE_ARM_AT = EXIT_AT;
 
-/* ---- Tile exit (EXISTING VALUES — unchanged) ---- */
-const TILE_DURATION = 0.62;
-const TILE_STAGGER = 0.042;
-/** markLoaded fires this far into the tile exit (existing behaviour). */
-const ENTRANCE_ARM_AT = EXIT_TILES_AT + 0.3;
 /** Wall-clock failsafe: GSAP advances on rAF, which a background tab can
-    freeze entirely — this guarantees the loader is gone regardless. */
+    freeze entirely — this guarantees the loader is gone regardless. Counted
+    from the start of the exit. */
 const FORCE_COMPLETE_MS = 4000;
 
 const SCROLL_LOCK_KEY = "page-loader";
 
 /**
- * STARTUP LOADER — Voyagerscape shimmer intro + vertical tile curtain.
+ * STARTUP LOADER — Voyagerscape, in the original Giats loader's choreography.
  *
- * The first-entry experience in two stages:
+ * Ported from Giats `src/components/dom/Loader.jsx`:
+ *   • a counter that climbs to 100% in the bottom corner,
+ *   • the name, which lifts out of its mask line by line,
+ *   • the window that shrinks to a rounded card and slides off to the left,
+ *     uncovering the page beneath.
  *
- *   1. INTRO — the cream curtain (TileCurtain) covers the viewport from
- *      the very first paint (the SSR HTML draws it, so no JS is required
- *      to be covered), and a single centered “Voyagerscape” wordmark
- *      carries a subtle character-level shimmer wave (Motion Primitives
- *      Text Shimmer Wave, adapted to GSAP and the site's tokens: chars
- *      rest at --vs-ink-soft and ripple to --vs-ink with a tiny 3D lift,
- *      center-out). The wave loops for as long as the document needs —
- *      it is gated by readiness, not by a timer.
- *
- *   2. REVEAL — when the document is complete AND the minimum hold has
- *      elapsed, the wave settles flat, the word fades with a slight
- *      rise, and the EXISTING vertical tile exit takes over unchanged
- *      (0.62s per tile, 0.042 center-out stagger, sine.inOut). Nothing
- *      about the tile system changes — this loader simply hands off to
- *      it.
+ * Deliberate adaptations (see the report accompanying this change):
+ *   • Readiness-gated, not the five-second fixed count. The counter is
+ *     capped below 100% until the document is ready.
+ *   • The window is a dedicated, scoped layer (`.panel`). Giats moves the
+ *     page's own `<main>` and `<header>` directly; V2 controls both, so the
+ *     page is left untouched and the loader owns the motion.
+ *   • The short name is "Stay Curious" (approved copy), not Giats' wording.
+ *     It takes the wordmark's place as the wordmark lifts out, as Giats'
+ *     short name does.
  *
  * Contracts preserved from the previous loader:
- *   • `markLoaded()` still arms the hero/header entrance timelines (the
- *     UI store's `loaded` flag), firing ~0.3s into the tile exit: the
- *     entrance timelines all start from opacity 0, so the hero rises
- *     THROUGH the lifting curtain — no flash, one continuous reveal.
- *   • `role="status"` region stays (the word itself is the label).
+ *   • `markLoaded()` arms the hero/header entrances. The store's `loaded`
+ *     flag gates them, fired as the window leaves.
+ *   • Scroll is locked (ref-counted, `smooth` so the single Lenis engine is
+ *     stopped too) and released on completion AND on unmount.
+ *   • The reduced-motion branch clears instantly after a short hold.
+ *   • Two fail-safes: a wall-clock timer, and a pure-CSS failsafe on the
+ *     root that removes the cover after 6s even if scripts never run.
  *
- * Effect discipline: the effect runs ONCE per mount. The UI store's
- * context value is recreated on every state change (so `markLoaded` has a
- * new identity after any dispatch); listing it as a dependency would
- * tear down and restart the timelines on every store update. The
- * callback is read through a ref instead, and fires at most once.
- *
- * Safety: scroll is locked (ref-counted, released on complete AND on
- * unmount), a wall-clock timer force-completes even if the frame
- * pipeline is frozen, and a pure-CSS failsafe in PageLoader.module.css
- * hides the curtain after 6s even if scripts never run — the loader can
- * never permanently cover the site.
+ * Effect discipline: the effect runs ONCE per mount. The UI store's context
+ * value changes on every dispatch, so `markLoaded` and the scroll controls
+ * are read through refs instead of being effect dependencies.
  */
 export default function PageLoader() {
   const { markLoaded } = useUI();
-  /* Always-fresh callback, never an effect dependency (see header). */
+  const scroll = useSmoothScroll();
+
+  /* Always-fresh values, never effect dependencies (see header). */
   const markLoadedRef = useRef(markLoaded);
   markLoadedRef.current = markLoaded;
+  const scrollRef = useRef(scroll);
+  scrollRef.current = scroll;
 
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const wordRef = useRef<HTMLSpanElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const nameRef = useRef<HTMLHeadingElement | null>(null);
+  const shortRef = useRef<HTMLHeadingElement | null>(null);
+  const counterRef = useRef<HTMLSpanElement | null>(null);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
     const reduced = prefersReducedMotion();
     const start = performance.now();
+
+    const root = rootRef.current;
+    const panel = panelRef.current;
+    const name = nameRef.current;
+    const shortEl = shortRef.current;
+    const counterEl = counterRef.current;
+
+    /* Name lines, split after the font settles. Falls back to the whole name
+       as one line if the split has not run. */
+    let lines: HTMLElement[] = name ? [name] : [];
+    let shortLines: HTMLElement[] = shortEl ? [shortEl] : [];
+
+    const counterState = { value: 0 };
+    let counter: gsap.core.Tween | null = null;
+    let exit: gsap.core.Timeline | null = null;
+
     let exitTimer = 0;
     let forceTimer = 0;
-    let wave: gsap.core.Timeline | null = null;
-    let exit: gsap.core.Timeline | null = null;
+    let fontTimer = 0;
+    let scheduled = false;
     let finished = false;
     let loadedFired = false;
+    let cancelled = false;
+    let readyFired = false;
+    let fontsDone = false;
 
-    lockScroll(SCROLL_LOCK_KEY);
+    /* Hold the page still, and freeze the single Lenis engine too. */
+    // If the layout ceiling already passed (slow or failed hydration), the
+    // page was released; do not lock it again. Otherwise hand the lock from the
+    // pre-hydration CSS lock to the JS lock. `expired` is never overwritten.
+    const htmlEl = document.documentElement;
+    const ceilingPassed = htmlEl.getAttribute("data-loader") === "expired";
+    if (!ceilingPassed) {
+      lockScroll(SCROLL_LOCK_KEY, { smooth: true });
+      if (htmlEl.getAttribute("data-loader") === "pending") {
+        htmlEl.setAttribute("data-loader", "owned");
+      }
+    }
+    // The ceiling fires while the loader is still waiting (for example, a
+    // load event that never comes). Release the JS claim too, so Lenis
+    // restarts and the page is scrollable. The loader's own gate is unchanged.
+    const onCeiling = () => unlockScroll(SCROLL_LOCK_KEY);
+    window.addEventListener("vs:loader-expired", onCeiling);
+
+    const renderCounter = () => {
+      if (counterRef.current) {
+        counterRef.current.textContent = `${Math.round(counterState.value)}%`;
+      }
+    };
 
     const fireLoaded = () => {
       if (loadedFired) return;
@@ -119,135 +169,157 @@ export default function PageLoader() {
     const complete = () => {
       if (finished) return;
       finished = true;
-      wave?.kill();
+      counter?.kill();
       exit?.kill();
       window.clearTimeout(forceTimer);
       unlockScroll(SCROLL_LOCK_KEY);
+      // The layout script's ceiling must not fire after this, and the CSS
+      // lock states no longer apply.
+      document.documentElement.setAttribute("data-loader", "done");
       setDone(true);
       fireLoaded();
     };
 
-    /* Resolve the shimmer's two token colors once (GSAP tweens need
-       concrete values; CSS keeps the same pair as the paint baseline). */
-    const rootStyle = getComputedStyle(document.documentElement);
-    const ink = rootStyle.getPropertyValue("--vs-ink").trim() || "#111111";
-    const inkSoft = rootStyle.getPropertyValue("--vs-ink-soft").trim() || "#6e6a64";
+    /* ---- The exit (Giats choreography, T0 = counter at 100%) ---- */
+    const startExit = () => {
+      if (finished) return;
+      const currentRoot = rootRef.current;
+      const currentPanel = panelRef.current;
+      if (reduced || !currentRoot || !currentPanel) {
+        // Reduced motion (or no nodes): clean, instant clear.
+        complete();
+        return;
+      }
 
-    /* ---- THE WAVE: loops until readiness, center-out. ---- */
-    const word = wordRef.current;
-    const chars =
-      word && !reduced
-        ? gsap.utils.toArray<HTMLElement>(word.querySelectorAll("[data-shimmer-char]"))
-        : [];
-    if (chars.length > 0) {
-      wave = gsap.timeline({ repeat: -1, repeatDelay: WAVE_REPEAT_DELAY });
-      wave.fromTo(
-        chars,
-        { color: inkSoft, x: 0, y: 0, z: 0, scale: 1, rotateY: 0 },
-        {
-          color: ink,
-          x: 2,
-          y: -2,
-          z: 10,
-          scale: 1.05,
-          rotateY: 8,
-          duration: WAVE_CHAR_DURATION,
-          ease: "sine.inOut",
-          /* repeat+yoyo inside the stagger: each character rises to its
-             peak and settles back, offset per character — the ripple. */
-          stagger: { each: WAVE_CHAR_STAGGER, from: "center", repeat: 1, yoyo: true },
-        },
+      counter?.kill();
+      counter = null;
+
+      // The cover can already be hidden by its CSS fail-safe (6s) if hydration
+      // was slower than that. Then the page is visible under the cover, and the
+      // top-of-page reset below would jump it, so it is skipped.
+      const coverShown = getComputedStyle(currentRoot).visibility !== "hidden";
+
+      const tl = gsap.timeline({ onComplete: complete });
+      exit = tl;
+      forceTimer = window.setTimeout(complete, FORCE_COMPLETE_MS);
+
+      // 0. Counter reaches 100% (Giats' count completes here).
+      tl.to(
+        counterState,
+        { value: 100, duration: COUNTER_FINISH, ease: "power2.out", onUpdate: renderCounter },
+        0,
       );
-    } else if (word) {
-      /* Reduced motion: a still, fully-ink wordmark. No per-character
-         animation of any kind. */
-      gsap.set(word.querySelectorAll("[data-shimmer-char]"), { color: ink });
-    }
 
-    const finish = () => {
-      const elapsed = performance.now() - start;
-      const minimum = reduced ? REDUCED_HOLD_MS : MIN_HOLD_MS;
-      const wait = Math.max(0, minimum - elapsed);
+      // 0b. Pages open at the top, under full cover (Giats: lenis.scrollTo(0)).
+      if (coverShown) {
+        tl.call(() => scrollRef.current.scrollTo(0, { immediate: true }), [], 0);
+      }
 
-      exitTimer = window.setTimeout(() => {
-        const root = rootRef.current;
-        if (!root || reduced) {
-          // Reduced motion (or no curtain nodes): clean, instant clear.
-          complete();
-          return;
-        }
+      // T0. Giats' onComplete: the name and the counter lift out of their masks.
+      if (lines.length > 0) {
+        tl.to(lines, { y: LIFT_Y, duration: LIFT_DURATION, ease: LIFT_EASE }, T0);
+      }
+      if (counterEl) {
+        tl.to(counterEl, { y: LIFT_Y, duration: LIFT_DURATION, ease: LIFT_EASE }, T0);
+      }
+      // The short name fades in and its lines rise into the wordmark's place.
+      if (shortEl) {
+        tl.to(shortEl, { opacity: 1, duration: 0.5 }, T0);
+      }
+      if (shortLines.length > 0) {
+        tl.to(shortLines, { y: 0, duration: LIFT_DURATION, ease: LIFT_EASE }, T0);
+      }
 
-        const tiles = root.querySelectorAll("[data-tile]");
+      // The window shrinks to a rounded card...
+      tl.to(
+        currentPanel,
+        {
+          scale: SHRINK_SCALE,
+          borderRadius: SHRINK_RADIUS,
+          duration: SHRINK_DURATION,
+          ease: EXIT_EASE,
+        },
+        SHRINK_AT,
+      );
 
-        // The wave stops here — readiness has been reached. The exit
-        // settles every character from wherever the ripple left it.
-        wave?.kill();
-        wave = null;
+      // ...then slides off to the left, uncovering the page.
+      tl.to(
+        currentPanel,
+        { xPercent: -100, duration: EXIT_DURATION, ease: EXIT_EASE },
+        EXIT_AT,
+      );
+      // Pointer events pass through only once the window is leaving.
+      tl.set(currentRoot, { pointerEvents: "none" }, EXIT_AT);
 
-        exit = gsap.timeline({ onComplete: complete });
-        forceTimer = window.setTimeout(complete, FORCE_COMPLETE_MS);
-
-        // 1. Characters settle to flat, full ink — the wave's deceleration.
-        if (chars.length > 0) {
-          exit.to(
-            chars,
-            {
-              color: ink,
-              x: 0,
-              y: 0,
-              z: 0,
-              scale: 1,
-              rotateY: 0,
-              duration: EXIT_SETTLE,
-              ease: "power2.out",
-              stagger: 0.012,
-              overwrite: "auto",
-            },
-            0,
-          );
-        }
-
-        // 2. The wordmark fades with a slight rise, dissolving into the
-        //    curtain that is about to carry the reveal.
-        if (word) {
-          exit.to(
-            word,
-            { opacity: 0, y: -10, duration: EXIT_FADE, ease: "power2.in" },
-            Math.max(0, EXIT_SETTLE - 0.06),
-          );
-        }
-
-        // 3. The EXISTING curtain exit — values untouched. It begins
-        //    while the fade is still finishing, so the tile reveal reads
-        //    as the wave's continuation.
-        if (tiles.length > 0) {
-          exit.to(
-            tiles,
-            {
-              yPercent: 100,
-              duration: TILE_DURATION,
-              ease: "sine.inOut",
-              stagger: { each: TILE_STAGGER, from: "center" },
-            },
-            EXIT_TILES_AT,
-          );
-        }
-
-        // 4. Arm the page's entrance ~0.3s into the tile exit (existing
-        //    behaviour): every entrance starts from opacity 0, so the
-        //    hero rises THROUGH the lifting curtain.
-        exit.call(fireLoaded, [], ENTRANCE_ARM_AT);
-      }, wait);
+      // Arm the page's entrances as the window leaves (existing contract).
+      tl.call(fireLoaded, [], ENTRANCE_ARM_AT);
     };
 
-    if (document.readyState === "complete") finish();
-    else window.addEventListener("load", finish, { once: true });
+    /* ---- Readiness gate: document loaded AND fonts settled ---- */
+    const tryFinish = () => {
+      if (cancelled || scheduled || !readyFired || !fontsDone) return;
+      scheduled = true;
+      const elapsed = performance.now() - start;
+      const minimum = reduced ? REDUCED_HOLD_MS : MIN_HOLD_MS;
+      exitTimer = window.setTimeout(startExit, Math.max(0, minimum - elapsed));
+    };
+
+    const onLoad = () => {
+      readyFired = true;
+      tryFinish();
+    };
+
+    const settleFonts = () => {
+      if (cancelled || fontsDone) return;
+      fontsDone = true;
+      window.clearTimeout(fontTimer);
+      if (name && !reduced) {
+        const parts = splitLines(name);
+        if (parts.length > 0) lines = parts;
+      }
+      if (shortEl && !reduced) {
+        const parts = splitLines(shortEl);
+        if (parts.length > 0) {
+          shortLines = parts;
+          // Giats starts the short name's lines 12vw below their slot.
+          gsap.set(parts, { y: "12vw" });
+        }
+      }
+      tryFinish();
+    };
+
+    /* ---- The counter climbs while the document loads (capped below 100) ---- */
+    if (reduced) {
+      counterState.value = 100;
+      renderCounter();
+      fontsDone = true;
+    } else {
+      counter = gsap.to(counterState, {
+        value: COUNTER_WAIT_CAP,
+        duration: COUNTER_WAIT_DURATION,
+        ease: COUNTER_WAIT_EASE,
+        onUpdate: renderCounter,
+      });
+      const fonts = typeof document !== "undefined" ? document.fonts : undefined;
+      fontTimer = window.setTimeout(settleFonts, FONTS_MAX_WAIT_MS);
+      if (fonts?.ready) {
+        fonts.ready.then(settleFonts, settleFonts);
+      } else {
+        settleFonts();
+      }
+    }
+
+    if (document.readyState === "complete") onLoad();
+    else window.addEventListener("load", onLoad, { once: true });
 
     return () => {
+      cancelled = true;
       window.clearTimeout(exitTimer);
       window.clearTimeout(forceTimer);
-      window.removeEventListener("load", finish);
-      wave?.kill();
+      window.clearTimeout(fontTimer);
+      window.removeEventListener("load", onLoad);
+      window.removeEventListener("vs:loader-expired", onCeiling);
+      counter?.kill();
       exit?.kill();
       // Never leave the page locked, whatever ended this loader.
       unlockScroll(SCROLL_LOCK_KEY);
@@ -258,19 +330,22 @@ export default function PageLoader() {
 
   return (
     <div className={styles.root} ref={rootRef} role="status" aria-live="polite">
-      <TileCurtain />
-      <span className={styles.word} ref={wordRef} data-shimmer-word>
-        {/* The animated characters are decorative; the word itself stays
-            intact for assistive tech. */}
-        <span className={styles.chars} aria-hidden="true">
-          {WORD.split("").map((ch, i) => (
-            <span key={`${WORD}-${i}`} className={styles.char} data-shimmer-char>
-              {ch}
-            </span>
-          ))}
-        </span>
-        <span className="vs-sr-only">{WORD}</span>
-      </span>
+      <div className={styles.panel} ref={panelRef}>
+        {/* Rendered once and never reconciled again: the effect above splits
+            its text into lines directly. The text stays in the server HTML,
+            so the first paint is already covered and already names the site. */}
+        <h2 className={styles.name} ref={nameRef}>
+          {WORD}
+        </h2>
+        <h2 className={styles.shortName} ref={shortRef}>
+          {SHORT_NAME}
+        </h2>
+        <div className={styles.progress}>
+          <span className={styles.progressValue} ref={counterRef} aria-hidden="true">
+            0%
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

@@ -9,8 +9,8 @@
   overflow: hidden;
   isolation: isolate;
   border-radius: 18px;
-  background: var(--vs-frame-bg);
-  transition: background-color var(--t-fast) var(--e-out);
+  /* Transparent so the global GiatsBackground shows through. */
+  background: transparent;
 }
 
 /* Static frame surface, separate from any optional visual effect. */
@@ -24,7 +24,7 @@
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  background: var(--vs-frame-bg);
+  background: transparent;
 }
 
 .canvas > :not(.atmosphere) {

@@ -1,0 +1,79 @@
+/*
+ * Giats page frame, transcribed from the source's `section` rule
+ * (src/styles/global.scss): four inset box-shadows painted as solid bands,
+ * plus a thin outer ring. The bands are sized in vw so they scale with the
+ * viewport, as in the source:
+ *   desktop  columns-gap 20px / margin 48px at 1440px wide
+ *   mobile   columns-gap 44px / margin 44px at 812px wide (max-width: 812px)
+ *
+ * Differences from the source, all deliberate:
+ *   - one fixed viewport overlay, not one per <section>. Voyagerscape has a
+ *     single page box and no global `section` styling;
+ *   - the band colour is --vs-frame-bg (the existing V2 frame surface), not
+ *     the source's --white;
+ *   - it is scoped to this class, so no global element selector is added.
+ */
+
+.frame {
+  /* Band colour. Day: the existing frame paper. Night: the deep warm-charcoal
+     surface, scoped here so --vs-frame-bg (shared by terminal, mobile menu and
+     cursor) keeps its value. */
+  --gf-band: var(--vs-frame-bg);
+  --gf-gap: calc(20 * 100vw / 1440);
+  --gf-margin: calc(48 * 100vw / 1440);
+  --gf-ring: calc(var(--gf-gap) * 0.045);
+
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  box-shadow:
+    inset 0 calc(var(--gf-gap) * 2.1) 0 0 var(--gf-band),
+    inset calc(var(--gf-margin) * -1.05) 0 0 0 var(--gf-band),
+    inset 0 calc(var(--gf-gap) * -2.1) 0 0 var(--gf-band),
+    inset calc(var(--gf-margin) * 1.05) 0 0 0 var(--gf-band),
+    0 0 0 var(--gf-ring) var(--gf-band);
+}
+
+:global(html[data-theme="dark"]) .frame {
+  /* Night: the deep frame surface (warm charcoal), read from the token. */
+  --gf-band: var(--vs-bg-deep);
+}
+
+@media (max-width: 812px) {
+  .frame {
+    --gf-gap: calc(44 * 100vw / 812);
+    --gf-margin: calc(44 * 100vw / 812);
+    --gf-ring: calc(var(--gf-gap) * 0.04);
+
+    box-shadow:
+      inset 0 calc(var(--gf-gap) * 2.1) 0 0 var(--gf-band),
+      inset calc(var(--gf-margin) * -1.0265) 0 0 0 var(--gf-band),
+      inset 0 calc(var(--gf-gap) * -2.1) 0 0 var(--gf-band),
+      inset calc(var(--gf-margin) * 1.0265) 0 0 0 var(--gf-band),
+      0 0 0 var(--gf-ring) var(--gf-band);
+  }
+}
+
+/*
+ * Grain: the source's `#layout::before` overlay, using public/other/noise.png
+ * (100×100 tile, copied from the source; SHA-256 15e3c6bc…339c).
+ * The source's `animation: noise 1s steps(2) infinite` names a @keyframes
+ * rule that does not exist in the source, so the browser ignores it and the
+ * grain is static there. It is reproduced static here. Opacity follows the
+ * source's 0.65, held in a variable because it should be checked against the
+ * pale Day palette.
+ */
+.grain {
+  --vs-grain-opacity: 0.65;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: calc(100% + 20rem);
+  height: calc(100% + 20rem);
+  pointer-events: none;
+  background-image: url("/other/noise.png");
+  opacity: var(--vs-grain-opacity);
+}

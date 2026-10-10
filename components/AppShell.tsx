@@ -7,11 +7,14 @@ import VisualModeProvider from "@/components/VisualModeProvider";
 import SmoothScroll from "@/components/SmoothScroll";
 import SiteHeader from "@/components/SiteHeader";
 import Cursor from "@/components/Cursor";
+import Scrollbar from "@/components/Scrollbar";
 import PageLoader from "@/components/PageLoader";
 import RouteTransition, { RouteTransitionProvider } from "@/components/RouteTransition";
 import SiteFooter from "@/components/SiteFooter";
 import HomeCanvas from "@/components/HomeCanvas";
 import AppBackdrop from "@/components/AppBackdrop";
+import GiatsBackground from "@/components/GiatsBackground/GiatsBackground";
+import GiatsFrame from "@/components/GiatsFrame/GiatsFrame";
 import WebsiteTosStage from "@/components/TosExperiment/WebsiteTosStage";
 import type { PanelContent } from "@/components/TosExperiment/TosSideSurface";
 import WebsiteShell from "@/components/TosExperiment/WebsiteShell";
@@ -98,6 +101,8 @@ function AppFrame({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <AppBackdrop />
+      <GiatsBackground />
+      <GiatsFrame />
       <PageLoader />
       <SiteHeader />
       <WebsiteTosStage
@@ -114,6 +119,7 @@ function AppFrame({ children }: { children: ReactNode }) {
           <SiteFooter />
         </WebsiteShell>
       </WebsiteTosStage>
+      <Scrollbar />
       <Cursor />
     </div>
   );

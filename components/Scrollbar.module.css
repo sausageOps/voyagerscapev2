@@ -1,0 +1,51 @@
+/* Right-edge scroll indicator (Giats original, converted from SCSS to plain
+   CSS: the project has no Sass). Colour comes from the --vs-scrollbar-thumb
+   token, which follows --vs-ink so the thumb stays near-white in Day and Night
+   under mix-blend-mode: difference. */
+
+.scrollbar {
+  position: fixed;
+  top: 10svh;
+  right: 1vw;
+  z-index: 100;
+  width: 0.25vw;
+  height: 80svh;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: difference;
+  border-radius: 0.15vw;
+  background-color: #f0f4f11a;
+}
+
+@media (max-width: 812px) {
+  .scrollbar {
+    width: 0.65vw;
+  }
+}
+
+.inner {
+  position: absolute;
+  top: 0;
+  width: 0.25vw;
+  height: 6svh;
+  background-color: var(--vs-scrollbar-thumb, #f0f4f1);
+  border: none;
+  border-radius: 0.15vw;
+}
+
+@media (max-width: 812px) {
+  .inner {
+    width: 0.65vw;
+  }
+}
+
+/* DAY ONLY. Under mix-blend-mode: difference a dark ink thumb inverts into a
+   pale tint on the cream page, so Day uses a normal blend and the thumb shows
+   its own colour: --vs-ink (#111111), the Day primary ink token. Night keeps
+   the base rules above unchanged. Scoped to this component's classes only. */
+:global(html:not([data-theme="dark"])) .scrollbar {
+  mix-blend-mode: normal;
+  /* Rail: low-opacity Day ink, so it reads against the cream page. */
+  background-color: rgba(17, 17, 17, 0.14);
+  background-color: color-mix(in srgb, var(--vs-ink) 14%, transparent);
+}

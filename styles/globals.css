@@ -33,6 +33,10 @@
   --vs-email-bg: #fffefc;
   --vs-email-ink: #111111;
 
+  /* Right-edge scroll indicator (Scrollbar). Follows the ink token so the
+     difference-blended thumb reads near-white in both Day and Night. */
+  --vs-scrollbar-thumb: var(--vs-ink);
+
   --vs-terminal-bg: #fffdf9;
   --vs-terminal-border: rgba(17, 17, 17, 0.12);
   --vs-terminal-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.92), -18px 0 48px rgba(20, 18, 15, 0.12), -4px 0 14px rgba(20, 18, 15, 0.07);
@@ -51,9 +55,16 @@
   --surface-card: rgba(255, 253, 249, 0.72);
   --surface-card-hover: rgba(255, 253, 249, 0.94);
 
-  /* ---- Type ---- */
-  --font-display: var(--font-display-face), var(--font-grotesk), "Helvetica Neue", Arial, sans-serif;
-  --font-body: var(--font-grotesk), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* ---- Type ----
+     Three approved families, one role each (AGENTS.md, TYPOGRAPHY LOCK).
+     app/layout.tsx declares each family once and sets its variable.
+       display  Geist Pixel Square  brand, titles, headings, loader, menu headings
+       body     Inter Tight         paragraphs, descriptions, readable prose
+       mono     JetBrains Mono      terminal, readouts, metadata, technical UI
+     The system stacks after each family only cover glyphs or scripts that
+     family does not carry (display falls back to the body family first). */
+  --font-display: var(--font-display-face), var(--font-body-face), "Helvetica Neue", Arial, sans-serif;
+  --font-body: var(--font-body-face), "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono: var(--font-mono-tech), ui-monospace, "SF Mono", Menlo, monospace;
 
   --fs-micro: 0.6875rem;   /* 11px technical labels */
@@ -106,13 +117,18 @@
    ========================================================= */
 html[data-theme="dark"],
 html.dark {
-  /* ---- Colour (Dark Theme) ---- */
-  --vs-bg: #121211;
-  --vs-bg-deep: #0d0d0c;
-  --vs-bg-sub: #171716;
+  /* ---- Colour (Dark Theme) ----
+     Warm charcoal, not black. Main ground, deep frame surface and secondary
+     (footer) surface step up in small increments so the shader's line
+     texture stays visible. Text tiers are checked against all three grounds
+     (WCAG AA): ink >= 9.4:1, soft >= 5.3:1, faint >= 3.5:1. Faint is kept to
+     decorative and placeholder text; body and label text uses soft or ink. */
+  --vs-bg: #292824;
+  --vs-bg-deep: #34322D;
+  --vs-bg-sub: #403D36;
   --vs-ink: #f4efe6;
-  --vs-ink-soft: #a8a298;
-  --vs-ink-faint: #6c675f;
+  --vs-ink-soft: #bdb6aa;
+  --vs-ink-faint: #999287;
   --vs-line: rgba(244, 239, 230, 0.14);
   --vs-line-soft: rgba(244, 239, 230, 0.08);
 
@@ -181,6 +197,42 @@ html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: auto;
   background: var(--vs-bg);
+}
+
+/* ---- Initial scroll lock (loader handoff) -------------------------------
+   app/layout.tsx sets html[data-loader] before the first paint. The states:
+     pending  the cover is up and the page must not scroll. The CSS lock below
+              holds it with no JavaScript needed.
+     owned    PageLoader holds the JS scroll lock. No CSS lock is added.
+     done     the loader has finished. Nothing here applies.
+     expired  the 10s ceiling passed before the loader finished. The lock is
+              released even if the JS lock is still held, and the cover hides
+              (see PageLoader.module.css).
+   No attribute means JavaScript did not run. The JS-off lock and the 6s
+   cover fail-safe are in PageLoader.module.css (they need the cover's class).
+   Keep this block in step with the loader and the layout script. */
+html[data-loader="pending"] {
+  overflow: hidden;
+}
+
+html[data-loader="expired"],
+html[data-loader="expired"] body {
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+}
+
+/* Native scrollbar hidden on the real scrolling element (the document's
+   <html>), only while the Scrollbar indicator is mounted (it adds this
+   class). Scrolling itself is untouched. */
+html.vs-custom-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html.vs-custom-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 body {

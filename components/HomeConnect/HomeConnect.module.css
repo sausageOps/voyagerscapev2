@@ -204,6 +204,14 @@
     left: 50%;
     z-index: 80;
   }
+
+  /* Mobile menu open only: the page shrinks behind the menu, and this
+     fixed sheet sits in that scaled page, so its left edge would peek out
+     beside the menu. Hide it while the menu is open. Recorder state is
+     untouched and the sheet returns as soon as the menu closes. */
+  :global([data-mobile-menu-open="true"]) .panelFloat {
+    visibility: hidden;
+  }
 }
 
 @media (max-width: 430px) {
@@ -227,4 +235,12 @@
     top: 43%;
     z-index: 1;
   }
+}
+
+/* NIGHT — the hero's greeting email sits directly on the warm-charcoal shader
+   in a translucent wash, so it takes the Night ink token (warm ivory). Scoped
+   to this element; the global email tokens and the mobile menu's email chip
+   are untouched. */
+:global(html[data-theme="dark"]) .sayHiText {
+  color: var(--vs-ink);
 }

@@ -161,6 +161,7 @@ export default function SiteHeader() {
       <div className={styles.desktopContainer} data-header-item>
         <ColoniaPillPrototype
           onRoutesClick={() => {
+            if (!loaded && !mobileMenuOpen) return; // Giats: no menu until the loader is done
             setTerminalOpen(false);
             setMobileMenuOpen(!mobileMenuOpen);
           }}
@@ -172,6 +173,7 @@ export default function SiteHeader() {
         <MobilePillHeader
           mobileMenuOpen={mobileMenuOpen}
           onMenuClick={() => {
+            if (!loaded && !mobileMenuOpen) return; // Giats: no menu until the loader is done
             setTerminalOpen(false);
             setMobileMenuOpen(!mobileMenuOpen);
           }}

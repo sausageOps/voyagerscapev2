@@ -4,7 +4,7 @@
    var(--vs-bg), animated translateY center-out by the
    provider). This layer positions it over the page, stacks
    it above the chrome, and carries the destination name in
-   Pixelify Sans, ink on the cream curtain (the same
+   Geist Pixel Square, ink on the cream curtain (the same
    ink-on-cream pairing as the startup loader's identity).
    Transform-only GSAP. No pixels, no loading UI of any kind.
    ========================================================= */
@@ -25,7 +25,7 @@
   opacity: 0;
 }
 
-/* Destination page name — Pixelify Sans, title case, nothing else; ink
+/* Destination page name — Geist Pixel Square, title case, nothing else; ink
    on the cream curtain (the startup loader's identity uses the same
    pairing). */
 .name {

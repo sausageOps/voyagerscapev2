@@ -56,6 +56,57 @@ export function splitChars(el: HTMLElement): HTMLElement[] {
   return chars;
 }
 
+/**
+ * Splits an element's text into visual LINES (not characters), so each line
+ * can be masked and moved as one unit — the same job SplitType's `lines` mode
+ * does for the original Giats loader, implemented locally with no dependency.
+ *
+ * Words are measured after layout, so the groups match how the browser
+ * actually wrapped the text. Each line is a block `<span>`. The element's
+ * text content is preserved exactly (spaces included). Returns [] when the
+ * element has no text. Call it once the font is settled, so wrapping is final.
+ */
+export function splitLines(el: HTMLElement): HTMLElement[] {
+  const text = (el.textContent ?? "").replace(/\s+/g, " ").trim();
+  if (!text) return [];
+
+  const words = text.split(" ");
+  el.textContent = "";
+  const wordEls = words.map((word, i) => {
+    const span = document.createElement("span");
+    span.textContent = word;
+    span.style.display = "inline-block";
+    span.style.whiteSpace = "nowrap";
+    el.appendChild(span);
+    if (i < words.length - 1) el.appendChild(document.createTextNode(" "));
+    return span;
+  });
+
+  // Group words by their rendered top edge (siblings share one offsetParent).
+  const groups: HTMLElement[][] = [];
+  let lastTop = Number.NaN;
+  for (const wordEl of wordEls) {
+    const top = wordEl.offsetTop;
+    if (groups.length === 0 || Math.abs(top - lastTop) > 1) {
+      groups.push([]);
+      lastTop = top;
+    }
+    groups[groups.length - 1].push(wordEl);
+  }
+
+  el.textContent = "";
+  return groups.map((group) => {
+    const line = document.createElement("span");
+    line.style.display = "block";
+    group.forEach((wordEl, i) => {
+      line.appendChild(wordEl);
+      if (i < group.length - 1) line.appendChild(document.createTextNode(" "));
+    });
+    el.appendChild(line);
+    return line;
+  });
+}
+
 /** Entrance: characters settle from a small offset with a hint of blur. */
 export function revealChars(
   chars: HTMLElement[],

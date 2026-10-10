@@ -47,3 +47,17 @@
   max-width: 100%;
   margin-top: clamp(16px, 4svh, 40px);
 }
+
+/* NIGHT — the page sits on the warm-charcoal shader. Primary text takes the
+   Night ink token and secondary text takes the Night soft-ink token, both
+   checked for AA on the charcoal grounds (globals.css). Scoped to this page's
+   own copy (Art, About, Privacy, not-found). */
+:global(html[data-theme="dark"]) .title {
+  color: var(--vs-ink);
+}
+
+:global(html[data-theme="dark"]) .index,
+:global(html[data-theme="dark"]) .note,
+:global(html[data-theme="dark"]) .hint {
+  color: var(--vs-ink-soft);
+}

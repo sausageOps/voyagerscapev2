@@ -3,13 +3,7 @@
    Art Page Lab — Direct Visual Match to Colonia Zacamil
    ========================================================= */
 
-@font-face {
-  font-family: "Geist Pixel Square";
-  src: url("/fonts/geist-pixel/GeistPixel-Square.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
+/* Geist Pixel Square is declared once, in app/layout.tsx (--font-display-face). */
 
 .wrapper {
   position: relative;
@@ -198,7 +192,7 @@
 .watchLabel,
 .routesLabel,
 .vSlashLabel {
-  font-family: "Geist Pixel Square", ui-monospace, monospace;
+  font-family: var(--font-display);
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.06em;

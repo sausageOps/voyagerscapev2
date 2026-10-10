@@ -75,6 +75,17 @@
     20px;
 }
 
+/* NIGHT — the terminal keeps its own Night palette. Its secondary and faint
+   text were tuned on its own #171716 surface, so those two tokens are pinned
+   here for the terminal only. The shared Night soft and faint tokens (page
+   ground) moved with the warm-charcoal palette; this stops them reaching the
+   terminal. Day is untouched. */
+:global(html[data-theme="dark"]) .contentLayer,
+:global(html.dark) .contentLayer {
+  --vs-ink-soft: #a8a298;
+  --vs-ink-faint: #6c675f;
+}
+
 /* Night-mode placeholder overrides the shared input's muted pseudo text
    with the existing cream token. Force both authored color and opacity so
    browser placeholder defaults cannot dim it; Day remains untouched. */

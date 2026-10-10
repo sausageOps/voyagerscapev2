@@ -6,9 +6,9 @@ import styles from "./HomeCanvas.module.css";
 /**
  * HOMEPAGE CANVAS — the rounded full-viewport frame.
  *
- * The frame and its atmosphere layer retain the theme's static surface color
- * (`--vs-frame-bg`). The atmosphere layer is intentionally kept as a clipped,
- * inert base surface; no animated/WebGL background is mounted here.
+ * The frame and its atmosphere layer are transparent. The global
+ * GiatsBackground (mounted once in AppShell) shows through, and the frame's
+ * solid edge bands come from GiatsFrame. Nothing here mounts WebGL.
  */
 export default function HomeCanvas({ children }: { children: ReactNode }) {
   return (

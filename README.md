@@ -55,9 +55,17 @@ sheet with a mobile override:
 The statement is set as **word capsules** (`primitives/WordBlocks`), a data-driven
 run shared with the footer statement — not every word is blocked, which is what
 keeps the rhythm from looking mechanical. Type roles are explicit
-(`--font-display` Space Grotesk, `--font-body` Inter Tight, `--font-mono`
+(`--font-display` Geist Pixel Square, `--font-body` Inter Tight, `--font-mono`
 JetBrains Mono) so mobile never falls back to a system face, and hero metrics are
 tuned separately per range rather than scaled.
+
+The three families are the whole typography system. Each is self-hosted from
+`public/fonts/` (Geist Pixel Square 400; Inter Tight 400; JetBrains Mono 400 and
+500), declared once in `app/layout.tsx` and exposed as `--font-display-face`,
+`--font-body-face` and `--font-mono-tech`. The role tokens in `styles/globals.css`
+map those variables to the roles above. Each family is under the SIL Open Font
+License 1.1; the attributions and licence texts are in `THIRD_PARTY_NOTICES.md`
+and in each family's `OFL.txt`.
 
 `SiteFooter` is mounted in `AppShell`, so every future route inherits it: a
 secondary warm-grey band with a centred word-block statement and metadata

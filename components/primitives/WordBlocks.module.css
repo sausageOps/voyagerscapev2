@@ -130,18 +130,15 @@
 
 /* ---------- Hero Scale ---------- */
 .hero {
-  /* FONT EXPERIMENT: Geist Pixel Square for the hero display run only —
-     Voyagerscape, the primary changing word and the lower three. The
-     statement run below, and every other surface on the site, still
-     resolve --font-display (Pixelify Sans). The second entry is a
-     failure fallback only: it is used if the woff2 does not load. */
-  font-family: var(--font-hero-display), var(--font-display);
+  /* The retired Handjet hero face is gone. This rule resolves the display
+     family (Geist Pixel Square); it is not mounted by any component. */
+  font-family: var(--font-display);
   column-gap: clamp(1.5px, 0.16vw, 3px);
   /* The two rows are one object; their closeness is owned by the type,
      not by a gap. */
   row-gap: 0;
   /* ONE display scale for the whole hero — both rows, every word.
-     Sized against Handjet's real advances: the widest composition the
+     Sized against the retired Handjet 900's advances (not re-measured for Geist): the widest composition the
      vocabulary can produce is row two ("Wander Observe Experiment",
      9.63em including padding), which at the 6.4rem ceiling is 986px
      inside a 1360px frame, so neither row can wrap or overflow at any
@@ -149,10 +146,10 @@
      1280. */
   font-size: clamp(2.85rem, 6.4vw, 6rem);
   line-height: 0.98;
-  /* The face's own weight. Declared explicitly everywhere in the hero so
-     the browser never substitutes or synthesises one. */
-  font-weight: 900;
-  /* Positive tracking: Handjet 900's blocks collide when pulled
+  /* Geist Pixel Square's single weight, declared explicitly so the browser
+     never synthesises one. */
+  font-weight: 400;
+  /* Positive tracking: the retired Handjet 900's blocks collided when pulled
      together. Measured at +0.02em the widest composition ("Wander
      Observe Experiment", 10.66em) is 1194px at the 7rem ceiling inside
      a 1440px frame, and still clears the frame at every breakpoint
@@ -167,7 +164,7 @@
 /* Large Style: "Voyagerscape", "Explore", "Observe" */
 .hero .word {
   font-size: 1em;
-  font-weight: 900;
+  font-weight: 400;
   line-height: 0.98;
   /* Vertical padding and the height floor both came down with the
      line-height; this is what actually closes the gap between the rows,
@@ -187,7 +184,7 @@
    Top/bottom padding and font-size are unchanged; only the horizontal
    padding inherited from .hero .word (0.38em) is tightened here. */
 .hero .rounded {
-  font-weight: 900;
+  font-weight: 400;
   padding-top: 0.14em;
   padding-bottom: 0.18em;
   padding-left: 0.09em;
@@ -201,7 +198,7 @@
    consistent vertical system. Horizontal padding stays its own pill value,
    matching The/Create's padding proportion. */
 .hero .cream {
-  font-weight: 900;
+  font-weight: 400;
   border-radius: 999px;
   padding-top: 0.14em;
   padding-bottom: 0.18em;
@@ -219,7 +216,7 @@
    tightened horizontal fit */
 .hero .lavender,
 .hero .pink {
-  font-weight: 900;
+  font-weight: 400;
   line-height: 0.98;
   padding: 0.12em 0.133em 0.16em;
   border-radius: 999px;
